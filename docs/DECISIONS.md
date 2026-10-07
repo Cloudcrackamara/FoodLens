@@ -98,3 +98,24 @@ As soon as possible, working phase by phase together. No fixed date.
 
 ### Pending batches in lookup
 A batch that is `PENDING_REVIEW` or `REJECTED` is invisible to consumer lookup and returns `BATCH_NOT_FOUND`.
+
+## Phase 1 data model decisions (approved 2026-10-07)
+
+Changes to the draft ERD, all approved by the student. Implemented in migration `0002_initial_schema`; described in `docs/SCHEMA.md`.
+
+| # | Decision | Reason |
+|---|---|---|
+| D17 | Change notice targets are four optional FKs (`product_id`, `batch_id`, `credential_id`, `location_id`) with a check that exactly one is set. Replaces `target_type` + `target_id`. | The database rejects notices pointing at records that do not exist. |
+| D18 | `PRODUCT_ANNOUNCEMENT` has no `company_id`; the company comes from the product. | Avoids two copies of ownership that could disagree. |
+| D19 | Credentials are product-level only; the `scope` / batch-specific option is removed for the MVP. | A batch-specific credential needs a batch link the model did not have; matches non-negotiable rule 3. |
+| D20 | Database checks: quantities > 0, attachment size 1 byte–5 MB, `valid_until >= valid_from`, `expiry_date >= production_date`, buyer ≠ seller. | Enforce simple invariants even if a service has a bug. |
+| D21 | Company-asserted identity fields are prefixed `claimed_` (`claimed_legal_name`, `claimed_business_identifier`, `claimed_address`). | Keeps claimed data visibly separate from reviewed fields. |
+| D22 | All reviewable tables (company, product, batch, credential, location, change notice) share `review_status` / `status`, `reviewed_by_user_id`, `reviewed_at`, `review_note`. | One review pattern for services and tests. |
+| D23 | Publishing a product needs admin review: `DRAFT → PENDING_REVIEW → PUBLISHED / REJECTED`, plus `WITHDRAWN`. | Without it a company could put any product in front of consumers unreviewed. Extends non-negotiable rule 4. |
+| D24 | `USER_SESSION` table holds hashed session tokens with expiry and revocation. | Server-side sessions can be revoked on logout; JWT cookies cannot. |
+| D25 | `COMPANY_MEMBER` gains `is_public_contact`, `public_title`, `public_phone`, `public_email`. | Supplier pages can name representatives without exposing login emails. |
+| D26 | Member roles are `OWNER` and `REPRESENTATIVE` only. | `STAFF` had no distinct permissions. |
+| D27 | `created_at` on every table; `updated_at` only on edited tables. Append-only tables (`audit_log`, `change_notice_field`, `notice_attachment`, `order_line`, `order_batch_allocation`, `user_session`) have none. | Makes immutability visible in the schema. |
+| D28 | Enums stored as `VARCHAR` + `CHECK`, not native PostgreSQL enums. | Native enums need awkward migrations to add values. |
+| D29 | `BATCH_SCAN` and `CONCERN_REPORT` are deferred to Phase 8's migration. They stay in `ERD.mmd`, marked Phase 8. | Optional features; no empty tables until needed. |
+| D30 | `docs/PLAN.md` Phase 1 is now "Data model"; identity/roles moved to the start of Phase 2. | The whole schema was built in one phase at the student's request. |

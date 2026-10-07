@@ -36,44 +36,59 @@ Every phase is done only when all tests listed under "Done when" exist and pass,
 - [x] `npm run lint`, `npm run typecheck`, `npm test` pass (banner renders test)
 - [ ] No secrets committed; README steps work from a clean clone (verify after first commit)
 
-Note: `TEST_DATABASE_URL` and the `foodlens_test` database exist, but the pytest DB fixture is built in Phase 1 with the first models.
+Note: the pytest DB fixture was added in Phase 1 with the first models.
 
 ---
 
-## Phase 1 — Identity and roles
+## Phase 1 — Data model
 
-**Goal:** Users can register and log in; roles and company membership are enforced server-side.
+**Goal:** The full MVP schema exists in PostgreSQL, matches `docs/ERD.mmd`, and its database-level rules are tested.
 
 **Deliverables**
-- Models: `APP_USER` (email unique, password hash, display name, `is_admin`, active), `COMPANY` (type, claimed identifier, profile status, `approved_by_user_id`), `COMPANY_MEMBER` (role, membership status)
-- Password hashing, cookie session, `register` / `login` / `logout` / `me`
+- SQLModel tables for every MVP entity in `docs/ERD.mmd` (Phase 8 tables excluded): UUID keys, enum status fields, timestamps, shared review columns, `claimed_` company fields
+- Migration `0002_initial_schema`, applied and reversible
+- pytest fixtures that rebuild `foodlens_test` from migrations and roll back each test
+- `docs/SCHEMA.md` describing each table
+
+**Done when**
+- [x] `uv run alembic upgrade head` and `downgrade` work; `alembic check` reports no drift
+- [x] Test: `(product_id, batch_number)` unique; same batch number allowed on another product
+- [x] Test: enum columns reject unknown values (e.g. `'SAFE'`)
+- [x] Test: new records default to unreviewed states; `is_admin` defaults false; `data_mode` defaults `DEMO`
+- [x] Test: change notice has exactly one existing target
+- [x] Test: date-order, quantity, attachment-size, and buyer≠seller checks
+- [x] Test: no payment/price columns exist
+- [x] `docs/SCHEMA.md` written
+
+---
+
+## Phase 2 — Identity, roles, catalogue, and lookup
+
+**Goal:** Users can sign in with roles enforced server-side, and consumers can look up a product code + batch number against seeded demo data and get a precise record state.
+
+**Deliverables — identity and roles**
+- Password hashing (bcrypt), `USER_SESSION` cookie sessions, `register` / `login` / `logout` / `me`
 - Reusable dependencies: `require_user`, `require_admin`, `require_company_member(company_id, roles)`
 - Admin accounts created only by seed/CLI
 - Frontend login/register pages and auth-aware nav
 
-**Done when**
+**Done when — identity and roles**
 - [ ] Test: register payload with `is_admin` / status fields is rejected or ignored
 - [ ] Test: unauthenticated request gets 401; wrong role gets 403
 - [ ] Test: member of company A cannot access company B routes
 - [ ] Test: passwords stored hashed, never returned
-- [ ] Test: inactive user cannot log in
+- [ ] Test: inactive user cannot log in; revoked or expired session rejected
 
----
-
-## Phase 2 — Catalogue, batches, and lookup
-
-**Goal:** Consumers can look up a product code + batch number against seeded demo data and get a precise record state.
-
-**Deliverables**
-- Models: `PRODUCT`, `PRODUCT_BATCH` (unique `(product_id, batch_number)`)
+**Deliverables — catalogue and lookup**
 - Seed: fictional products/batches incl. mismatch and not-found cases
 - `services/lookup.py`: normalize input, find product, find approved batch, apply the precedence in `docs/DECISIONS.md` Q4, return primary state + `warnings`
 - `POST /api/lookups/batch` with `data_mode: "DEMO"` and disclaimer on every response
 - Frontend check form with value confirmation/correction and result screen with banner
 
-**Done when**
+**Done when — catalogue and lookup**
 - [ ] Test: known product + batch returns `DEMO_RECORD_FOUND` (credential checks stubbed until Phase 3)
 - [ ] Test: unknown batch returns `BATCH_NOT_FOUND` (no "fake"/"unsafe")
+- [ ] Test: product that is not `PUBLISHED` returns `BATCH_NOT_FOUND`
 - [ ] Test: batch belonging to a different product returns `DETAILS_MISMATCH` with differing field `product_code`
 - [ ] Test: batch past expiry date returns `BATCH_EXPIRED`
 - [ ] Test: pending or rejected batch returns `BATCH_NOT_FOUND`
@@ -89,7 +104,6 @@ Note: `TEST_DATABASE_URL` and the `foodlens_test` database exist, but the pytest
 **Goal:** Lookup results show product-level credential provenance honestly.
 
 **Deliverables**
-- Models: `REGULATORY_AGENCY`, `CREDENTIAL_RECORD` (product FK, agency FK, reference, scope, status, validity dates, `data_mode`, provenance, checked date)
 - Seeded simulated agencies (NAFDAC simulated, SON/MANCAP simulated) and `DEMO-` references
 - Status/expiry computation in a service; `CREDENTIAL_EXPIRED_OR_INACTIVE` state
 - Result UI: agency, scheme, reference, status, dates, provenance, scope label
@@ -113,7 +127,7 @@ Note: `TEST_DATABASE_URL` and the `foodlens_test` database exist, but the pytest
 - Company registration → `PENDING_REVIEW`; admin approve/reject/suspend with reviewer + time
 - Representative management within a company
 - `SUPPLIER_LOCATION` with FoodLens review status and reviewer/time
-- Company product drafts, new batches, and credential entry (new batches and credentials `PENDING_REVIEW`; admin approves)
+- Company product drafts, new batches, and credential entry. Submitting a draft for publication sets `PENDING_REVIEW`; admin publishes or rejects. New batches and credentials `PENDING_REVIEW` until admin approves
 - Direct edit of company contact details, logged in `AUDIT_LOG`
 - Company dashboard and admin review queue screens
 
@@ -125,6 +139,7 @@ Note: `TEST_DATABASE_URL` and the `foodlens_test` database exist, but the pytest
 - [ ] Test: client cannot set status, reviewer, or ownership fields on any create/update
 - [ ] Test: member cannot edit another company's products, batches, or locations
 - [ ] Test: unapproved company cannot publish products to lookups or the directory
+- [ ] Test: company cannot publish its own product; only admin moves `PENDING_REVIEW` to `PUBLISHED`
 - [ ] Test: admin decisions record reviewer and timestamp
 
 ---
@@ -134,7 +149,6 @@ Note: `TEST_DATABASE_URL` and the `foodlens_test` database exist, but the pytest
 **Goal:** Companies propose catalogue changes that only take effect after admin approval, with full history, and can post pop-up product announcements.
 
 **Deliverables**
-- Models: `CHANGE_NOTICE`, `CHANGE_NOTICE_FIELD` (current/proposed value per field), `NOTICE_ATTACHMENT`, `PRODUCT_ANNOUNCEMENT`
 - States: `PENDING_REVIEW`, `CLARIFICATION_REQUESTED`, `APPROVED`, `REJECTED`
 - Upload validation (type, extension, size), private storage, safe filenames
 - Admin field-by-field diff view and decision endpoint; approval validates and applies values, recording old/new value, approver, time
@@ -176,7 +190,6 @@ Note: `TEST_DATABASE_URL` and the `foodlens_test` database exist, but the pytest
 **Goal:** Wholesalers send order requests; sellers respond; fulfilment can record batches.
 
 **Deliverables**
-- Models: `WHOLESALE_ORDER`, `ORDER_LINE`, `ORDER_BATCH_ALLOCATION`
 - Order status lifecycle service (see `docs/DECISIONS.md`)
 - Seller accept/decline/reply; buyer cancel before acceptance
 - Batch allocation at fulfilment

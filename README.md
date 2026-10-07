@@ -56,7 +56,7 @@ Check: `http://localhost:3000/api/health` returns `{"status":"ok"}`.
 ## Test and lint
 
 ```bash
-# Backend
+# Backend (needs `docker compose up -d db`; tests rebuild the foodlens_test database from migrations)
 cd backend
 uv run pytest
 uv run ruff check . && uv run ruff format --check .
@@ -75,9 +75,10 @@ cd backend
 uv run alembic upgrade head                                  # apply
 uv run alembic revision --autogenerate -m "describe change"  # create after model changes
 uv run alembic downgrade -1                                  # roll back one
+uv run alembic check                                         # fails if models and migrations differ
 ```
 
-Models must be imported in `backend/app/models/__init__.py` for autogenerate to see them.
+Models must be imported in `backend/app/models/__init__.py` for autogenerate to see them. Table-by-table rules: [`docs/SCHEMA.md`](docs/SCHEMA.md).
 
 ## Reset the local database
 

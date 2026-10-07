@@ -2,88 +2,53 @@ erDiagram
 
     APP_USER {
         uuid user_id PK
-        string email UK
+        string email UK "stored lowercased"
         string password_hash
         string display_name
-        boolean is_admin "set by seed/CLI only"
+        boolean is_admin "seed/CLI only"
         boolean is_active
+        datetime created_at
+        datetime updated_at
+    }
+
+    USER_SESSION {
+        uuid session_id PK
+        uuid user_id FK
+        string token_hash UK "hash only, never the token"
+        datetime expires_at
+        datetime revoked_at "nullable"
         datetime created_at
     }
 
     COMPANY {
         uuid company_id PK
-        string legal_name
+        enum company_type "MANUFACTURER, WHOLESALER, BOTH"
         string display_name
-        string company_type "MANUFACTURER_WHOLESALER_BOTH"
-        string claimed_business_identifier "nullable, claimed not verified"
         string contact_email
         string contact_phone "nullable"
-        string profile_status "PENDING_REVIEW_APPROVED_REJECTED_SUSPENDED"
+        string claimed_legal_name "claimed, unverified"
+        string claimed_business_identifier "claimed, nullable"
+        string claimed_address "claimed, nullable"
+        enum review_status "PENDING_REVIEW, APPROVED, REJECTED, SUSPENDED"
         uuid reviewed_by_user_id FK "nullable"
         datetime reviewed_at "nullable"
-        datetime created_at
-    }
-
-    COMPANY_MEMBER {
-        uuid member_id PK
-        uuid user_id FK "UK: one company per user in MVP"
-        uuid company_id FK
-        string role "OWNER_REPRESENTATIVE_STAFF"
-        string membership_status
-        datetime created_at
-    }
-
-    PRODUCT {
-        uuid product_id PK
-        uuid company_id FK
-        string name
-        string brand
-        string category
-        string product_code UK "barcode or FoodLens code"
-        string package_size "nullable"
-        string manufacturer_name
-        text label_information "nullable"
-        string status "DRAFT_PUBLISHED_WITHDRAWN"
+        string review_note "nullable"
         datetime created_at
         datetime updated_at
     }
 
-    PRODUCT_BATCH {
-        uuid batch_id PK
-        uuid product_id FK "UK with batch_number"
-        string batch_number
-        date production_date "nullable"
-        date expiry_date "nullable"
-        string review_status "PENDING_REVIEW_APPROVED_REJECTED"
-        string qr_token UK "nullable, opaque"
-        uuid reviewed_by_user_id FK "nullable"
-        datetime reviewed_at "nullable"
+    COMPANY_MEMBER {
+        uuid member_id PK
+        uuid user_id FK,UK "one company per user"
+        uuid company_id FK
+        enum role "OWNER, REPRESENTATIVE"
+        enum membership_status "ACTIVE, INACTIVE"
+        boolean is_public_contact
+        string public_title "nullable"
+        string public_phone "nullable"
+        string public_email "nullable"
         datetime created_at
-    }
-
-    REGULATORY_AGENCY {
-        uuid agency_id PK
-        string name "e.g. NAFDAC (simulated)"
-        string scheme "e.g. Food product registration (demo)"
-        string data_mode "DEMO"
-    }
-
-    CREDENTIAL_RECORD {
-        uuid credential_id PK
-        uuid product_id FK
-        uuid agency_id FK
-        string reference_number "DEMO- prefix"
-        string scope "PRODUCT or BATCH_SPECIFIC"
-        string status "ACTIVE_INACTIVE"
-        date valid_from "nullable"
-        date valid_until "nullable"
-        string data_mode "DEMO"
-        string provenance
-        date checked_on
-        string review_status "PENDING_REVIEW_APPROVED_REJECTED"
-        uuid submitted_by_user_id FK
-        uuid reviewed_by_user_id FK "nullable"
-        datetime reviewed_at "nullable"
+        datetime updated_at
     }
 
     SUPPLIER_LOCATION {
@@ -93,58 +58,127 @@ erDiagram
         string address
         string area
         uuid contact_member_id FK "nullable"
-        string review_status "PENDING_REVIEW_APPROVED_REJECTED"
+        enum review_status "PENDING_REVIEW, APPROVED, REJECTED"
         uuid reviewed_by_user_id FK "nullable"
         datetime reviewed_at "nullable"
+        string review_note "nullable"
+        datetime created_at
+        datetime updated_at
+    }
+
+    PRODUCT {
+        uuid product_id PK
+        uuid company_id FK
+        string name
+        string brand
+        string category
+        string product_code UK
+        string package_size "nullable"
+        string manufacturer_name
+        text label_information "nullable"
+        enum status "DRAFT, PENDING_REVIEW, PUBLISHED, REJECTED, WITHDRAWN"
+        uuid reviewed_by_user_id FK "nullable"
+        datetime reviewed_at "nullable"
+        string review_note "nullable"
+        datetime created_at
+        datetime updated_at
+    }
+
+    PRODUCT_BATCH {
+        uuid batch_id PK
+        uuid product_id FK "UK with batch_number"
+        string batch_number
+        date production_date "nullable"
+        date expiry_date "nullable, >= production_date"
+        string qr_token UK "nullable, opaque"
+        enum review_status "PENDING_REVIEW, APPROVED, REJECTED"
+        uuid reviewed_by_user_id FK "nullable"
+        datetime reviewed_at "nullable"
+        string review_note "nullable"
+        datetime created_at
+        datetime updated_at
+    }
+
+    REGULATORY_AGENCY {
+        uuid agency_id PK
+        string name "e.g. NAFDAC (simulated); UK with scheme"
+        string scheme
+        enum data_mode "DEMO"
+        datetime created_at
+        datetime updated_at
+    }
+
+    CREDENTIAL_RECORD {
+        uuid credential_id PK
+        uuid product_id FK "product-level only"
+        uuid agency_id FK "UK with reference_number"
+        string reference_number "DEMO- prefix"
+        enum status "ACTIVE, INACTIVE"
+        date valid_from "nullable"
+        date valid_until "nullable, >= valid_from"
+        enum data_mode "DEMO"
+        text provenance
+        date checked_on
+        uuid submitted_by_user_id FK "nullable for seed"
+        enum review_status "PENDING_REVIEW, APPROVED, REJECTED"
+        uuid reviewed_by_user_id FK "nullable"
+        datetime reviewed_at "nullable"
+        string review_note "nullable"
+        datetime created_at
+        datetime updated_at
     }
 
     CHANGE_NOTICE {
         uuid notice_id PK
         uuid company_id FK
-        string target_type "PRODUCT_BATCH_CREDENTIAL_LOCATION"
-        uuid target_id
-        string change_type
+        uuid product_id FK "exactly one target set"
+        uuid batch_id FK "exactly one target set"
+        uuid credential_id FK "exactly one target set"
+        uuid location_id FK "exactly one target set"
+        enum change_type
         text reason
         date effective_date "nullable"
-        string status "PENDING_REVIEW_CLARIFICATION_REQUESTED_APPROVED_REJECTED"
         uuid submitted_by_user_id FK
+        enum review_status "PENDING_REVIEW, CLARIFICATION_REQUESTED, APPROVED, REJECTED"
         uuid reviewed_by_user_id FK "nullable"
-        text reviewer_note "nullable"
-        datetime submitted_at
-        datetime decided_at "nullable"
+        datetime reviewed_at "nullable"
+        string review_note "nullable"
+        datetime created_at
+        datetime updated_at
     }
 
     CHANGE_NOTICE_FIELD {
         uuid field_change_id PK
-        uuid notice_id FK
+        uuid notice_id FK "UK with field_name"
         string field_name
         text current_value "snapshot at submission"
         text proposed_value
-        text applied_old_value "nullable, set on approval"
+        text applied_old_value "set on approval"
+        datetime created_at
     }
 
     NOTICE_ATTACHMENT {
         uuid attachment_id PK
         uuid notice_id FK
-        string storage_key "private"
+        string storage_key UK "private"
         string original_filename
-        string mime_type "PDF_PNG_JPEG"
-        int size_bytes "max 5 MB"
-        datetime uploaded_at
+        enum mime_type "application/pdf, image/png, image/jpeg"
+        int size_bytes "1 to 5 MB"
+        datetime created_at
     }
 
     PRODUCT_ANNOUNCEMENT {
         uuid announcement_id PK
         uuid product_id FK
-        uuid company_id FK
         string title
         text message
         string image_storage_key "nullable"
-        string status "LIVE_HIDDEN"
+        enum status "LIVE, HIDDEN"
         uuid created_by_user_id FK
         uuid hidden_by_user_id FK "nullable, admin"
-        datetime created_at
         datetime hidden_at "nullable"
+        datetime created_at
+        datetime updated_at
     }
 
     AUDIT_LOG {
@@ -153,20 +187,21 @@ erDiagram
         string entity_type
         uuid entity_id
         string action
-        json old_values "nullable"
-        json new_values "nullable"
+        jsonb old_values "nullable"
+        jsonb new_values "nullable"
         datetime created_at
     }
 
     WHOLESALE_ORDER {
         uuid order_id PK
-        uuid buyer_company_id FK
+        uuid buyer_company_id FK "differs from seller"
         uuid seller_company_id FK
         uuid created_by_user_id FK
         uuid pickup_location_id FK "nullable"
-        string fulfilment_method "PICKUP_DELIVERY"
+        enum fulfilment_method "PICKUP, DELIVERY"
         text delivery_details "nullable"
-        string status "SUBMITTED_ACCEPTED_DECLINED_FULFILLED_CANCELLED"
+        enum status "SUBMITTED, ACCEPTED, DECLINED, FULFILLED, CANCELLED"
+        text buyer_note "nullable"
         text seller_note "nullable"
         datetime created_at
         datetime updated_at
@@ -176,29 +211,30 @@ erDiagram
         uuid line_id PK
         uuid order_id FK
         uuid product_id FK
-        decimal quantity
+        decimal quantity "> 0"
         string unit
+        datetime created_at
     }
 
     ORDER_BATCH_ALLOCATION {
         uuid allocation_id PK
         uuid line_id FK
-        uuid batch_id FK "must belong to line product"
-        decimal allocated_quantity
+        uuid batch_id FK "must belong to line product (service)"
+        decimal allocated_quantity "> 0"
         datetime created_at
     }
 
     BATCH_SCAN {
-        uuid scan_id PK
+        uuid scan_id PK "PHASE 8 - not yet migrated"
         string input_product_code
         string input_batch_number
         uuid matched_batch_id FK "nullable"
         string result
-        datetime scanned_at
+        datetime created_at
     }
 
     CONCERN_REPORT {
-        uuid report_id PK
+        uuid report_id PK "PHASE 8 - not yet migrated"
         uuid product_id FK "nullable"
         uuid batch_id FK "nullable"
         string product_code_entered "snapshot"
@@ -209,13 +245,15 @@ erDiagram
         string contact_email "nullable, optional PII"
         string photo_storage_key "nullable, private"
         string status
-        datetime submitted_at
+        datetime created_at
     }
 
+    APP_USER ||--o{ USER_SESSION : "signs in with"
     APP_USER ||--o| COMPANY_MEMBER : "belongs via"
     COMPANY ||--o{ COMPANY_MEMBER : "has"
     COMPANY ||--o{ PRODUCT : "owns"
     COMPANY ||--o{ SUPPLIER_LOCATION : "operates"
+    COMPANY_MEMBER o|--o{ SUPPLIER_LOCATION : "is contact for"
     COMPANY ||--o{ CHANGE_NOTICE : "submits"
     COMPANY ||--o{ WHOLESALE_ORDER : "buys in"
     COMPANY ||--o{ WHOLESALE_ORDER : "sells in"
@@ -223,21 +261,23 @@ erDiagram
     PRODUCT ||--o{ CREDENTIAL_RECORD : "credentialed by"
     PRODUCT ||--o{ PRODUCT_ANNOUNCEMENT : "announced in"
     REGULATORY_AGENCY ||--o{ CREDENTIAL_RECORD : "issues (simulated)"
+    PRODUCT o|--o{ CHANGE_NOTICE : "target"
+    PRODUCT_BATCH o|--o{ CHANGE_NOTICE : "target"
+    CREDENTIAL_RECORD o|--o{ CHANGE_NOTICE : "target"
+    SUPPLIER_LOCATION o|--o{ CHANGE_NOTICE : "target"
     CHANGE_NOTICE ||--|{ CHANGE_NOTICE_FIELD : "proposes"
     CHANGE_NOTICE ||--o{ NOTICE_ATTACHMENT : "supported by"
     WHOLESALE_ORDER ||--|{ ORDER_LINE : "contains"
     PRODUCT ||--o{ ORDER_LINE : "ordered as"
     ORDER_LINE ||--o{ ORDER_BATCH_ALLOCATION : "fulfilled by"
     PRODUCT_BATCH ||--o{ ORDER_BATCH_ALLOCATION : "allocated in"
-    PRODUCT_BATCH o|--o{ BATCH_SCAN : "optional match"
-    PRODUCT o|--o{ CONCERN_REPORT : "optional match"
-    PRODUCT_BATCH o|--o{ CONCERN_REPORT : "optional match"
+    SUPPLIER_LOCATION o|--o{ WHOLESALE_ORDER : "pickup at"
     APP_USER o|--o{ AUDIT_LOG : "acts in"
+    PRODUCT_BATCH o|--o{ BATCH_SCAN : "optional match (Phase 8)"
+    PRODUCT o|--o{ CONCERN_REPORT : "optional match (Phase 8)"
+    PRODUCT_BATCH o|--o{ CONCERN_REPORT : "optional match (Phase 8)"
 
-%% Design notes:
-%% - Draft from docs/HANDOFF.md section 7 plus docs/DECISIONS.md (2026-10-07). Migrations become the source of truth.
-%% - CHANGE_NOTICE.target_id is polymorphic; the service layer validates it belongs to the notice's company.
-%% - Only APPROVED batches and credentials are visible to consumer lookup.
-%% - PRODUCT_ANNOUNCEMENT is company-authored, live without review, labelled "not reviewed by FoodLens", and never changes product data.
-%% - No payment fields anywhere. BATCH_SCAN stores no user, IP, or location.
-%% - BATCH_SCAN and CONCERN_REPORT are Phase 8 (optional).
+%% Matches backend/app/models and migration 0002_initial_schema (2026-10-07).
+%% Migrations are the source of truth; see docs/SCHEMA.md for rules per table.
+%% Every reviewer FK (reviewed_by_user_id, hidden_by_user_id) references APP_USER; omitted above for readability.
+%% BATCH_SCAN and CONCERN_REPORT are planned for Phase 8 and do not exist in the database yet.
