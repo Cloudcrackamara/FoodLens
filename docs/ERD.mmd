@@ -1,0 +1,243 @@
+erDiagram
+
+    APP_USER {
+        uuid user_id PK
+        string email UK
+        string password_hash
+        string display_name
+        boolean is_admin "set by seed/CLI only"
+        boolean is_active
+        datetime created_at
+    }
+
+    COMPANY {
+        uuid company_id PK
+        string legal_name
+        string display_name
+        string company_type "MANUFACTURER_WHOLESALER_BOTH"
+        string claimed_business_identifier "nullable, claimed not verified"
+        string contact_email
+        string contact_phone "nullable"
+        string profile_status "PENDING_REVIEW_APPROVED_REJECTED_SUSPENDED"
+        uuid reviewed_by_user_id FK "nullable"
+        datetime reviewed_at "nullable"
+        datetime created_at
+    }
+
+    COMPANY_MEMBER {
+        uuid member_id PK
+        uuid user_id FK "UK: one company per user in MVP"
+        uuid company_id FK
+        string role "OWNER_REPRESENTATIVE_STAFF"
+        string membership_status
+        datetime created_at
+    }
+
+    PRODUCT {
+        uuid product_id PK
+        uuid company_id FK
+        string name
+        string brand
+        string category
+        string product_code UK "barcode or FoodLens code"
+        string package_size "nullable"
+        string manufacturer_name
+        text label_information "nullable"
+        string status "DRAFT_PUBLISHED_WITHDRAWN"
+        datetime created_at
+        datetime updated_at
+    }
+
+    PRODUCT_BATCH {
+        uuid batch_id PK
+        uuid product_id FK "UK with batch_number"
+        string batch_number
+        date production_date "nullable"
+        date expiry_date "nullable"
+        string review_status "PENDING_REVIEW_APPROVED_REJECTED"
+        string qr_token UK "nullable, opaque"
+        uuid reviewed_by_user_id FK "nullable"
+        datetime reviewed_at "nullable"
+        datetime created_at
+    }
+
+    REGULATORY_AGENCY {
+        uuid agency_id PK
+        string name "e.g. NAFDAC (simulated)"
+        string scheme "e.g. Food product registration (demo)"
+        string data_mode "DEMO"
+    }
+
+    CREDENTIAL_RECORD {
+        uuid credential_id PK
+        uuid product_id FK
+        uuid agency_id FK
+        string reference_number "DEMO- prefix"
+        string scope "PRODUCT or BATCH_SPECIFIC"
+        string status "ACTIVE_INACTIVE"
+        date valid_from "nullable"
+        date valid_until "nullable"
+        string data_mode "DEMO"
+        string provenance
+        date checked_on
+        string review_status "PENDING_REVIEW_APPROVED_REJECTED"
+        uuid submitted_by_user_id FK
+        uuid reviewed_by_user_id FK "nullable"
+        datetime reviewed_at "nullable"
+    }
+
+    SUPPLIER_LOCATION {
+        uuid location_id PK
+        uuid company_id FK
+        string name
+        string address
+        string area
+        uuid contact_member_id FK "nullable"
+        string review_status "PENDING_REVIEW_APPROVED_REJECTED"
+        uuid reviewed_by_user_id FK "nullable"
+        datetime reviewed_at "nullable"
+    }
+
+    CHANGE_NOTICE {
+        uuid notice_id PK
+        uuid company_id FK
+        string target_type "PRODUCT_BATCH_CREDENTIAL_LOCATION"
+        uuid target_id
+        string change_type
+        text reason
+        date effective_date "nullable"
+        string status "PENDING_REVIEW_CLARIFICATION_REQUESTED_APPROVED_REJECTED"
+        uuid submitted_by_user_id FK
+        uuid reviewed_by_user_id FK "nullable"
+        text reviewer_note "nullable"
+        datetime submitted_at
+        datetime decided_at "nullable"
+    }
+
+    CHANGE_NOTICE_FIELD {
+        uuid field_change_id PK
+        uuid notice_id FK
+        string field_name
+        text current_value "snapshot at submission"
+        text proposed_value
+        text applied_old_value "nullable, set on approval"
+    }
+
+    NOTICE_ATTACHMENT {
+        uuid attachment_id PK
+        uuid notice_id FK
+        string storage_key "private"
+        string original_filename
+        string mime_type "PDF_PNG_JPEG"
+        int size_bytes "max 5 MB"
+        datetime uploaded_at
+    }
+
+    PRODUCT_ANNOUNCEMENT {
+        uuid announcement_id PK
+        uuid product_id FK
+        uuid company_id FK
+        string title
+        text message
+        string image_storage_key "nullable"
+        string status "LIVE_HIDDEN"
+        uuid created_by_user_id FK
+        uuid hidden_by_user_id FK "nullable, admin"
+        datetime created_at
+        datetime hidden_at "nullable"
+    }
+
+    AUDIT_LOG {
+        uuid audit_id PK
+        uuid actor_user_id FK "nullable for system"
+        string entity_type
+        uuid entity_id
+        string action
+        json old_values "nullable"
+        json new_values "nullable"
+        datetime created_at
+    }
+
+    WHOLESALE_ORDER {
+        uuid order_id PK
+        uuid buyer_company_id FK
+        uuid seller_company_id FK
+        uuid created_by_user_id FK
+        uuid pickup_location_id FK "nullable"
+        string fulfilment_method "PICKUP_DELIVERY"
+        text delivery_details "nullable"
+        string status "SUBMITTED_ACCEPTED_DECLINED_FULFILLED_CANCELLED"
+        text seller_note "nullable"
+        datetime created_at
+        datetime updated_at
+    }
+
+    ORDER_LINE {
+        uuid line_id PK
+        uuid order_id FK
+        uuid product_id FK
+        decimal quantity
+        string unit
+    }
+
+    ORDER_BATCH_ALLOCATION {
+        uuid allocation_id PK
+        uuid line_id FK
+        uuid batch_id FK "must belong to line product"
+        decimal allocated_quantity
+        datetime created_at
+    }
+
+    BATCH_SCAN {
+        uuid scan_id PK
+        string input_product_code
+        string input_batch_number
+        uuid matched_batch_id FK "nullable"
+        string result
+        datetime scanned_at
+    }
+
+    CONCERN_REPORT {
+        uuid report_id PK
+        uuid product_id FK "nullable"
+        uuid batch_id FK "nullable"
+        string product_code_entered "snapshot"
+        string batch_number_entered "snapshot"
+        string concern_type
+        text description
+        string purchase_area "nullable"
+        string contact_email "nullable, optional PII"
+        string photo_storage_key "nullable, private"
+        string status
+        datetime submitted_at
+    }
+
+    APP_USER ||--o| COMPANY_MEMBER : "belongs via"
+    COMPANY ||--o{ COMPANY_MEMBER : "has"
+    COMPANY ||--o{ PRODUCT : "owns"
+    COMPANY ||--o{ SUPPLIER_LOCATION : "operates"
+    COMPANY ||--o{ CHANGE_NOTICE : "submits"
+    COMPANY ||--o{ WHOLESALE_ORDER : "buys in"
+    COMPANY ||--o{ WHOLESALE_ORDER : "sells in"
+    PRODUCT ||--o{ PRODUCT_BATCH : "has"
+    PRODUCT ||--o{ CREDENTIAL_RECORD : "credentialed by"
+    PRODUCT ||--o{ PRODUCT_ANNOUNCEMENT : "announced in"
+    REGULATORY_AGENCY ||--o{ CREDENTIAL_RECORD : "issues (simulated)"
+    CHANGE_NOTICE ||--|{ CHANGE_NOTICE_FIELD : "proposes"
+    CHANGE_NOTICE ||--o{ NOTICE_ATTACHMENT : "supported by"
+    WHOLESALE_ORDER ||--|{ ORDER_LINE : "contains"
+    PRODUCT ||--o{ ORDER_LINE : "ordered as"
+    ORDER_LINE ||--o{ ORDER_BATCH_ALLOCATION : "fulfilled by"
+    PRODUCT_BATCH ||--o{ ORDER_BATCH_ALLOCATION : "allocated in"
+    PRODUCT_BATCH o|--o{ BATCH_SCAN : "optional match"
+    PRODUCT o|--o{ CONCERN_REPORT : "optional match"
+    PRODUCT_BATCH o|--o{ CONCERN_REPORT : "optional match"
+    APP_USER o|--o{ AUDIT_LOG : "acts in"
+
+%% Design notes:
+%% - Draft from docs/HANDOFF.md section 7 plus docs/DECISIONS.md (2026-10-07). Migrations become the source of truth.
+%% - CHANGE_NOTICE.target_id is polymorphic; the service layer validates it belongs to the notice's company.
+%% - Only APPROVED batches and credentials are visible to consumer lookup.
+%% - PRODUCT_ANNOUNCEMENT is company-authored, live without review, labelled "not reviewed by FoodLens", and never changes product data.
+%% - No payment fields anywhere. BATCH_SCAN stores no user, IP, or location.
+%% - BATCH_SCAN and CONCERN_REPORT are Phase 8 (optional).

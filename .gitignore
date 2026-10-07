@@ -1,0 +1,25 @@
+# Secrets and local env files
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Node / Next.js (frontend/.gitignore has the full list)
+node_modules/
+.next/
+
+# Uploads (private, never committed)
+backend/storage/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

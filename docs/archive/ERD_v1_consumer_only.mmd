@@ -1,0 +1,98 @@
+erDiagram
+
+    PRODUCT {
+        uuid product_id PK
+        string product_name
+        string brand_name
+        string category
+        string barcode UK "nullable"
+        string manufacturer_name
+        string registration_number "nullable"
+        string package_size "nullable"
+        string catalogue_status "prototype_only"
+        datetime created_at
+        datetime updated_at
+    }
+
+    PRODUCT_SOURCE {
+        uuid source_id PK
+        uuid product_id FK
+        string source_type
+        string source_reference
+        string verification_note
+        date checked_on
+    }
+
+    PRODUCT_CHECK {
+        uuid check_id PK
+        uuid product_id FK "nullable"
+        string entered_product_name
+        string entered_brand
+        string entered_barcode "nullable"
+        string entered_registration_no "nullable"
+        string entered_batch_no "nullable"
+        date entered_expiry_date "nullable"
+        string result "MATCH_MISMATCH_UNKNOWN"
+        datetime checked_at
+    }
+
+    CONCERN_REPORT {
+        uuid report_id PK
+        uuid product_id FK "nullable"
+        string product_name_entered
+        string brand_entered "nullable"
+        string barcode_entered "nullable"
+        string registration_no_entered "nullable"
+        string batch_no_entered "nullable"
+        date expiry_date_entered "nullable"
+        string concern_type
+        text description
+        date purchase_date "nullable"
+        string purchase_area "nullable"
+        string status
+        string contact_email "nullable_optional_PII"
+        datetime submitted_at
+    }
+
+    REPORT_ATTACHMENT {
+        uuid attachment_id PK
+        uuid report_id FK
+        string storage_key
+        string original_filename "nullable"
+        string mime_type
+        datetime uploaded_at
+    }
+
+    ADMIN_USER {
+        uuid admin_id PK
+        string display_name
+        string email UK
+        string password_hash
+        string role
+        boolean is_active
+        datetime created_at
+    }
+
+    REPORT_STATUS_HISTORY {
+        uuid history_id PK
+        uuid report_id FK
+        uuid admin_id FK "nullable_for_system_event"
+        string previous_status "nullable"
+        string new_status
+        text internal_note "nullable"
+        datetime changed_at
+    }
+
+    PRODUCT ||--o{ PRODUCT_SOURCE : "documented by"
+    PRODUCT o|--o{ PRODUCT_CHECK : "optional catalogue match"
+    PRODUCT o|--o{ CONCERN_REPORT : "optional catalogue match"
+    CONCERN_REPORT ||--o{ REPORT_ATTACHMENT : "may include"
+    CONCERN_REPORT ||--o{ REPORT_STATUS_HISTORY : "status changes"
+    ADMIN_USER o|--o{ REPORT_STATUS_HISTORY : "records review"
+
+%% Design notes:
+%% - No consumer account table: reports may be submitted anonymously.
+%% - PRODUCT_CHECK is a minimal, non-identifying audit record; omit it if lookups need not be retained.
+%% - PRODUCT_ID on a report/check is nullable because the catalogue may not contain the submitted item.
+%% - Submitted product fields in CONCERN_REPORT are intentional snapshots, even when PRODUCT_ID is present.
+%% - A catalogue match is not proof of authenticity, contents, or food safety.
