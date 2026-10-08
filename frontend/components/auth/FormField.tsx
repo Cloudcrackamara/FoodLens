@@ -6,6 +6,8 @@ type FormFieldProps = {
   value: string;
   error?: string;
   hint?: string;
+  autoCapitalize?: string;
+  spellCheck?: boolean;
   onChange: (value: string) => void;
 };
 
@@ -17,6 +19,8 @@ export function FormField({
   value,
   error,
   hint,
+  autoCapitalize,
+  spellCheck,
   onChange,
 }: FormFieldProps) {
   const describedBy = [hint && `${id}-hint`, error && `${id}-error`].filter(Boolean).join(" ");
@@ -30,6 +34,8 @@ export function FormField({
         name={id}
         type={type}
         autoComplete={autoComplete}
+        autoCapitalize={autoCapitalize}
+        spellCheck={spellCheck}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         aria-invalid={error ? true : undefined}

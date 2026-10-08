@@ -89,16 +89,18 @@ Note: the pytest DB fixture was added in Phase 1 with the first models.
 - Frontend check form with value confirmation/correction and result screen with banner
 
 **Done when — catalogue and lookup**
-- [ ] Test: known product + batch returns `DEMO_RECORD_FOUND` (credential checks stubbed until Phase 3)
-- [ ] Test: unknown batch returns `BATCH_NOT_FOUND` (no "fake"/"unsafe")
-- [ ] Test: product that is not `PUBLISHED` returns `BATCH_NOT_FOUND`
-- [ ] Test: batch belonging to a different product returns `DETAILS_MISMATCH` with differing field `product_code`
-- [ ] Test: batch past expiry date returns `BATCH_EXPIRED`
-- [ ] Test: pending or rejected batch returns `BATCH_NOT_FOUND`
-- [ ] Test: unidentifiable input returns `INSUFFICIENT_OR_AMBIGUOUS`
-- [ ] Test: every lookup response has `data_mode == "DEMO"`
-- [ ] Test: banned-words guard (no "safe"/"unsafe"/"fake") over all lookup messages, backend and frontend
-- [ ] Frontend test: banner shown on every result state
+- [x] Test: known product + batch returns `DEMO_RECORD_FOUND` (credential checks included; see Phase 3)
+- [x] Test: unknown batch returns `BATCH_NOT_FOUND` (no "fake"/"unsafe")
+- [x] Test: product that is not `PUBLISHED` returns `BATCH_NOT_FOUND`
+- [x] Test: batch belonging to a different product returns `DETAILS_MISMATCH` with differing field `product_code`
+- [x] Test: batch past expiry date returns `BATCH_EXPIRED`
+- [x] Test: pending or rejected batch returns `BATCH_NOT_FOUND`
+- [x] Test: unidentifiable input returns `INSUFFICIENT_OR_AMBIGUOUS`
+- [x] Test: every lookup response has `data_mode == "DEMO"`
+- [x] Test: banned-words guard (no "safe"/"unsafe"/"fake") over all lookup messages, backend and frontend
+- [x] Frontend test: banner shown on every result state
+- [x] Seed covers every lookup state; each seed case tested through the API (`app/demo_data.py` `SEED_CASES`)
+- [x] Anonymised `BATCH_SCAN` logged per lookup, no identifying columns (D46)
 
 ---
 
@@ -112,13 +114,15 @@ Note: the pytest DB fixture was added in Phase 1 with the first models.
 - Result UI: agency, scheme, reference, status, dates, provenance, scope label
 
 **Done when**
-- [ ] Test: expired/inactive credential returns `CREDENTIAL_EXPIRED_OR_INACTIVE`, worded as demo record status
-- [ ] Test: product with no approved credential returns `DETAILS_MISMATCH` with differing field `credential`
-- [ ] Test: pending company-entered credential is not shown in lookup
-- [ ] Test: expired batch + expired credential returns `BATCH_EXPIRED` with a credential warning
-- [ ] Test: expiry computed the same way in every response
-- [ ] Test: product-level credential is never labelled batch-level
-- [ ] Test: every credential carries `source_mode == "DEMO"`
+- [x] Test: expired/inactive credential returns `CREDENTIAL_EXPIRED_OR_INACTIVE`, worded as demo record status
+- [x] Test: product with no approved credential returns `DETAILS_MISMATCH` with differing field `credential`
+- [x] Test: pending company-entered credential is not shown in lookup
+- [x] Test: expired batch + expired credential returns `BATCH_EXPIRED` with a credential warning
+- [x] Test: expiry computed the same way in every response
+- [x] Test: product-level credential is never labelled batch-level
+- [x] Test: every credential carries `data_mode == "DEMO"`
+
+Note: delivered together with the Phase 2 lookup (2026-10-08); expiry is computed by one function, `credential_status` in `backend/app/services/lookup.py`.
 
 ---
 

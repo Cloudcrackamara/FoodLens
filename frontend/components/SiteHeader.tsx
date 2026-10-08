@@ -13,11 +13,16 @@ export function SiteHeader() {
     <header className="border-b border-zinc-200 dark:border-zinc-800">
       <nav
         aria-label="Main"
-        className="mx-auto flex w-full max-w-2xl items-center justify-between gap-4 px-4 py-3"
+        className="mx-auto flex w-full max-w-2xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3"
       >
-        <Link href="/" className="font-bold">
-          FoodLens
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link href="/" className="font-bold">
+            FoodLens
+          </Link>
+          <Link href="/check" className="text-sm underline">
+            Check a product
+          </Link>
+        </div>
         {isPending ? null : user ? (
           <div className="flex items-center gap-3 text-sm">
             <span>

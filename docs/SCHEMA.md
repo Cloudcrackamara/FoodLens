@@ -1,6 +1,6 @@
 # FoodLens database schema
 
-Describes the tables created by migration `0002_initial_schema` (models in `backend/app/models/`). Diagram: [`ERD.mmd`](ERD.mmd). Reasons for each choice: [`DECISIONS.md`](DECISIONS.md) D17–D30.
+Describes the tables created by migrations `0002_initial_schema` and `0003_batch_scan` (models in `backend/app/models/`). Diagram: [`ERD.mmd`](ERD.mmd). Reasons for each choice: [`DECISIONS.md`](DECISIONS.md) D17–D30.
 
 Migrations are the source of truth. If this file and the database disagree, the database wins and this file must be updated.
 
@@ -176,9 +176,22 @@ Records which batch fulfilled a line. `allocated_quantity` > 0 **(DB)**. Batch m
 
 ---
 
+## Lookups
+
+### `batch_scan`
+Anonymised log of consumer lookups (D46). Append-only. Written by `POST /api/lookups/batch`.
+
+| Column | Notes |
+|---|---|
+| `input_product_code`, `input_batch_number` | Normalised input (trimmed, upper-cased, max 64 characters). |
+| `matched_batch_id` | Batch the lookup resolved to, or null (not found, mismatch on product code, insufficient input). |
+| `result` | One of the six lookup states **(DB)**. |
+
+There is deliberately **no** user, session, IP address, user agent, or location column; a test enforces the exact column list.
+
 ## Planned (Phase 8, not in the database)
 
-`batch_scan` (anonymised lookup log, no user/IP/location) and `concern_report` (private consumer report) are drawn in `ERD.mmd` and will be added by a later migration if Phase 8 goes ahead.
+`concern_report` (private consumer report) is drawn in `ERD.mmd` and will be added by a later migration if Phase 8 goes ahead.
 
 ## Working with migrations
 

@@ -225,11 +225,11 @@ erDiagram
     }
 
     BATCH_SCAN {
-        uuid scan_id PK "PHASE 8 - not yet migrated"
-        string input_product_code
-        string input_batch_number
+        uuid scan_id PK "anonymised: no user, IP, or device"
+        string input_product_code "normalised, nullable"
+        string input_batch_number "normalised, nullable"
         uuid matched_batch_id FK "nullable"
-        string result
+        enum result "six lookup states"
         datetime created_at
     }
 
@@ -273,11 +273,11 @@ erDiagram
     PRODUCT_BATCH ||--o{ ORDER_BATCH_ALLOCATION : "allocated in"
     SUPPLIER_LOCATION o|--o{ WHOLESALE_ORDER : "pickup at"
     APP_USER o|--o{ AUDIT_LOG : "acts in"
-    PRODUCT_BATCH o|--o{ BATCH_SCAN : "optional match (Phase 8)"
+    PRODUCT_BATCH o|--o{ BATCH_SCAN : "optional match"
     PRODUCT o|--o{ CONCERN_REPORT : "optional match (Phase 8)"
     PRODUCT_BATCH o|--o{ CONCERN_REPORT : "optional match (Phase 8)"
 
-%% Matches backend/app/models and migration 0002_initial_schema (2026-10-07).
+%% Matches backend/app/models and migrations 0002_initial_schema, 0003_batch_scan (2026-10-08).
 %% Migrations are the source of truth; see docs/SCHEMA.md for rules per table.
 %% Every reviewer FK (reviewed_by_user_id, hidden_by_user_id) references APP_USER; omitted above for readability.
-%% BATCH_SCAN and CONCERN_REPORT are planned for Phase 8 and do not exist in the database yet.
+%% CONCERN_REPORT is planned for Phase 8 and does not exist in the database yet.

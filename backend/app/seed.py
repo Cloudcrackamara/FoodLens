@@ -1,7 +1,7 @@
 """Load demo data. Run with: uv run python -m app.seed
 
-Creates the seed admin from SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD when both are set.
-Safe to run repeatedly. All demo data must be obviously fictional and use DEMO- references.
+Creates the seed admin from SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD when both are set, then the
+fictional lookup dataset (app/demo_data.py). Safe to run repeatedly.
 """
 
 from sqlmodel import Session, select
@@ -9,6 +9,7 @@ from sqlmodel import Session, select
 from app.core.config import Settings, get_settings
 from app.core.db import get_engine
 from app.core.security import MAX_PASSWORD_BYTES, MIN_PASSWORD_LENGTH, hash_password
+from app.demo_data import SEED_CASES, seed_demo_data
 from app.models import AppUser
 from app.services.auth import normalize_email
 
@@ -49,10 +50,12 @@ def seed_admin(db: Session, settings: Settings) -> AppUser | None:
 def main() -> None:
     with Session(get_engine()) as db:
         admin = seed_admin(db, get_settings())
+        seed_demo_data(db)
     if admin is None:
         print("Seed admin skipped: set SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD in backend/.env.")
     else:
         print(f"Seed admin ready: {admin.email}")
+    print(f"Demo lookup data ready ({len(SEED_CASES)} documented cases; see README).")
 
 
 if __name__ == "__main__":

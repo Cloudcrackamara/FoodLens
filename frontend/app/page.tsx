@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Home() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-12">
@@ -6,6 +8,12 @@ export default function Home() {
         Check a packaged food product and batch number against the FoodLens demonstration
         database, and find suppliers whose profiles FoodLens has reviewed for this demo.
       </p>
+      <Link
+        href="/check"
+        className="self-start rounded-md bg-zinc-900 px-5 py-3 text-lg font-semibold text-white dark:bg-zinc-100 dark:text-zinc-900"
+      >
+        Check a product
+      </Link>
       <section className="rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
         <h2 className="mb-2 font-semibold">What a lookup can and cannot tell you</h2>
         <ul className="list-disc space-y-1 pl-5">

@@ -55,6 +55,28 @@ Check: `http://localhost:3000/api/health` returns `{"status":"ok"}`.
 
 `npm run dev` and `npm run start` run `frontend/server.mjs`, a small custom Next.js server that replaces any client-supplied `X-Forwarded-For` with the real connection address so rate limits cannot be dodged (D45). It listens on all interfaces, so other devices on the same network can open `http://<this-computer's-IP>:3000` during usability tests.
 
+## Demo lookups
+
+Open `http://localhost:3000/check` (no account needed) after running the seed. Each row is tested automatically (`backend/app/demo_data.py` `SEED_CASES`):
+
+| Case | Product code | Batch number | Result |
+|---|---|---|---|
+| Active NAFDAC and SON credentials | `DEMO-PC-0001` | `DEMO-LOT-101` | `DEMO_RECORD_FOUND` |
+| Second product, active credential | `DEMO-PC-0002` | `DEMO-LOT-201` | `DEMO_RECORD_FOUND` |
+| Batch number not in demo data | `DEMO-PC-0001` | `DEMO-LOT-999` | `BATCH_NOT_FOUND` |
+| Batch awaiting review is hidden | `DEMO-PC-0001` | `DEMO-LOT-102` | `BATCH_NOT_FOUND` |
+| Draft product is hidden | `DEMO-PC-0007` | `DEMO-LOT-701` | `BATCH_NOT_FOUND` |
+| Company awaiting review is hidden | `DEMO-PC-0008` | `DEMO-LOT-801` | `BATCH_NOT_FOUND` |
+| Batch expiry date has passed | `DEMO-PC-0005` | `DEMO-LOT-501` | `BATCH_EXPIRED` |
+| Batch belongs to another product | `DEMO-PC-0001` | `DEMO-LOT-201` | `DETAILS_MISMATCH` |
+| Product has no approved credential | `DEMO-PC-0006` | `DEMO-LOT-601` | `DETAILS_MISMATCH` |
+| Credential expired | `DEMO-PC-0003` | `DEMO-LOT-301` | `CREDENTIAL_EXPIRED_OR_INACTIVE` |
+| Credential inactive | `DEMO-PC-0004` | `DEMO-LOT-401` | `CREDENTIAL_EXPIRED_OR_INACTIVE` |
+| Batch number on two products, no product code | `(blank)` | `DEMO-LOT-001` | `INSUFFICIENT_OR_AMBIGUOUS` |
+| Nothing entered | `(blank)` | `(blank)` | `INSUFFICIENT_OR_AMBIGUOUS` |
+
+All companies, products, and credentials are fictional; agencies are labelled "(simulated)". Every lookup is logged anonymously in `batch_scan` (no IP, user, or device details).
+
 ## Accounts and the seed admin
 
 - Sign in at `http://localhost:3000/login`; create an account at `/register`. Consumers do not need an account.
