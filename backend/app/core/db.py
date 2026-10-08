@@ -1,6 +1,8 @@
 from collections.abc import Iterator
 from functools import lru_cache
+from typing import Annotated
 
+from fastapi import Depends
 from sqlalchemy import Engine
 from sqlmodel import Session, create_engine
 
@@ -12,7 +14,10 @@ def get_engine() -> Engine:
     return create_engine(get_settings().database_url, pool_pre_ping=True)
 
 
-def get_session() -> Iterator[Session]:
+def get_db() -> Iterator[Session]:
     """FastAPI dependency yielding a database session."""
-    with Session(get_engine()) as session:
-        yield session
+    with Session(get_engine()) as db:
+        yield db
+
+
+DbSession = Annotated[Session, Depends(get_db)]

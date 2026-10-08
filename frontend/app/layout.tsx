@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { DemoDataBanner } from "@/components/DemoDataBanner";
+import { SiteHeader } from "@/components/SiteHeader";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -28,7 +29,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <DemoDataBanner />
-        <Providers>{children}</Providers>
+        <Providers>
+          <SiteHeader />
+          {children}
+        </Providers>
       </body>
     </html>
   );

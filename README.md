@@ -35,7 +35,7 @@ docker compose up -d db                    # Postgres 16 on localhost:5433 (dev 
 cd backend
 uv sync
 uv run alembic upgrade head
-uv run python -m app.seed                  # fictional demo data (empty until Phase 1)
+uv run python -m app.seed                  # seed admin (if SEED_ADMIN_* set) and demo data
 
 cd ../frontend
 npm install
@@ -52,6 +52,37 @@ cd frontend && npm run dev
 ```
 
 Check: `http://localhost:3000/api/health` returns `{"status":"ok"}`.
+
+`npm run dev` and `npm run start` run `frontend/server.mjs`, a small custom Next.js server that replaces any client-supplied `X-Forwarded-For` with the real connection address so rate limits cannot be dodged (D45). It listens on all interfaces, so other devices on the same network can open `http://<this-computer's-IP>:3000` during usability tests.
+
+## Accounts and the seed admin
+
+- Sign in at `http://localhost:3000/login`; create an account at `/register`. Consumers do not need an account.
+- Sessions are httpOnly cookies issued by the API (`/api/auth/register`, `/login`, `/logout`, `/me`). Logout revokes the session server-side.
+- Admins cannot be created through the API. To create one, set these in `backend/.env` and run the seed:
+
+```bash
+SEED_ADMIN_EMAIL=admin@foodlens-demo.example
+SEED_ADMIN_PASSWORD=<10+ characters, not reused anywhere>
+```
+
+```bash
+cd backend && uv run python -m app.seed
+```
+
+Running the seed again is safe. If an account with that email already exists it is promoted to admin and its password is left unchanged.
+
+## Rate limits
+
+Requests are limited per network (IP address); no cookies or identifiers are used. Defaults, all changeable in `backend/.env`:
+
+| What | Default |
+|---|---|
+| Product lookups | burst of 20, then 1 per second (`RATE_LIMIT_LOOKUP_BURST`, `RATE_LIMIT_LOOKUP_REFILL_PER_SECOND`) |
+| Login | 5 per minute per IP + email (`RATE_LIMIT_LOGIN_PER_MINUTE`) |
+| Registration | 5 per hour per IP (`RATE_LIMIT_REGISTER_PER_HOUR`) |
+
+For usability-test sessions, list the test machines' IPs or a range in `RATE_LIMIT_EXEMPT_IPS`, e.g. `192.168.1.20,192.168.1.0/24`, and restart the API. Over the limit the API returns 429 with `Retry-After`. See `docs/DECISIONS.md` D39–D45.
 
 ## Test and lint
 

@@ -46,6 +46,7 @@ Product brief: `docs/HANDOFF.md`. Schema: `docs/SCHEMA.md` (tables and rules) an
   app/               Next.js App Router pages
   components/
   lib/               typed API client, Zod schemas, query hooks
+  server.mjs         custom server: replaces X-Forwarded-For with the real client IP (D45)
 /docs                handoff, PLAN.md, DECISIONS.md, schema docs
 docker-compose.yml
 ```

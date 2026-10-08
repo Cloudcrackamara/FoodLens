@@ -68,21 +68,24 @@ Note: the pytest DB fixture was added in Phase 1 with the first models.
 
 **Deliverables — identity and roles**
 - Password hashing (bcrypt), `USER_SESSION` cookie sessions, `register` / `login` / `logout` / `me`
-- Reusable dependencies: `require_user`, `require_admin`, `require_company_member(company_id, roles)`
+- Reusable dependencies: `current_user`, `require_admin`, `require_company_member(*roles)`
 - Admin accounts created only by seed/CLI
 - Frontend login/register pages and auth-aware nav
 
 **Done when — identity and roles**
-- [ ] Test: register payload with `is_admin` / status fields is rejected or ignored
-- [ ] Test: unauthenticated request gets 401; wrong role gets 403
-- [ ] Test: member of company A cannot access company B routes
-- [ ] Test: passwords stored hashed, never returned
-- [ ] Test: inactive user cannot log in; revoked or expired session rejected
+- [x] Test: register payload with `is_admin` / status fields is rejected or ignored
+- [x] Test: unauthenticated request gets 401; wrong role gets 403
+- [x] Test: member of company A cannot access company B routes
+- [x] Test: passwords stored hashed, never returned
+- [x] Test: inactive user cannot log in; revoked or expired session rejected
+- [x] Test: wrong password rejected with a generic message; seed admin created from env, idempotent
+- [x] Frontend: `/login` and `/register` pages, signed-in header; Vitest tests for validation, server errors, and payload
 
 **Deliverables — catalogue and lookup**
 - Seed: fictional products/batches incl. mismatch and not-found cases
 - `services/lookup.py`: normalize input, find product, find approved batch, apply the precedence in `docs/DECISIONS.md` Q4, return primary state + `warnings`
 - `POST /api/lookups/batch` with `data_mode: "DEMO"` and disclaimer on every response
+- Attach the lookup rate limit (`Depends(limit_lookups)`, D40) and show the per-network 429 message on the result screen
 - Frontend check form with value confirmation/correction and result screen with banner
 
 **Done when — catalogue and lookup**

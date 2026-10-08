@@ -119,3 +119,32 @@ Changes to the draft ERD, all approved by the student. Implemented in migration 
 | D28 | Enums stored as `VARCHAR` + `CHECK`, not native PostgreSQL enums. | Native enums need awkward migrations to add values. |
 | D29 | `BATCH_SCAN` and `CONCERN_REPORT` are deferred to Phase 8's migration. They stay in `ERD.mmd`, marked Phase 8. | Optional features; no empty tables until needed. |
 | D30 | `docs/PLAN.md` Phase 1 is now "Data model"; identity/roles moved to the start of Phase 2. | The whole schema was built in one phase at the student's request. |
+
+## Auth decisions (2026-10-08)
+
+Implements D12 (httpOnly cookie session, bcrypt) and D24 (`USER_SESSION` table). Code: `backend/app/core/security.py`, `core/auth.py`, `services/auth.py`, `routers/auth.py`.
+
+| # | Decision | Reason |
+|---|---|---|
+| D31 | Passwords: bcrypt (12 rounds; 4 in tests only), 10 characters minimum, 72 bytes maximum (bcrypt's limit; longer passwords are rejected, not truncated). | Matches D12; rejection avoids silently ignoring part of a password. |
+| D32 | Session token: 32 random bytes in a cookie named `foodlens_session`; only its SHA-256 hash is stored. Cookie is `HttpOnly`, `SameSite=Lax`, `Path=/`, `Secure` when `SESSION_COOKIE_SECURE=true`. Sessions last 24 hours. | A leaked database row cannot be replayed as a cookie. Lax blocks the cookie on cross-site POSTs (basic CSRF protection). |
+| D33 | Logout revokes the session in the database and clears the cookie; deactivating a user ends all their sessions. | Server-side revocation is the reason for D24. |
+| D34 | Login failures (unknown email, wrong password, inactive account) all return 401 "Invalid email or password", and unknown emails still run a bcrypt check. | Does not reveal which accounts exist, by message or timing. Registration still returns 409 for a taken email, an accepted trade-off for a demo. |
+| D35 | Registration reads only `email`, `password`, `display_name`; any other field (e.g. `is_admin`, `is_active`, `review_status`, `user_id`) is ignored, not rejected. Email is stored lowercased. Registration signs the user in. | Student's instruction; the service takes explicit keyword arguments, so mass assignment is impossible. |
+| D36 | Admins are created only by `uv run python -m app.seed` from `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`. An existing account with that email is promoted; its password is not changed. | No API path can grant admin. |
+| D37 | Dependencies: `current_user` (401), `require_admin` (403), `require_company_member(*roles)` (403; needs a `company_id` path parameter; admins do not pass as members). | One place for authorization checks; admins act through admin routes. |
+| D38 | Not in scope yet: password reset, email verification. (Login rate limiting added in D41.) | Out of capstone MVP scope; listed so the report can name them as limitations. |
+
+## Rate limiting (2026-10-08)
+
+Approved by the student. Code: `backend/app/core/rate_limit.py`. All values configurable in `backend/.env`.
+
+| # | Decision | Reason |
+|---|---|---|
+| D39 | Limits are per client IP address only (login adds the email). No cookies, fingerprinting, or per-consumer identifiers. Counters live in process memory, are never stored or logged, and are dropped once refilled. | Keeps consumer lookups anonymous. |
+| D40 | Product lookups use a token bucket: burst 20, refill 1 per second (about 60 per minute) per IP. | Several consumers on shared Wi-Fi are not blocked; sustained scraping is. |
+| D41 | Login: 5 per minute per IP + email. Registration: 5 per hour per IP. Both are token buckets (burst = the number, refilling evenly over the period). Login is checked before the password. | Limits password guessing and bulk account creation. Closes the rate-limiting part of D38. |
+| D42 | `RATE_LIMIT_EXEMPT_IPS` (IPs or CIDR ranges, empty by default) is never limited; `RATE_LIMIT_ENABLED=false` turns limits off. Invalid entries stop the API at startup. | Usability-test sessions from one room must not be blocked. |
+| D43 | Over the limit: HTTP 429 with a `Retry-After` header (whole seconds). The frontend explains the limit is shared by everyone on the same network and says when to retry. | Users understand it is not their fault and how long to wait. |
+| D44 | Client IP: the connecting address, or, when the connection comes from `TRUSTED_PROXY_IPS` (the Next.js server), the right-most `X-Forwarded-For` entry that is not a trusted proxy. Limits are per API process. | The browser reaches FastAPI through the Next.js `/api` proxy. Several API processes would need a shared store (e.g. Redis). |
+| D45 | `next dev` / `next start` keep a client-supplied `X-Forwarded-For` (`??=` in Next.js 16.4 `base-server.js`; the rewrite proxy does not append), so a forged header could dodge the limits. **Fixed** with a custom server, `frontend/server.mjs`, which replaces `X-Forwarded-For` with the real connection address (and drops `Forwarded`) before Next.js runs. `npm run dev` / `npm run start` use it. IPv4-mapped addresses (`::ffff:a.b.c.d`) are normalised on both sides. If a CDN or reverse proxy is ever placed in front of the web server, `server.mjs` must trust it instead, or all visitors share its IP. | Verified end to end from the LAN address: before the fix forged headers were never limited; after it the 6th login attempt got 429 with `Retry-After` despite a new forged IP on every request. |
