@@ -21,6 +21,16 @@ import {
   useCredentialDecision,
   type AdminCredential,
 } from "@/lib/catalogue";
+import {
+  changeTypes,
+  noticeStatusLabels,
+  useAdminNotices,
+  useNoticeDecision,
+  type AdminNotice,
+  type ChangeTypeValue,
+  type NoticeDecision,
+} from "@/lib/changeNotices";
+import { Changes } from "@/components/company/ChangeNotices";
 import { formatDate } from "@/lib/lookup";
 
 const companyActions: Record<CompanyStatus, CompanyDecision[]> = {
@@ -152,6 +162,59 @@ function CredentialRow({ credential }: { credential: AdminCredential }) {
   );
 }
 
+const noticeActions: Record<AdminNotice["review_status"], [NoticeDecision, string][]> = {
+  PENDING_REVIEW: [["APPROVE", "Approve and apply"], ["REQUEST_CLARIFICATION", "Request clarification"], ["REJECT", "Reject"]],
+  CLARIFICATION_REQUESTED: [["REJECT", "Reject"]],
+  APPROVED: [],
+  REJECTED: [],
+};
+
+function NoticeRow({ notice }: { notice: AdminNotice }) {
+  const decide = useNoticeDecision();
+  const [note, setNote] = useState("");
+  const target = notice.batch_number ? `${notice.product_name} · batch ${notice.batch_number}` : notice.product_name;
+  const actions = noticeActions[notice.review_status];
+
+  return (
+    <li aria-label={`Notice for ${target}`} className="flex flex-col gap-2 rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
+      <div>
+        <h3 className="font-semibold">{target} ({notice.product_code})</h3>
+        <p className="text-sm">
+          {notice.company_display_name} · {changeTypes[notice.change_type as ChangeTypeValue] ?? notice.change_type} · {noticeStatusLabels[notice.review_status]}
+          {notice.submitted_by_display_name && ` · by ${notice.submitted_by_display_name}`}
+          {notice.effective_date && ` · effective ${formatDate(notice.effective_date)}`}
+        </p>
+      </div>
+      <Changes notice={notice} />
+      <p className="whitespace-pre-line text-sm">{notice.reason}</p>
+      {notice.attachments.length > 0 && (
+        <ul className="text-sm">
+          {notice.attachments.map((a) => (
+            <li key={a.attachment_id}><a className="underline" href={`/api/admin/attachments/${a.attachment_id}`}>{a.original_filename}</a></li>
+          ))}
+        </ul>
+      )}
+      {notice.review_note && <p className="text-sm">Note: {notice.review_note}</p>}
+      {actions.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium">Review note (required to request clarification)</span>
+            <input value={note} onChange={(event) => setNote(event.target.value)} className="rounded-md border border-zinc-400 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-900" />
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {actions.map(([decision, label]) => (
+              <button key={decision} type="button" disabled={decide.isPending} onClick={() => decide.mutate({ noticeId: notice.notice_id, decision, note })} className="rounded-md border border-zinc-600 px-3 py-1 font-medium disabled:opacity-60">
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {decide.isError && <p role="alert" className="text-red-700 dark:text-red-400">{describeError(decide.error)}</p>}
+    </li>
+  );
+}
+
 const companyFilters: (CompanyStatus | "ALL")[] = ["PENDING_REVIEW", "APPROVED", "SUSPENDED", "REJECTED", "ALL"];
 
 export function AdminReview() {
@@ -160,6 +223,8 @@ export function AdminReview() {
   const companies = useAdminCompanies(companyFilter);
   const locations = useAdminLocations("PENDING_REVIEW");
   const credentials = useAdminCredentials();
+  const notices = useAdminNotices();
+  const openNotices = notices.data?.filter((n) => n.review_status === "PENDING_REVIEW" || n.review_status === "CLARIFICATION_REQUESTED");
 
   if (isPending) return <p>Loading…</p>;
   if (!user?.is_admin) return <p role="alert">Admin access required.</p>;
@@ -199,6 +264,16 @@ export function AdminReview() {
         {credentials.data?.length === 0 && <p>No credential claims awaiting review.</p>}
         <ul className="flex flex-col gap-3">
           {credentials.data?.map((credential) => <CredentialRow key={credential.credential_id} credential={credential} />)}
+        </ul>
+      </section>
+
+      <section aria-labelledby="notices-heading" className="flex flex-col gap-3">
+        <h2 id="notices-heading" className="text-xl font-bold">Change notices</h2>
+        <p className="text-sm text-zinc-700 dark:text-zinc-300">Approving applies every change at once and keeps the previous values for audit.</p>
+        {notices.isError && <p role="alert">{describeError(notices.error)}</p>}
+        {openNotices?.length === 0 && <p>No open change notices.</p>}
+        <ul className="flex flex-col gap-3">
+          {openNotices?.map((notice) => <NoticeRow key={notice.notice_id} notice={notice} />)}
         </ul>
       </section>
     </div>

@@ -170,13 +170,13 @@ Note: delivered together with the Phase 2 lookup (2026-10-08); expiry is compute
 - Company notice form and history; admin review screen
 
 **Done when**
-- [ ] Test: pending or clarification-requested notice leaves published data unchanged
-- [ ] Test: approved notice updates the catalogue and records old value, new value, approver, time
-- [ ] Test: rejected notice changes nothing
-- [ ] Test: company response to clarification returns notice to `PENDING_REVIEW`
-- [ ] Test: submitter cannot approve own notice
-- [ ] Test: notice targeting another company's record is rejected
-- [ ] Test: disallowed file type/size rejected; attachments not publicly accessible
+- [x] Test: pending or clarification-requested notice leaves published data unchanged
+- [x] Test: approved notice updates the catalogue and records old value, new value, approver, time
+- [x] Test: rejected notice changes nothing
+- [x] Test: company response to clarification returns notice to `PENDING_REVIEW`
+- [x] Test: submitter cannot approve own notice
+- [x] Test: notice targeting another company's record is rejected
+- [x] Test: disallowed file type/size rejected; attachments not publicly accessible
 - [ ] Test: announcement never changes product fields; hidden announcement not shown; only approved companies can post
 - [ ] Frontend test: announcement pop-up shows the "not reviewed by FoodLens" label
 

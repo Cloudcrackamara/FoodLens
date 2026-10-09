@@ -36,6 +36,9 @@ class Settings(BaseSettings):
     # Proxies whose X-Forwarded-For header is trusted (the Next.js server).
     trusted_proxy_ips: str = "127.0.0.1,::1"
 
+    # Private folder for change-notice attachments (relative to backend/). Never served statically.
+    upload_dir: str = "storage/notices"
+
     # Seed admin, created by `uv run python -m app.seed` when both are set.
     seed_admin_email: str | None = None
     seed_admin_password: str | None = None

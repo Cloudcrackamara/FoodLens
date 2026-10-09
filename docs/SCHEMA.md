@@ -141,7 +141,7 @@ Supporting document or image. Append-only.
 |---|---|
 | `mime_type` | `application/pdf`, `image/png`, `image/jpeg` **(DB)**. Content sniffing and extension checks **(service)**. |
 | `size_bytes` | 1 byte to 5 MB **(DB)**. |
-| `storage_key` | Private key, unique **(DB)**. Never a public URL; only admins and the owning company can download **(service)**. |
+| `storage_key` | Random 32-hex key, unique **(DB)**; the file is stored at `UPLOAD_DIR/<key>` (default `backend/storage/notices`, git-ignored). Never a public URL; only admins and the owning company can download **(service)**. |
 
 ### `product_announcement`
 Company pop-up message ("POPs"), e.g. "New packaging from March 2027".

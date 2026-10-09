@@ -1,15 +1,27 @@
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import Settings, get_settings
 from app.core.rate_limit import RateLimiters
-from app.routers import admin, auth, catalogue, companies, health, lookups, suppliers
+from app.routers import (
+    admin,
+    auth,
+    catalogue,
+    change_notices,
+    companies,
+    health,
+    lookups,
+    suppliers,
+)
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
     app = FastAPI(title="FoodLens API", version="0.1.0")
     app.state.rate_limiters = RateLimiters(settings)
+    app.state.upload_dir = Path(settings.upload_dir).resolve()
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
@@ -23,6 +35,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(lookups.router)
     app.include_router(companies.router)
     app.include_router(catalogue.router)
+    app.include_router(change_notices.router)
     app.include_router(admin.router)
     app.include_router(suppliers.router)
     return app

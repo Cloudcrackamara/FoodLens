@@ -191,3 +191,17 @@ Student decision: keep the catalogue simple. Code: `backend/app/services/catalog
 | D65 | On company registration the owner becomes the directory contact: `is_public_contact`, title "Owner", and the company's contact email and phone. The owner's login email is never shown. | Directory must show the owner's contact (student request) without breaking D58. |
 | D66 | Registration offers three company types: Manufacturer, Wholesaler, or Manufacturer and wholesaler (`MANUFACTURER`, `WHOLESALER`, `BOTH`). Any approved company type may add products. | Confirmed by the student; tested for all three. |
 | D67 | (2026-10-09) Credential claims are stored `INACTIVE` + `PENDING_REVIEW`; only admin approval sets them `ACTIVE`. Rejected claims stay `INACTIVE`. Replaces the "status `ACTIVE`" part of D63. | Student instruction: a claim is never active until admin review. |
+
+## Change notices (2026-10-09)
+
+Code: `backend/app/services/change_notices.py`, `routers/change_notices.py`; `frontend/components/company/ChangeNotices.tsx`, admin queue in `components/admin/AdminReview.tsx`.
+
+| # | Decision | Reason |
+|---|---|---|
+| D68 | A notice targets one of the company's products or batches. Allowed fields: product name, brand, category, package size, manufacturer, label information; batch production and expiry dates. Product codes and batch numbers cannot be changed (they are printed on packages and identify the record). Unknown fields, empty required fields, and "changes" equal to the current value are rejected (422). | Validated, structured `proposed_changes` (Q3); codes stay stable for consumers. |
+| D69 | `proposed_changes` is accepted as JSON and stored as one `change_notice_field` row per field with a snapshot of the current value (dates as ISO text). Submitting changes no published data. | Field-by-field diff for the admin; rule 5. |
+| D70 | Admin decisions: approve (from pending), request clarification (from pending; a note is required), reject (from pending or clarification). The company answers a clarification with a message, appended to the reason, and the notice returns to pending. To change proposed values, the company submits a new notice. | Q8 lifecycle without editable history. |
+| D71 | Approval applies all fields in one transaction with a row lock, after checking every live value still equals its snapshot; if anything changed since submission it returns 409 and applies nothing. Each applied row stores `applied_old_value`; an audit entry records old and new values with the notice id. | Atomic change with history; no silent overwrite of a newer value. |
+| D72 | Attachments: `.pdf`, `.png`, `.jpg`, `.jpeg` only, checked by extension and file signature (`%PDF-`, PNG header, JPEG `FF D8 FF`); 1 byte to 5 MB (413 when larger); at most 5 per notice; only while the notice is open. | Rejects renamed or disguised files. |
+| D73 | Files are saved under a random 32-hex-character key in `UPLOAD_DIR` (default `backend/storage/notices`, git-ignored, never served statically). Original filenames are sanitised and only used for the download name. Downloads go through authorised routes (owning company members, admins) with `Content-Disposition: attachment`, `nosniff`, and `no-store`. | Private evidence; no path tricks or public URLs. |
+| D74 | `effective_date` is recorded and shown but does not delay application: an approved change applies immediately. Product announcements (POPs, rest of Phase 5) are not built yet. | Kept simple; announcements were not requested in this step. |

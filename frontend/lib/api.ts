@@ -74,3 +74,19 @@ export async function apiFetch<T>(
   }
   return schema ? schema.parse(payload) : (undefined as T);
 }
+
+/** Upload one file as multipart/form-data (field name "file") through the same-origin proxy. */
+export async function apiUpload<T>(path: string, schema: z.ZodType<T>, file: File): Promise<T> {
+  const form = new FormData();
+  form.append("file", file);
+  const response = await fetch(path, { method: "POST", credentials: "same-origin", body: form });
+  const payload: unknown = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new ApiError(
+      response.status,
+      errorMessage(response.status, payload),
+      parseRetryAfter(response.headers.get("Retry-After")),
+    );
+  }
+  return schema.parse(payload);
+}
