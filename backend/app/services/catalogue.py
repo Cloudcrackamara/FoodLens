@@ -160,7 +160,8 @@ def add_credential(
     data: CredentialCreateRequest,
     today: date,
 ) -> CredentialRecord:
-    """Record a credential claim. Hidden from lookups until an admin approves it."""
+    """Record a credential claim: INACTIVE and PENDING_REVIEW, hidden from lookups. Only admin
+    approval makes it ACTIVE."""
     _approved_company(db, member)
     product = _own_product(db, member, product_id)
     if db.get(RegulatoryAgency, data.agency_id) is None:
@@ -179,7 +180,8 @@ def add_credential(
         product_id=product.product_id,
         agency_id=data.agency_id,
         reference_number=reference,
-        status=CredentialStatus.ACTIVE,
+        # A claim is never active until an admin approves it (D67).
+        status=CredentialStatus.INACTIVE,
         valid_from=data.valid_from,
         valid_until=data.valid_until,
         provenance=COMPANY_CLAIM_PROVENANCE,
@@ -315,6 +317,8 @@ def decide_credential(
         ReviewStatus.APPROVED if decision == CredentialDecision.APPROVE else ReviewStatus.REJECTED
     )
     credential.review_status = new_status
+    if new_status == ReviewStatus.APPROVED:
+        credential.status = CredentialStatus.ACTIVE
     credential.reviewed_by_user_id = admin.user_id
     credential.reviewed_at = utc_now()
     credential.review_note = note or None

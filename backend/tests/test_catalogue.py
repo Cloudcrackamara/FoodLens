@@ -185,13 +185,13 @@ def test_credential_starts_as_claim_and_is_hidden_from_lookup(
     nafdac = agency(session)
 
     response = add_credential(
-        client, company, product_id, nafdac.agency_id, status="INACTIVE", review_status="APPROVED"
+        client, company, product_id, nafdac.agency_id, status="ACTIVE", review_status="APPROVED"
     )
 
     assert response.status_code == 201
     credential = session.exec(select(CredentialRecord)).one()
     assert credential.review_status == ReviewStatus.PENDING_REVIEW
-    assert credential.status == "ACTIVE"  # client cannot set credential status
+    assert credential.status == "INACTIVE"  # member cannot set it to ACTIVE
     assert credential.data_mode == "DEMO"
     assert "claim" in credential.provenance
     result = lookup(client, "DEMO-PC-5001", "LOT-1")
@@ -217,6 +217,7 @@ def test_admin_approval_makes_credential_visible(
     assert [c["credential_id"] for c in queue.json()] == [str(credential.credential_id)]
     assert decision.status_code == 200
     assert decision.json()["review_status"] == "APPROVED"
+    assert decision.json()["status"] == "ACTIVE"  # activated only by admin approval
     session.refresh(credential)
     assert credential.reviewed_by_user_id is not None
     assert credential.reviewed_at is not None
@@ -353,3 +354,90 @@ def test_directory_shows_owner_contact_without_login_email(
     ]
     assert "ada-login@example.test" not in response.text
     assert owner
+
+
+# --- Company A cannot read-for-edit or modify company B's catalogue ---------------------------
+
+
+@pytest.fixture
+def company_b(make_client: Callable[..., TestClient], session: Session) -> dict:
+    """Company B with a product, batch, and credential claim, created by B's own owner."""
+    client_b = make_client(client_ip="203.0.113.50")
+    company = my_company(client_b, session)
+    product_id = add_product(client_b, company, product_code="demo-pc-b1").json()["product_id"]
+    batch_id = add_batch(client_b, company, product_id).json()["batch_id"]
+    add_credential(
+        client_b, company, product_id, agency(session).agency_id, reference_number="demo-ref-b1"
+    )
+    credential = session.exec(select(CredentialRecord)).one()
+    return {
+        "company": company,
+        "product_id": product_id,
+        "batch_id": batch_id,
+        "credential_id": str(credential.credential_id),
+    }
+
+
+def test_member_of_a_cannot_read_company_b_catalogue_or_profile(
+    client: TestClient, session: Session, company_b: dict
+) -> None:
+    my_company(client, session)
+    b = company_b["company"].company_id
+
+    assert client.get(f"/api/companies/{b}/products").status_code == 403
+    assert client.get(f"/api/companies/{b}").status_code == 403
+
+
+def test_member_of_a_cannot_add_to_company_b_catalogue(
+    client: TestClient, session: Session, company_b: dict
+) -> None:
+    my_company(client, session)
+    b = company_b["company"]
+    product_id = company_b["product_id"]
+
+    assert add_product(client, b, product_code="demo-pc-x").status_code == 403
+    assert add_batch(client, b, product_id, batch_number="lot-x").status_code == 403
+    assert add_credential(client, b, product_id, agency(session).agency_id).status_code == 403
+
+
+def test_member_of_a_cannot_reach_b_product_through_own_company(
+    client: TestClient, session: Session, company_b: dict
+) -> None:
+    mine = my_company(client, session)
+    product_id = company_b["product_id"]
+
+    assert add_batch(client, mine, product_id, batch_number="lot-x").status_code == 404
+    assert (
+        add_credential(
+            client, mine, product_id, agency(session).agency_id, reference_number="demo-x"
+        ).status_code
+        == 404
+    )
+
+
+def test_member_of_a_cannot_review_b_credential(
+    client: TestClient, session: Session, company_b: dict
+) -> None:
+    my_company(client, session)
+
+    response = client.post(
+        f"/api/admin/credentials/{company_b['credential_id']}/decision",
+        json={"decision": "APPROVE"},
+    )
+
+    assert response.status_code == 403
+
+
+def test_company_b_data_unchanged_after_a_attempts(
+    client: TestClient, session: Session, company_b: dict
+) -> None:
+    my_company(client, session)
+    b = company_b["company"]
+    add_batch(client, b, company_b["product_id"], batch_number="lot-x")
+    add_credential(client, b, company_b["product_id"], agency(session).agency_id)
+
+    products = session.exec(select(Product).where(Product.company_id == b.company_id)).all()
+    credentials = session.exec(select(CredentialRecord)).all()
+    assert len(products) == 1
+    assert len(credentials) == 1
+    assert credentials[0].status == "INACTIVE"

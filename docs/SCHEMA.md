@@ -108,7 +108,7 @@ Product-level credential. Never presented as a batch test or batch certificate.
 | `valid_until` | On or after `valid_from` when both set **(DB)**. |
 | `data_mode` | Always `DEMO` **(DB)**. |
 | `provenance`, `checked_on` | Where the demo record came from and when it was last checked. |
-| `submitted_by_user_id` | Company user who entered it; null for seeded rows. Company-entered credentials are claims with fixed provenance text (D63). |
+| `submitted_by_user_id` | Company user who entered it; null for seeded rows. Company-entered credentials are claims with fixed provenance text, stored `INACTIVE` until an admin approval sets them `ACTIVE` (D63, D67). |
 | `review_status` | `PENDING_REVIEW` default. Pending credentials are hidden from lookup **(service)**. |
 
 ---
