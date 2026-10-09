@@ -177,8 +177,8 @@ Note: delivered together with the Phase 2 lookup (2026-10-08); expiry is compute
 - [x] Test: submitter cannot approve own notice
 - [x] Test: notice targeting another company's record is rejected
 - [x] Test: disallowed file type/size rejected; attachments not publicly accessible
-- [ ] Test: announcement never changes product fields; hidden announcement not shown; only approved companies can post
-- [ ] Frontend test: announcement pop-up shows the "not reviewed by FoodLens" label
+- [x] Test: announcement never changes product fields; hidden announcement not shown; only approved companies can post
+- [x] Frontend test: announcement pop-up shows the "not reviewed by FoodLens" label
 
 ---
 

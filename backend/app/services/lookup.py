@@ -45,6 +45,7 @@ from app.schemas.lookup import (
     LookupResponse,
     LookupWarning,
 )
+from app.services import announcements
 
 MAX_CODE_LENGTH = 64
 _CODE_PATTERN = re.compile(r"^[A-Z0-9][A-Z0-9 ._/-]*$")
@@ -274,6 +275,7 @@ def lookup_batch(
             expiry_date=batch.expiry_date,
         ),
         credentials=credentials,
+        announcements=announcements.for_lookup(db, product.product_id),
     )
     return response, batch
 

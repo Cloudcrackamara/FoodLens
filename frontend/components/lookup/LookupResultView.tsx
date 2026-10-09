@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { DemoDataBanner } from "@/components/DemoDataBanner";
 import { credentialStatuses, formatDate, type LookupResponse } from "@/lib/lookup";
 
@@ -24,6 +27,31 @@ type Props = {
  * Lookup result. Deliberately neutral styling (no green/red): a result describes a demo record,
  * never whether food is fit to eat. The demo banner is repeated inside every result.
  */
+function CompanyMessages({ announcements }: { announcements: LookupResponse["announcements"] }) {
+  const [open, setOpen] = useState(true);
+  if (!open || announcements.length === 0) return null;
+  return (
+    <aside
+      aria-label="Messages from the company"
+      className="flex flex-col gap-2 rounded-md border-2 border-zinc-500 bg-zinc-50 p-3 dark:bg-zinc-900"
+    >
+      {announcements.map((item) => (
+        <div key={`${item.posted_at}-${item.title}`}>
+          <p className="text-xs font-semibold uppercase tracking-wide">{item.label}</p>
+          <p className="font-semibold">{item.title}</p>
+          <p>{item.message}</p>
+          <p className="text-xs text-zinc-600 dark:text-zinc-400">
+            Posted {formatDate(item.posted_at.slice(0, 10))}
+          </p>
+        </div>
+      ))}
+      <button type="button" onClick={() => setOpen(false)} className="self-end text-sm underline">
+        Close
+      </button>
+    </aside>
+  );
+}
+
 export function LookupResultView({ response, onChooseCandidate }: Props) {
   const { product, batch, credentials, mismatch, warnings, candidates } = response;
 
@@ -40,6 +68,8 @@ export function LookupResultView({ response, onChooseCandidate }: Props) {
           </h2>
           <p className="mt-1">{response.message}</p>
         </div>
+
+        <CompanyMessages announcements={response.announcements} />
 
         {mismatch && (
           <p>

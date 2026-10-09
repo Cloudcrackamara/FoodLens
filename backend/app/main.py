@@ -7,6 +7,7 @@ from app.core.config import Settings, get_settings
 from app.core.rate_limit import RateLimiters
 from app.routers import (
     admin,
+    announcements,
     auth,
     catalogue,
     change_notices,
@@ -36,6 +37,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(companies.router)
     app.include_router(catalogue.router)
     app.include_router(change_notices.router)
+    app.include_router(announcements.router)
     app.include_router(admin.router)
     app.include_router(suppliers.router)
     return app

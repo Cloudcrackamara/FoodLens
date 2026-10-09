@@ -146,7 +146,7 @@ Supporting document or image. Append-only.
 ### `product_announcement`
 Company pop-up message ("POPs"), e.g. "New packaging from March 2027".
 
-- Goes live without review (`status` `LIVE` by default), only for approved companies **(service)**.
+- Goes live without review (`status` `LIVE` by default), only for approved companies; text with the whole words "safe" or "unsafe" is refused; counterfeit warnings are allowed (D77) **(service)**. `image_storage_key` is not used yet.
 - Shown on lookup labelled "Message from the company — not reviewed by FoodLens" **(frontend + service)**.
 - Never changes product data.
 - Admin may set `HIDDEN`, recording `hidden_by_user_id` and `hidden_at` **(service)**.

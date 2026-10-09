@@ -204,4 +204,16 @@ Code: `backend/app/services/change_notices.py`, `routers/change_notices.py`; `fr
 | D71 | Approval applies all fields in one transaction with a row lock, after checking every live value still equals its snapshot; if anything changed since submission it returns 409 and applies nothing. Each applied row stores `applied_old_value`; an audit entry records old and new values with the notice id. | Atomic change with history; no silent overwrite of a newer value. |
 | D72 | Attachments: `.pdf`, `.png`, `.jpg`, `.jpeg` only, checked by extension and file signature (`%PDF-`, PNG header, JPEG `FF D8 FF`); 1 byte to 5 MB (413 when larger); at most 5 per notice; only while the notice is open. | Rejects renamed or disguised files. |
 | D73 | Files are saved under a random 32-hex-character key in `UPLOAD_DIR` (default `backend/storage/notices`, git-ignored, never served statically). Original filenames are sanitised and only used for the download name. Downloads go through authorised routes (owning company members, admins) with `Content-Disposition: attachment`, `nosniff`, and `no-store`. | Private evidence; no path tricks or public URLs. |
-| D74 | `effective_date` is recorded and shown but does not delay application: an approved change applies immediately. Product announcements (POPs, rest of Phase 5) are not built yet. | Kept simple; announcements were not requested in this step. |
+| D74 | `effective_date` is recorded and shown but does not delay application: an approved change applies immediately. Product announcements were added afterwards (D75-D79). | Kept simple; announcements were not requested in this step. |
+
+## Product announcements, "POPs" (2026-10-09)
+
+Code: `backend/app/services/announcements.py`, `routers/announcements.py`; `frontend/components/company/Announcements.tsx`, pop-up in `components/lookup/LookupResultView.tsx`.
+
+| # | Decision | Reason |
+|---|---|---|
+| D75 | Members of approved companies post announcements on their own products: title (max 80) and message (max 500). They go live at once (`LIVE`); the client cannot set status. No image for now. | Q7 and rule 5 exception; kept simple. |
+| D76 | Lookup responses include up to 3 newest live announcements for the matched product, each with the fixed label "Message from the company — not reviewed by FoodLens". Only shown when the product is visible (approved company, published product). The frontend shows them in a closable box on the result. | Consumers see the message but know FoodLens did not review it. |
+| D77 | Announcement text containing the whole words "safe" or "unsafe" is refused (422), so a company cannot claim its product is safe or unsafe. Whole-word matching means "safety", "safely", "fake", and "counterfeit" are allowed, so companies can warn about counterfeits ("beware of fake versions"). FoodLens's own wording still never uses "fake" (rule 1). Regulator claims such as "NAFDAC approved" are not blocked automatically; admins hide misleading ones. | Student decision (2026-10-09): allow counterfeit warnings, block only safe/unsafe claims. |
+| D78 | Announcements never change product data. The company can withdraw its own; admins can hide any (except for a company they belong to). Both set `HIDDEN`, `hidden_by_user_id`, `hidden_at`, and write an audit entry. Hidden announcements are not shown again. | Rule 5 exception; accountability. |
+| D79 | Admins see live announcements at `/admin` with a Hide button and optional reason (stored in the audit log). | Post-moderation instead of pre-approval. |

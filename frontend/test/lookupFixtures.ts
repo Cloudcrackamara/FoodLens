@@ -51,6 +51,7 @@ function base(overrides: Partial<LookupResponse>): LookupResponse {
     credentials: [],
     credential_scope_note: credentialScopeNote,
     candidates: [],
+    announcements: [],
     ...overrides,
   };
 }
@@ -63,6 +64,14 @@ export const lookupFixtures: Record<LookupResponse["result"], LookupResponse> = 
     product,
     batch,
     credentials: [nafdac],
+    announcements: [
+      {
+        title: "New packaging",
+        message: "From March 2027 the bottle is green.",
+        posted_at: "2026-10-09T12:00:00Z",
+        label: "Message from the company — not reviewed by FoodLens",
+      },
+    ],
   }),
   BATCH_NOT_FOUND: base({
     result: "BATCH_NOT_FOUND",

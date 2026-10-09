@@ -67,6 +67,14 @@ export const lookupResponseSchema = z.object({
   ),
   credential_scope_note: z.string(),
   candidates: z.array(z.object({ product_code: z.string(), name: z.string(), brand: z.string() })),
+  announcements: z.array(
+    z.object({
+      title: z.string(),
+      message: z.string(),
+      posted_at: z.string(),
+      label: z.literal("Message from the company — not reviewed by FoodLens"),
+    }),
+  ),
 });
 
 export type LookupResponse = z.infer<typeof lookupResponseSchema>;

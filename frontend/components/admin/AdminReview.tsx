@@ -31,6 +31,11 @@ import {
   type NoticeDecision,
 } from "@/lib/changeNotices";
 import { Changes } from "@/components/company/ChangeNotices";
+import {
+  useHideAnnouncement,
+  useLiveAnnouncements,
+  type AdminAnnouncement,
+} from "@/lib/announcements";
 import { formatDate } from "@/lib/lookup";
 
 const companyActions: Record<CompanyStatus, CompanyDecision[]> = {
@@ -215,6 +220,31 @@ function NoticeRow({ notice }: { notice: AdminNotice }) {
   );
 }
 
+function AnnouncementRow({ item }: { item: AdminAnnouncement }) {
+  const hide = useHideAnnouncement();
+  const [reason, setReason] = useState("");
+  return (
+    <li aria-label={item.title} className="flex flex-col gap-2 rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
+      <div>
+        <h3 className="font-semibold">{item.title}</h3>
+        <p>{item.message}</p>
+        <p className="text-sm">
+          {item.product_name} ({item.product_code}) · {item.company_display_name}
+          {item.created_by_display_name && ` · posted by ${item.created_by_display_name}`} · {formatDate(item.created_at.slice(0, 10))}
+        </p>
+      </div>
+      <label className="flex flex-col gap-1 text-sm">
+        <span className="font-medium">Reason (optional)</span>
+        <input value={reason} onChange={(event) => setReason(event.target.value)} className="rounded-md border border-zinc-400 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-900" />
+      </label>
+      <button type="button" disabled={hide.isPending} onClick={() => hide.mutate({ announcementId: item.announcement_id, reason })} className="self-start rounded-md border border-zinc-600 px-3 py-1 font-medium disabled:opacity-60">
+        Hide announcement
+      </button>
+      {hide.isError && <p role="alert" className="text-red-700 dark:text-red-400">{describeError(hide.error)}</p>}
+    </li>
+  );
+}
+
 const companyFilters: (CompanyStatus | "ALL")[] = ["PENDING_REVIEW", "APPROVED", "SUSPENDED", "REJECTED", "ALL"];
 
 export function AdminReview() {
@@ -224,6 +254,7 @@ export function AdminReview() {
   const locations = useAdminLocations("PENDING_REVIEW");
   const credentials = useAdminCredentials();
   const notices = useAdminNotices();
+  const announcements = useLiveAnnouncements();
   const openNotices = notices.data?.filter((n) => n.review_status === "PENDING_REVIEW" || n.review_status === "CLARIFICATION_REQUESTED");
 
   if (isPending) return <p>Loading…</p>;
@@ -274,6 +305,16 @@ export function AdminReview() {
         {openNotices?.length === 0 && <p>No open change notices.</p>}
         <ul className="flex flex-col gap-3">
           {openNotices?.map((notice) => <NoticeRow key={notice.notice_id} notice={notice} />)}
+        </ul>
+      </section>
+
+      <section aria-labelledby="announcements-heading" className="flex flex-col gap-3">
+        <h2 id="announcements-heading" className="text-xl font-bold">Live announcements</h2>
+        <p className="text-sm text-zinc-700 dark:text-zinc-300">Company messages go live without review. Hide any that are misleading.</p>
+        {announcements.isError && <p role="alert">{describeError(announcements.error)}</p>}
+        {announcements.data?.length === 0 && <p>No live announcements.</p>}
+        <ul className="flex flex-col gap-3">
+          {announcements.data?.map((item) => <AnnouncementRow key={item.announcement_id} item={item} />)}
         </ul>
       </section>
     </div>

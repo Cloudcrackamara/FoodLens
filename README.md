@@ -100,8 +100,8 @@ Running the seed again is safe. If an account with that email already exists it 
 |---|---|---|
 | `/suppliers` | Anyone | Approved companies with demo-reviewed locations, badge "FoodLens demo-reviewed profile" |
 | `/company/register` | Signed-in user without a company | Registers a company (starts pending; you become owner) |
-| `/company` | Company members | Review status, locations, products, batches, credential claims, change notices with attachments (once approved) |
-| `/admin` | Admins (seed admin) | Approve, reject, or suspend companies; mark locations demo-reviewed; approve or reject credential claims; approve, reject, or request clarification on change notices |
+| `/company` | Company members | Review status, locations, products, batches, credential claims, change notices with attachments, announcements (once approved) |
+| `/admin` | Admins (seed admin) | Approve, reject, or suspend companies; mark locations demo-reviewed; approve or reject credential claims; approve, reject, or request clarification on change notices; hide announcements |
 
 Try the full flow: create an account at `/register`, register a company, sign in as the seed admin in another browser (or a private window) and approve it at `/admin`, add a location at `/company`, mark it demo-reviewed at `/admin`, then see it at `/suppliers`. Products and batches a company adds are searchable at `/check` immediately, but show "Details do not match" (no credential) until an admin approves a credential claim. A FoodLens demo review is never a NAFDAC or SON approval.
 

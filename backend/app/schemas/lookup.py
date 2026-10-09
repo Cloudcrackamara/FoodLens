@@ -5,6 +5,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.enums import DataMode, LookupResult
+from app.schemas.announcement import LookupAnnouncement
 
 
 class LookupRequest(BaseModel):
@@ -93,3 +94,5 @@ class LookupResponse(BaseModel):
     credentials: list[LookupCredential] = []
     credential_scope_note: str
     candidates: list[LookupCandidate] = []
+    # Company pop-up messages, each labelled as not reviewed by FoodLens.
+    announcements: list[LookupAnnouncement] = []
