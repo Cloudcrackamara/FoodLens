@@ -149,6 +149,11 @@ Note: delivered together with the Phase 2 lookup (2026-10-08); expiry is compute
 - [ ] Test: company cannot publish its own product; only admin moves `PENDING_REVIEW` to `PUBLISHED`
 - [ ] Test: admin decisions record reviewer and timestamp
 
+**Progress (2026-10-08)**
+- Done: company registration (`PENDING_REVIEW` + owner), admin approve/reject/suspend with reviewer, time, note, and audit; supplier locations (pending until admin review, only for approved companies); company dashboard and admin review screens.
+- Tested so far: company cannot approve itself or its locations; admin cannot review a company they belong to; client cannot set review/ownership fields on company or location create; member cannot add locations to another company; decisions record reviewer and time.
+- Remaining: representative management, product drafts / batches / credential entry and their review, contact-detail edits with audit, and the related tests above.
+
 ---
 
 ## Phase 5 — Change notices
@@ -180,15 +185,15 @@ Note: delivered together with the Phase 2 lookup (2026-10-08); expiry is compute
 **Goal:** Wholesalers find approved suppliers and reviewed locations.
 
 **Deliverables**
-- `GET /api/suppliers`, `GET /api/suppliers/{id}` showing only approved companies/locations
+- `GET /api/suppliers` (public, with `q` search) showing only approved companies with reviewed locations; a separate detail endpoint was not needed, the list carries all public fields
 - Supplier detail with reps/contact and what FoodLens reviewed
 - Badge: "FoodLens demo-reviewed profile"
 - Wholesaler search and detail screens
 
 **Done when**
-- [ ] Test: pending/rejected/suspended companies and unreviewed locations never listed
-- [ ] Test: badge wording exact and never implies official certification
-- [ ] Test: only wholesaler-capable users reach buyer screens
+- [x] Test: pending/rejected/suspended companies and unreviewed locations never listed
+- [x] Test: badge wording exact and never implies official certification
+- [ ] Test: only wholesaler-capable users reach buyer screens (directory itself is public, D58; applies to ordering in Phase 7)
 
 ---
 

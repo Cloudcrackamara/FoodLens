@@ -15,16 +15,32 @@ export function SiteHeader() {
         aria-label="Main"
         className="mx-auto flex w-full max-w-2xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3"
       >
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
           <Link href="/" className="font-bold">
             FoodLens
           </Link>
           <Link href="/check" className="text-sm underline">
             Check a product
           </Link>
+          <Link href="/suppliers" className="text-sm underline">
+            Suppliers
+          </Link>
         </div>
         {isPending ? null : user ? (
-          <div className="flex items-center gap-3 text-sm">
+          <div className="flex flex-wrap items-center gap-3 text-sm">
+            {user.is_admin ? (
+              <Link href="/admin" className="underline">
+                Admin
+              </Link>
+            ) : user.membership ? (
+              <Link href="/company" className="underline">
+                My company
+              </Link>
+            ) : (
+              <Link href="/company/register" className="underline">
+                Register company
+              </Link>
+            )}
             <span>
               Signed in as <span className="font-medium">{user.display_name}</span>
             </span>

@@ -34,3 +34,22 @@ export const demoUser = {
   is_admin: false,
   membership: null,
 };
+
+type Route = { status?: number; body?: unknown } | ((init: RequestInit) => { status?: number; body?: unknown });
+
+/** Stub fetch by "METHOD /path" (query string included). Unknown routes return 404. */
+export function routeFetch(routes: Record<string, Route>) {
+  const fetchMock = vi.fn(async (url: string, init: RequestInit = {}) => {
+    const key = `${init.method ?? "GET"} ${url}`;
+    const route = routes[key];
+    const { status = 200, body } =
+      route === undefined ? { status: 404, body: { detail: `No route for ${key}` } }
+      : typeof route === "function" ? route(init) : route;
+    return new Response(body === undefined ? null : JSON.stringify(body), {
+      status,
+      headers: { "Content-Type": "application/json" },
+    });
+  });
+  vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
+}

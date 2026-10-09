@@ -31,3 +31,31 @@ describe("SiteHeader", () => {
     expect(screen.queryByRole("link", { name: "Sign in" })).not.toBeInTheDocument();
   });
 });
+
+describe("SiteHeader role links", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it.each([
+    [{ ...demoUser, is_admin: true }, "Admin", "/admin"],
+    [
+      {
+        ...demoUser,
+        membership: {
+          company_id: "c1",
+          company_display_name: "Demo Co",
+          company_review_status: "PENDING_REVIEW",
+          role: "OWNER",
+        },
+      },
+      "My company",
+      "/company",
+    ],
+    [demoUser, "Register company", "/company/register"],
+  ])("links signed-in users to the right place", async (user, label, href) => {
+    mockFetch({ status: 200, body: user });
+    renderWithQuery(<SiteHeader />);
+
+    expect(await screen.findByRole("link", { name: label })).toHaveAttribute("href", href);
+    expect(screen.getByRole("link", { name: "Suppliers" })).toHaveAttribute("href", "/suppliers");
+  });
+});

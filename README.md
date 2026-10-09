@@ -94,6 +94,17 @@ cd backend && uv run python -m app.seed
 
 Running the seed again is safe. If an account with that email already exists it is promoted to admin and its password is left unchanged.
 
+## Companies, admin review, and the supplier directory
+
+| Page | Who | What |
+|---|---|---|
+| `/suppliers` | Anyone | Approved companies with demo-reviewed locations, badge "FoodLens demo-reviewed profile" |
+| `/company/register` | Signed-in user without a company | Registers a company (starts pending; you become owner) |
+| `/company` | Company members | Review status, locations, add a location (once approved) |
+| `/admin` | Admins (seed admin) | Approve, reject, or suspend companies; mark locations demo-reviewed or reject |
+
+Try the full flow: create an account at `/register`, register a company, sign in as the seed admin in another browser (or a private window) and approve it at `/admin`, add a location at `/company`, mark it demo-reviewed at `/admin`, then see it at `/suppliers`. A FoodLens demo review is never a NAFDAC or SON approval.
+
 ## Rate limits
 
 Requests are limited per network (IP address); no cookies or identifiers are used. Defaults, all changeable in `backend/.env`:

@@ -19,6 +19,7 @@ from app.models import (
     Product,
     ProductBatch,
     RegulatoryAgency,
+    SupplierLocation,
 )
 from app.models.base import utc_now
 from app.models.enums import (
@@ -197,5 +198,23 @@ def seed_demo_data(db: Session, today: date | None = None) -> None:
     # Company-entered, not yet reviewed: must not make Sample Honey look credentialed.
     credential(honey, nafdac, "DEMO-NAFDAC-0006", future, review=ReviewStatus.PENDING_REVIEW)
     credential(snack, nafdac, "DEMO-NAFDAC-0008", future)
+
+    # Supplier directory: only approved locations of approved companies are listed.
+    def location(company_row: Company, name: str, address: str, area: str,
+                 status=ReviewStatus.APPROVED) -> None:  # fmt: skip
+        _get_or_create(
+            db,
+            SupplierLocation,
+            {"company_id": company_row.company_id, "name": name},
+            {"address": address, "area": area, **_reviewed(status)},
+        )
+
+    location(harvest, "Demo Harvest Ikeja depot (fictional)", "12 Sample Road", "Ikeja, Lagos")
+    location(harvest, "Demo Harvest Ibadan warehouse (fictional)", "4 Example Close", "Ibadan, Oyo")
+    location(springs, "Sample Springs Kano depot (fictional)", "8 Demo Avenue", "Kano")
+    location(mills, "Example Grain Mills Aba yard (fictional)", "3 Placeholder Lane", "Aba, Abia",
+             ReviewStatus.PENDING_REVIEW)  # fmt: skip
+    location(pending, "Pending Demo Snacks store (fictional)", "9 Test Street", "Abuja",
+             ReviewStatus.PENDING_REVIEW)  # fmt: skip
 
     db.commit()
