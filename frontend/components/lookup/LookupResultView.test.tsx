@@ -1,10 +1,10 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { render, screen, within } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
 import { lookupResults } from "@/lib/lookup";
 import { lookupFixtures } from "@/test/lookupFixtures";
 import { LookupResultView } from "./LookupResultView";
 
-const BANNED_WORDS = /\b(safe|unsafe|fake)\b/i;
+const BANNED = /\b(safe|unsafe|fake|genuine)\b|verified by nafdac/i;
 
 describe("LookupResultView", () => {
   it.each(lookupResults)("shows the demo banner, title and disclaimer for %s", (result) => {
@@ -16,68 +16,49 @@ describe("LookupResultView", () => {
       "DEMO DATA — NOT AN OFFICIAL REGULATOR SERVICE",
     );
     expect(within(section).getByRole("heading", { level: 2 })).toHaveTextContent(response.title);
-    expect(section).toHaveTextContent("not a NAFDAC or SON decision");
+    expect(section).toHaveTextContent("not NAFDAC's or SON's own system");
   });
 
-  it.each(lookupResults)("never shows safe, unsafe or fake for %s", (result) => {
+  it.each(lookupResults)("never says safe, unsafe, fake, genuine or verified for %s", (result) => {
     const { container } = render(<LookupResultView response={lookupFixtures[result]} />);
 
-    expect(container.textContent).not.toMatch(BANNED_WORDS);
+    expect(container.textContent).not.toMatch(BANNED);
   });
 
-  it("shows agency, scheme, reference, status, validity and provenance", () => {
-    render(<LookupResultView response={lookupFixtures.DEMO_RECORD_FOUND} />);
+  it("shows the simulated register record for the consumer to compare with the pack", () => {
+    render(<LookupResultView response={lookupFixtures.REGISTERED_ACTIVE} />);
 
-    const card = screen.getByRole("listitem", {
-      name: "Product-level credential DEMO-NAFDAC-0001",
-    });
+    const card = screen.getByLabelText("Simulated register record");
+    expect(card).toHaveTextContent("Simulated register record · Demo data");
     expect(card).toHaveTextContent("NAFDAC (simulated)");
-    expect(card).toHaveTextContent("Food product registration (demo)");
     expect(card).toHaveTextContent("DEMO-NAFDAC-0001");
-    expect(card).toHaveTextContent("Active in demo data");
-    expect(card).toHaveTextContent("26 May 2025 to 12 Nov 2027");
-    expect(card).toHaveTextContent("Not from any regulator");
-    expect(card).toHaveTextContent("Last checked8 Oct 2026");
+    expect(card).toHaveTextContent("Registered productSample Palm Oil");
+    expect(card).toHaveTextContent("Registered companyDemo Harvest Foods (fictional) Ltd");
+    expect(card).toHaveTextContent("Active in the simulated register");
+    expect(card).toHaveTextContent("Expires13 Nov 2027");
+    expect(card).toHaveTextContent("Not from NAFDAC or SON");
   });
 
-  it("presents credentials as product-level, never as a batch certificate", () => {
-    render(<LookupResultView response={lookupFixtures.DEMO_RECORD_FOUND} />);
+  it("explains a mismatch and shows both the register record and the catalogue product", () => {
+    render(<LookupResultView response={lookupFixtures.REGISTRATION_MISMATCH} />);
 
+    expect(screen.getByText(/names a different product or company/)).toBeInTheDocument();
+    expect(screen.getByLabelText("Simulated register record")).toHaveTextContent("Sample Chin Chin");
     expect(
-      screen.getByRole("heading", { name: "Product-level credential records" }),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/not to this batch, and are not a batch certificate/)).toBeInTheDocument();
-    expect(screen.getByText("Product-level · Demo data")).toBeInTheDocument();
-    // The batch section lists only batch facts, no credential.
-    const batchHeading = screen.getByRole("heading", { name: "Batch (demo record)" });
-    expect(batchHeading.parentElement).not.toHaveTextContent(/NAFDAC|MANCAP|credential/i);
+      screen.getByRole("heading", { name: "Product this batch belongs to (FoodLens catalogue)" })
+        .parentElement,
+    ).toHaveTextContent("Sample Honey");
   });
 
-  it("shows expired credential status", () => {
-    render(<LookupResultView response={lookupFixtures.CREDENTIAL_EXPIRED_OR_INACTIVE} />);
+  it("shows expired register status", () => {
+    render(<LookupResultView response={lookupFixtures.REGISTRATION_EXPIRED_OR_INACTIVE} />);
 
-    expect(screen.getByText("Expired in demo data")).toBeInTheDocument();
+    expect(screen.getByText("Expired in the simulated register")).toBeInTheDocument();
   });
 
-  it("names the field that differs", () => {
-    render(<LookupResultView response={lookupFixtures.DETAILS_MISMATCH} />);
+  it("shows no register record when the number is not found", () => {
+    render(<LookupResultView response={lookupFixtures.REGISTRATION_NOT_FOUND} />);
 
-    expect(screen.getByText("Field that differs:").parentElement).toHaveTextContent(
-      "Product code",
-    );
-  });
-
-  it("lets the user choose between ambiguous products", () => {
-    const choose = vi.fn();
-    render(
-      <LookupResultView
-        response={lookupFixtures.INSUFFICIENT_OR_AMBIGUOUS}
-        onChooseCandidate={choose}
-      />,
-    );
-
-    fireEvent.click(screen.getAllByRole("button", { name: "Choose this product" })[1]);
-
-    expect(choose).toHaveBeenCalledWith("DEMO-PC-0002");
+    expect(screen.queryByLabelText("Simulated register record")).not.toBeInTheDocument();
   });
 });

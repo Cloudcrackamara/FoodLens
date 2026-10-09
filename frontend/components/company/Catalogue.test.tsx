@@ -14,25 +14,11 @@ const product: Product = {
   package_size: "500 g",
   manufacturer_name: "Test Foods Ltd (fictional)",
   label_information: null,
+  registration_number: "DEMO-NAFDAC-5001",
   status: "PUBLISHED",
   created_at: "2026-10-09T10:00:00Z",
   batches: [
     { batch_id: "b1", batch_number: "LOT-1", production_date: null, expiry_date: "2027-12-31", created_at: "2026-10-09T10:00:00Z" },
-  ],
-  credentials: [
-    {
-      credential_id: "cr1",
-      agency: "NAFDAC (simulated)",
-      scheme: "Food product registration (demo)",
-      reference_number: "DEMO-NAFDAC-5001",
-      status: "ACTIVE",
-      valid_from: null,
-      valid_until: null,
-      data_mode: "DEMO",
-      review_status: "PENDING_REVIEW",
-      reviewed_at: null,
-      review_note: null,
-    },
   ],
 };
 
@@ -48,17 +34,16 @@ function body(fetchMock: ReturnType<typeof routeFetch>, url: string) {
 describe("Catalogue", () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it("lists products with batches and shows credential claims as awaiting review", async () => {
+  it("lists products with batches and the number printed on the pack", async () => {
     routeFetch({
       [`GET /api/companies/${companyId}/products`]: { body: [product] },
-      "GET /api/agencies": { body: [] },
     });
     renderWithQuery(<Catalogue companyId={companyId} />);
 
     const card = await screen.findByRole("listitem", { name: "Sample Cocoa Drink" });
     expect(card).toHaveTextContent("LOT-1 · expires 31 Dec 2027");
-    expect(card).toHaveTextContent("Claimed, awaiting FoodLens review (hidden from lookups)");
-    expect(card).toHaveTextContent("Credential claims (product-level)");
+    expect(card).toHaveTextContent("Number on the pack: DEMO-NAFDAC-5001");
+    expect(card).not.toHaveTextContent(/credential/i);
   });
 
   it("publishes a product with only catalogue fields", async () => {
@@ -74,6 +59,7 @@ describe("Catalogue", () => {
     fill(container, "Brand", "Test Foods");
     fill(container, "Category", "Snacks");
     fill(container, "Manufacturer", "Test Foods Ltd (fictional)");
+    fill(container, "NAFDAC or SON number printed on the pack (optional)", "demo-nafdac-5002");
     fireEvent.click(screen.getByRole("button", { name: "Publish product" }));
 
     await waitFor(() => expect(fetchMock.mock.calls.some(([, i]) => i?.method === "POST")).toBe(true));
@@ -84,33 +70,8 @@ describe("Catalogue", () => {
       "name",
       "package_size",
       "product_code",
+      "registration_number",
     ]);
   });
 
-  it("submits a credential claim without any status field", async () => {
-    const url = `/api/companies/${companyId}/products/p1/credentials`;
-    const fetchMock = routeFetch({
-      [`GET /api/companies/${companyId}/products`]: { body: [product] },
-      "GET /api/agencies": {
-        body: [{ agency_id: "a1", name: "NAFDAC (simulated)", scheme: "Food product registration (demo)" }],
-      },
-      [`POST ${url}`]: { status: 201, body: [product] },
-    });
-    renderWithQuery(<Catalogue companyId={companyId} />);
-
-    const form = await screen.findByRole("form", { name: "Claim credential for Sample Cocoa Drink" });
-    expect(form).toHaveTextContent("never a NAFDAC or SON check");
-    await within(form).findByRole("option", { name: /NAFDAC \(simulated\)/ });
-    fireEvent.change(within(form).getByRole("combobox"), { target: { value: "a1" } });
-    fill(form, "Reference number", "demo-nafdac-5002");
-    fireEvent.click(within(form).getByRole("button", { name: "Submit claim for review" }));
-
-    await waitFor(() => expect(fetchMock.mock.calls.some(([u]) => u === url)).toBe(true));
-    expect(body(fetchMock, url)).toEqual({
-      agency_id: "a1",
-      reference_number: "demo-nafdac-5002",
-      valid_from: null,
-      valid_until: null,
-    });
-  });
 });

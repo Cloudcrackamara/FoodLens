@@ -5,6 +5,8 @@
 - Never change product data. The company can withdraw its own; admins can hide any.
 - Text with the whole words "safe" or "unsafe" is refused, so a company cannot claim its
   product is safe or unsafe (rule 1). Warnings such as "beware of fake versions" are allowed.
+- Regulator claims ("NAFDAC approved", "certified by SON", ...) are refused (D86): registration
+  status comes only from the simulated register.
 """
 
 import re
@@ -34,9 +36,23 @@ from app.services.companies import (
 MAX_SHOWN_IN_LOOKUP = 3
 # Whole words only: "safety", "safely", "fake", "counterfeit" are allowed (D77).
 _BANNED_WORDS = re.compile(r"\b(safe|unsafe)\b", re.IGNORECASE)
+# Regulator claims, whole words, any case, either order (D86): "NAFDAC approved/registered/
+# certified", "SON approved/certified", "approved by NAFDAC", "SON-certified". The two words
+# must be next to each other, so everyday uses of "son" stay allowed.
+_REGULATOR_CLAIMS = re.compile(
+    r"\b(?:nafdac[\s-]+(?:approved|registered|certified)"
+    r"|son[\s-]+(?:approved|certified)"
+    r"|(?:approved|registered|certified)\s+by\s+nafdac"
+    r"|(?:approved|certified)\s+by\s+son)\b",
+    re.IGNORECASE,
+)
 
 
 class SafetyClaimError(Exception):
+    pass
+
+
+class RegulatorClaimError(Exception):
     pass
 
 
@@ -51,6 +67,8 @@ def post_announcement(
         raise NotFoundError
     if _BANNED_WORDS.search(data.title) or _BANNED_WORDS.search(data.message):
         raise SafetyClaimError
+    if _REGULATOR_CLAIMS.search(data.title) or _REGULATOR_CLAIMS.search(data.message):
+        raise RegulatorClaimError
 
     announcement = ProductAnnouncement(
         product_id=product.product_id,

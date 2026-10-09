@@ -9,14 +9,12 @@ from app.core.db import DbSession
 from app.models import AppUser, Company, SupplierLocation
 from app.models.enums import CompanyReviewStatus, ReviewStatus
 from app.routers.companies import location_read
-from app.schemas.catalogue import AdminCredentialRead, CredentialDecisionRequest
 from app.schemas.company import (
     AdminCompanyRead,
     AdminLocationRead,
     CompanyDecisionRequest,
     LocationDecisionRequest,
 )
-from app.services import catalogue as catalogue_service
 from app.services import companies as company_service
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -110,27 +108,3 @@ def decide_location(
         raise _decision_error(exc) from None
     company = company_service.get_company(db, location.company_id)
     return _admin_location_read(location, company)
-
-
-@router.get("/credentials")
-def list_credentials(
-    admin: AdminUser, db: DbSession, review_status: ReviewStatus | None = None
-) -> list[AdminCredentialRead]:
-    return catalogue_service.list_credentials(db, review_status)
-
-
-@router.post("/credentials/{credential_id}/decision")
-def decide_credential(
-    credential_id: uuid.UUID, body: CredentialDecisionRequest, admin: AdminUser, db: DbSession
-) -> AdminCredentialRead:
-    """Approve a company's credential claim (it then appears in lookups) or reject it."""
-    try:
-        return catalogue_service.decide_credential(
-            db, admin, credential_id, body.decision, body.note
-        )
-    except (
-        company_service.NotFoundError,
-        company_service.ConflictOfInterestError,
-        company_service.InvalidTransitionError,
-    ) as exc:
-        raise _decision_error(exc) from None

@@ -7,13 +7,9 @@ import { describeError } from "@/lib/api";
 import { fieldErrors } from "@/lib/auth";
 import {
   batchFormSchema,
-  credentialFormSchema,
-  credentialReviewLabels,
   productFormSchema,
   useAddBatch,
-  useAddCredential,
   useAddProduct,
-  useAgencies,
   useProducts,
   type Product,
 } from "@/lib/catalogue";
@@ -56,7 +52,7 @@ function AddProductForm({ companyId }: { companyId: string }) {
   const addProduct = useAddProduct(companyId);
   const form = useForm(
     productFormSchema,
-    { product_code: "", name: "", brand: "", category: "", package_size: "", manufacturer_name: "" },
+    { product_code: "", name: "", brand: "", category: "", package_size: "", manufacturer_name: "", registration_number: "" },
     (data, done) => addProduct.mutate(data, { onSuccess: done }),
   );
   return (
@@ -72,6 +68,7 @@ function AddProductForm({ companyId }: { companyId: string }) {
       <FormField id="category" label="Category" value={form.values.category} error={form.errors.category} onChange={form.set("category")} />
       <FormField id="package_size" label="Package size (optional)" value={form.values.package_size} error={form.errors.package_size} onChange={form.set("package_size")} />
       <FormField id="manufacturer_name" label="Manufacturer" value={form.values.manufacturer_name} error={form.errors.manufacturer_name} onChange={form.set("manufacturer_name")} />
+      <FormField id="registration_number" label="NAFDAC or SON number printed on the pack (optional)" value={form.values.registration_number} error={form.errors.registration_number} hint="Consumers check this number against the simulated register. FoodLens does not record it as approved." autoCapitalize="characters" spellCheck={false} onChange={form.set("registration_number")} />
       <ErrorText error={addProduct.error} />
       <button type="submit" disabled={addProduct.isPending} className={buttonClass}>Publish product</button>
     </form>
@@ -98,47 +95,13 @@ function AddBatchForm({ companyId, product }: { companyId: string; product: Prod
   );
 }
 
-function AddCredentialForm({ companyId, product }: { companyId: string; product: Product }) {
-  const agencies = useAgencies();
-  const addCredential = useAddCredential(companyId, product.product_id);
-  const form = useForm(
-    credentialFormSchema,
-    { agency_id: "", reference_number: "", valid_from: "", valid_until: "" },
-    (data, done) => addCredential.mutate(data, { onSuccess: done }),
-  );
-  const id = (name: string) => `${name}-${product.product_id}`;
-  return (
-    <form onSubmit={form.onSubmit} noValidate aria-label={`Claim credential for ${product.name}`} className="flex flex-col gap-2">
-      <h4 className="font-medium">Claim a product-level credential</h4>
-      <p className="text-sm text-zinc-700 dark:text-zinc-300">
-        Recorded as your claim. It stays out of consumer lookups until a FoodLens admin reviews it
-        for the demo database. This is never a NAFDAC or SON check.
-      </p>
-      <label className="flex flex-col gap-1">
-        <span className="font-medium">Agency (simulated)</span>
-        <select value={form.values.agency_id} onChange={(event) => form.set("agency_id")(event.target.value)} className="rounded-md border border-zinc-400 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-900">
-          <option value="">Choose…</option>
-          {agencies.data?.map((agency) => (
-            <option key={agency.agency_id} value={agency.agency_id}>{agency.name} · {agency.scheme}</option>
-          ))}
-        </select>
-        {form.errors.agency_id && <span className="text-sm text-red-700 dark:text-red-400">{form.errors.agency_id}</span>}
-      </label>
-      <FormField id={id("reference_number")} label="Reference number" value={form.values.reference_number} error={form.errors.reference_number} autoCapitalize="characters" spellCheck={false} onChange={form.set("reference_number")} />
-      <FormField id={id("valid_from")} label="Valid from (optional)" type="date" value={form.values.valid_from} onChange={form.set("valid_from")} />
-      <FormField id={id("valid_until")} label="Valid until (optional)" type="date" value={form.values.valid_until} onChange={form.set("valid_until")} />
-      <ErrorText error={addCredential.error} />
-      <button type="submit" disabled={addCredential.isPending} className={buttonClass}>Submit claim for review</button>
-    </form>
-  );
-}
-
 function ProductCard({ companyId, product }: { companyId: string; product: Product }) {
   return (
     <li aria-label={product.name} className="flex flex-col gap-3 rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
       <div>
         <h3 className="font-semibold">{product.name}</h3>
         <p className="text-sm">{product.product_code} · {product.brand} · {product.category}{product.package_size && ` · ${product.package_size}`}</p>
+        <p className="text-sm">Number on the pack: {product.registration_number ?? "Not given"}</p>
       </div>
       <div>
         <h4 className="font-medium">Batches</h4>
@@ -150,21 +113,7 @@ function ProductCard({ companyId, product }: { companyId: string; product: Produ
           </ul>
         )}
       </div>
-      <div>
-        <h4 className="font-medium">Credential claims (product-level)</h4>
-        {product.credentials.length === 0 ? <p className="text-sm">No credentials yet.</p> : (
-          <ul className="text-sm">
-            {product.credentials.map((credential) => (
-              <li key={credential.credential_id}>
-                {credential.agency} · {credential.reference_number} · {credentialReviewLabels[credential.review_status]}
-                {credential.review_note && ` · Note: ${credential.review_note}`}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
       <AddBatchForm companyId={companyId} product={product} />
-      <AddCredentialForm companyId={companyId} product={product} />
     </li>
   );
 }

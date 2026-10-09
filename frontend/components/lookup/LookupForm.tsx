@@ -1,46 +1,55 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { FormField } from "@/components/auth/FormField";
 import { describeError } from "@/lib/api";
-import { useBatchLookup } from "@/lib/lookup";
+import { useRegistrationLookup, type LookupQuery } from "@/lib/lookup";
 import { LookupResultView } from "./LookupResultView";
 
-const codeInputHint = "As printed on the package. Letters, numbers, spaces and - . / _ only.";
+const EMPTY: LookupQuery = { registrationNumber: "", batchNumber: "" };
 
-export function LookupForm() {
-  const lookup = useBatchLookup();
-  const [productCode, setProductCode] = useState("");
-  const [batchNumber, setBatchNumber] = useState("");
+/**
+ * `initial` comes from the page URL (?reg=...&batch=...), e.g. handed over by a scanner or a
+ * printed link. When a number is given, the check runs straight away.
+ */
+export function LookupForm({ initial = EMPTY }: { initial?: LookupQuery }) {
+  const lookup = useRegistrationLookup();
+  const [registrationNumber, setRegistrationNumber] = useState(initial.registrationNumber);
+  const [batchNumber, setBatchNumber] = useState(initial.batchNumber);
+
+  useEffect(() => {
+    if (initial.registrationNumber) lookup.mutate(initial);
+    // Run once for the values the page was opened with.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function check(query: LookupQuery) {
+    lookup.mutate(query);
+  }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    lookup.mutate({ productCode, batchNumber });
-  }
-
-  function chooseCandidate(code: string) {
-    setProductCode(code);
-    lookup.mutate({ productCode: code, batchNumber });
+    check({ registrationNumber, batchNumber });
   }
 
   return (
     <div className="flex flex-col gap-6">
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
         <FormField
-          id="productCode"
-          label="Product code"
-          value={productCode}
-          hint={codeInputHint}
+          id="registrationNumber"
+          label="NAFDAC or SON number on the pack"
+          value={registrationNumber}
+          hint='Type it as printed, for example "DEMO-NAFDAC-0001". Words like "NAFDAC Reg No:" are ignored.'
           autoComplete="off"
           autoCapitalize="characters"
           spellCheck={false}
-          onChange={setProductCode}
+          onChange={setRegistrationNumber}
         />
         <FormField
           id="batchNumber"
-          label="Batch number"
+          label="Batch number (optional)"
           value={batchNumber}
-          hint="Often labelled LOT, Batch, or B/N."
+          hint="Often labelled LOT, Batch, or B/N. Helps spot a number copied onto another product."
           autoComplete="off"
           autoCapitalize="characters"
           spellCheck={false}
@@ -51,7 +60,7 @@ export function LookupForm() {
           disabled={lookup.isPending}
           className="rounded-md bg-zinc-900 px-4 py-3 text-lg font-semibold text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
         >
-          {lookup.isPending ? "Checking…" : "Check demo records"}
+          {lookup.isPending ? "Checking…" : "Check the register"}
         </button>
       </form>
 
@@ -61,9 +70,7 @@ export function LookupForm() {
             {describeError(lookup.error)}
           </p>
         )}
-        {lookup.isSuccess && (
-          <LookupResultView response={lookup.data} onChooseCandidate={chooseCandidate} />
-        )}
+        {lookup.isSuccess && <LookupResultView response={lookup.data} />}
       </div>
     </div>
   );

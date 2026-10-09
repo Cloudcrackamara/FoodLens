@@ -1,5 +1,5 @@
-"""Company catalogue: products and batches go live at once; credentials are claims until an
-admin approves them (docs/DECISIONS.md D61-D64)."""
+"""Company catalogue: products and batches go live at once and carry the registration number
+printed on the pack; companies cannot create or edit register records (D61-D62, D80-D81)."""
 
 from collections.abc import Callable
 
@@ -8,8 +8,16 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session, select
 
 from app.core.security import hash_password
-from app.models import AppUser, AuditLog, Company, CredentialRecord, Product, RegulatoryAgency
-from app.models.enums import CompanyReviewStatus, CompanyType, MemberRole, ReviewStatus
+from app.models import (
+    AppUser,
+    AuditLog,
+    Company,
+    Product,
+    ProductBatch,
+    RegulatorRegister,
+    RegulatoryAgency,
+)
+from app.models.enums import CompanyReviewStatus, CompanyType, MemberRole
 from tests import factories as f
 
 PASSWORD = "correct-horse-battery"
@@ -20,6 +28,7 @@ PRODUCT = {
     "category": "Beverages",
     "package_size": "500 g",
     "manufacturer_name": "Test Foods Ltd (fictional)",
+    "registration_number": "demo-nafdac-5001",
 }
 
 
@@ -56,16 +65,9 @@ def add_batch(client: TestClient, company: Company, product_id: str, **overrides
     )
 
 
-def add_credential(client: TestClient, company: Company, product_id: str, agency_id, **kw):
-    body = {"agency_id": str(agency_id), "reference_number": "demo-nafdac-5001"} | kw
+def lookup(client: TestClient, number: str, batch: str | None = None) -> dict:
     return client.post(
-        f"/api/companies/{company.company_id}/products/{product_id}/credentials", json=body
-    )
-
-
-def lookup(client: TestClient, code: str, batch: str) -> dict:
-    return client.post(
-        "/api/lookups/batch", json={"product_code": code, "batch_number": batch}
+        "/api/lookups/registration", json={"registration_number": number, "batch_number": batch}
     ).json()
 
 
@@ -90,10 +92,9 @@ def test_product_and_batch_go_live_immediately(client: TestClient, session: Sess
     assert product.json()["product_code"] == "DEMO-PC-5001"  # stored normalised
     assert batch.status_code == 201
     assert batch.json()["batch_number"] == "LOT-1"
-    result = lookup(client, "demo-pc-5001", "lot-1")
-    # Live in lookups, but no approved credential yet, so never "record found".
-    assert result["result"] == "DETAILS_MISMATCH"
-    assert result["mismatch"] == {"field": "credential"}
+    assert product.json()["registration_number"] == "DEMO-NAFDAC-5001"  # normalised
+    # The number is not in the simulated register, so the lookup never shows a match.
+    assert lookup(client, "DEMO-NAFDAC-5001", "lot-1")["result"] == "REGISTRATION_NOT_FOUND"
 
 
 def test_client_cannot_set_status_or_owner_on_product(client: TestClient, session: Session) -> None:
@@ -173,128 +174,95 @@ def test_publishing_is_audited(client: TestClient, session: Session) -> None:
     assert ("product_batch", "published") in actions
 
 
-# --- Credentials are claims until an admin approves them ------------------------------------
+# --- Registration numbers: entered by companies, checked only against the register ---------
 
 
-def test_credential_starts_as_claim_and_is_hidden_from_lookup(
+def test_product_number_matching_the_register_shows_as_registered(
+    client: TestClient, session: Session
+) -> None:
+    company = my_company(client, session)
+    f.make_register(
+        session,
+        agency(session),
+        registration_number="DEMO-NAFDAC-5001",
+        registered_product_name="Sample Cocoa Drink",
+        registered_company_name=company.claimed_legal_name,
+    )
+    product_id = add_product(client, company).json()["product_id"]
+    add_batch(client, company, product_id)
+
+    assert lookup(client, "DEMO-NAFDAC-5001", "LOT-1")["result"] == "REGISTERED_ACTIVE"
+
+
+def test_copying_another_companys_number_is_a_mismatch(
+    client: TestClient, session: Session
+) -> None:
+    company = my_company(client, session)
+    f.make_register(
+        session,
+        agency(session),
+        registration_number="DEMO-NAFDAC-5001",
+        registered_product_name="Sample Cocoa Drink",
+        registered_company_name="Someone Else Ltd (fictional)",
+    )
+    product_id = add_product(client, company).json()["product_id"]
+    add_batch(client, company, product_id)
+
+    result = lookup(client, "DEMO-NAFDAC-5001", "LOT-1")
+
+    assert result["result"] == "REGISTRATION_MISMATCH"
+    assert result["mismatch"] == {"reason": "registered_names_differ"}
+
+
+def test_registration_number_is_optional(client: TestClient, session: Session) -> None:
+    company = my_company(client, session)
+
+    response = add_product(client, company, registration_number=None)
+
+    assert response.status_code == 201
+    assert response.json()["registration_number"] is None
+
+
+def test_malformed_registration_number_is_rejected(client: TestClient, session: Session) -> None:
+    company = my_company(client, session)
+
+    assert add_product(client, company, registration_number="<bad>").status_code == 422
+
+
+def test_company_cannot_create_or_change_register_records(
+    client: TestClient, session: Session
+) -> None:
+    company = my_company(client, session)
+
+    response = add_product(
+        client,
+        company,
+        register_status="ACTIVE",
+        registered_product_name="Sample Cocoa Drink",
+        registered_company_name="Test Foods Ltd (fictional)",
+    )
+
+    assert response.status_code == 201
+    assert session.exec(select(RegulatorRegister)).all() == []
+    gone = client.post(
+        f"/api/companies/{company.company_id}/products/{response.json()['product_id']}/credentials",
+        json={"agency_id": str(agency(session).agency_id), "reference_number": "X"},
+    )
+    assert gone.status_code in (404, 405)
+
+
+def test_member_sees_catalogue_with_registration_numbers(
     client: TestClient, session: Session
 ) -> None:
     company = my_company(client, session)
     product_id = add_product(client, company).json()["product_id"]
     add_batch(client, company, product_id)
-    nafdac = agency(session)
-
-    response = add_credential(
-        client, company, product_id, nafdac.agency_id, status="ACTIVE", review_status="APPROVED"
-    )
-
-    assert response.status_code == 201
-    credential = session.exec(select(CredentialRecord)).one()
-    assert credential.review_status == ReviewStatus.PENDING_REVIEW
-    assert credential.status == "INACTIVE"  # member cannot set it to ACTIVE
-    assert credential.data_mode == "DEMO"
-    assert "claim" in credential.provenance
-    result = lookup(client, "DEMO-PC-5001", "LOT-1")
-    assert result["result"] == "DETAILS_MISMATCH"
-    assert result["credentials"] == []
-
-
-def test_admin_approval_makes_credential_visible(
-    client: TestClient, admin_client: TestClient, session: Session
-) -> None:
-    company = my_company(client, session)
-    product_id = add_product(client, company).json()["product_id"]
-    add_batch(client, company, product_id)
-    add_credential(client, company, product_id, agency(session).agency_id)
-    credential = session.exec(select(CredentialRecord)).one()
-
-    queue = admin_client.get("/api/admin/credentials", params={"review_status": "PENDING_REVIEW"})
-    decision = admin_client.post(
-        f"/api/admin/credentials/{credential.credential_id}/decision",
-        json={"decision": "APPROVE", "note": "Reference format checked"},
-    )
-
-    assert [c["credential_id"] for c in queue.json()] == [str(credential.credential_id)]
-    assert decision.status_code == 200
-    assert decision.json()["review_status"] == "APPROVED"
-    assert decision.json()["status"] == "ACTIVE"  # activated only by admin approval
-    session.refresh(credential)
-    assert credential.reviewed_by_user_id is not None
-    assert credential.reviewed_at is not None
-    assert lookup(client, "DEMO-PC-5001", "LOT-1")["result"] == "DEMO_RECORD_FOUND"
-
-
-def test_rejected_credential_stays_out_of_lookup(
-    client: TestClient, admin_client: TestClient, session: Session
-) -> None:
-    company = my_company(client, session)
-    product_id = add_product(client, company).json()["product_id"]
-    add_batch(client, company, product_id)
-    add_credential(client, company, product_id, agency(session).agency_id)
-    credential = session.exec(select(CredentialRecord)).one()
-
-    admin_client.post(
-        f"/api/admin/credentials/{credential.credential_id}/decision", json={"decision": "REJECT"}
-    )
-
-    assert lookup(client, "DEMO-PC-5001", "LOT-1")["result"] == "DETAILS_MISMATCH"
-
-
-def test_company_cannot_approve_its_own_credential(client: TestClient, session: Session) -> None:
-    company = my_company(client, session)
-    product_id = add_product(client, company).json()["product_id"]
-    add_credential(client, company, product_id, agency(session).agency_id)
-    credential = session.exec(select(CredentialRecord)).one()
-
-    response = client.post(
-        f"/api/admin/credentials/{credential.credential_id}/decision", json={"decision": "APPROVE"}
-    )
-
-    assert response.status_code == 403
-    session.refresh(credential)
-    assert credential.review_status == ReviewStatus.PENDING_REVIEW
-
-
-def test_credential_decision_only_once(
-    client: TestClient, admin_client: TestClient, session: Session
-) -> None:
-    company = my_company(client, session)
-    product_id = add_product(client, company).json()["product_id"]
-    add_credential(client, company, product_id, agency(session).agency_id)
-    credential = session.exec(select(CredentialRecord)).one()
-    url = f"/api/admin/credentials/{credential.credential_id}/decision"
-    admin_client.post(url, json={"decision": "APPROVE"})
-
-    assert admin_client.post(url, json={"decision": "REJECT"}).status_code == 409
-
-
-def test_unknown_agency_is_rejected(client: TestClient, session: Session) -> None:
-    company = my_company(client, session)
-    product_id = add_product(client, company).json()["product_id"]
-
-    response = add_credential(client, company, product_id, "00000000-0000-0000-0000-000000000000")
-
-    assert response.status_code == 422
-
-
-def test_agencies_are_listed(client: TestClient, session: Session) -> None:
-    agency(session)
-
-    names = [a["name"] for a in client.get("/api/agencies").json()]
-
-    assert names == ["NAFDAC (simulated)"]
-
-
-def test_member_sees_catalogue_with_claim_status(client: TestClient, session: Session) -> None:
-    company = my_company(client, session)
-    product_id = add_product(client, company).json()["product_id"]
-    add_batch(client, company, product_id)
-    add_credential(client, company, product_id, agency(session).agency_id)
 
     [product] = client.get(f"/api/companies/{company.company_id}/products").json()
 
+    assert product["registration_number"] == "DEMO-NAFDAC-5001"
     assert [b["batch_number"] for b in product["batches"]] == ["LOT-1"]
-    assert [c["review_status"] for c in product["credentials"]] == ["PENDING_REVIEW"]
+    assert "credentials" not in product
 
 
 # --- Registration types and directory owner contact -----------------------------------------
@@ -361,21 +329,12 @@ def test_directory_shows_owner_contact_without_login_email(
 
 @pytest.fixture
 def company_b(make_client: Callable[..., TestClient], session: Session) -> dict:
-    """Company B with a product, batch, and credential claim, created by B's own owner."""
+    """Company B with a product and batch, created by B's own owner."""
     client_b = make_client(client_ip="203.0.113.50")
     company = my_company(client_b, session)
     product_id = add_product(client_b, company, product_code="demo-pc-b1").json()["product_id"]
     batch_id = add_batch(client_b, company, product_id).json()["batch_id"]
-    add_credential(
-        client_b, company, product_id, agency(session).agency_id, reference_number="demo-ref-b1"
-    )
-    credential = session.exec(select(CredentialRecord)).one()
-    return {
-        "company": company,
-        "product_id": product_id,
-        "batch_id": batch_id,
-        "credential_id": str(credential.credential_id),
-    }
+    return {"company": company, "product_id": product_id, "batch_id": batch_id}
 
 
 def test_member_of_a_cannot_read_company_b_catalogue_or_profile(
@@ -397,7 +356,6 @@ def test_member_of_a_cannot_add_to_company_b_catalogue(
 
     assert add_product(client, b, product_code="demo-pc-x").status_code == 403
     assert add_batch(client, b, product_id, batch_number="lot-x").status_code == 403
-    assert add_credential(client, b, product_id, agency(session).agency_id).status_code == 403
 
 
 def test_member_of_a_cannot_reach_b_product_through_own_company(
@@ -407,25 +365,6 @@ def test_member_of_a_cannot_reach_b_product_through_own_company(
     product_id = company_b["product_id"]
 
     assert add_batch(client, mine, product_id, batch_number="lot-x").status_code == 404
-    assert (
-        add_credential(
-            client, mine, product_id, agency(session).agency_id, reference_number="demo-x"
-        ).status_code
-        == 404
-    )
-
-
-def test_member_of_a_cannot_review_b_credential(
-    client: TestClient, session: Session, company_b: dict
-) -> None:
-    my_company(client, session)
-
-    response = client.post(
-        f"/api/admin/credentials/{company_b['credential_id']}/decision",
-        json={"decision": "APPROVE"},
-    )
-
-    assert response.status_code == 403
 
 
 def test_company_b_data_unchanged_after_a_attempts(
@@ -434,10 +373,11 @@ def test_company_b_data_unchanged_after_a_attempts(
     my_company(client, session)
     b = company_b["company"]
     add_batch(client, b, company_b["product_id"], batch_number="lot-x")
-    add_credential(client, b, company_b["product_id"], agency(session).agency_id)
+    add_product(client, b, product_code="demo-pc-x")
 
     products = session.exec(select(Product).where(Product.company_id == b.company_id)).all()
-    credentials = session.exec(select(CredentialRecord)).all()
     assert len(products) == 1
-    assert len(credentials) == 1
-    assert credentials[0].status == "INACTIVE"
+    batches = session.exec(
+        select(ProductBatch).where(ProductBatch.product_id == company_b["product_id"])
+    ).all()
+    assert [x.batch_number for x in batches] == ["LOT-1"]

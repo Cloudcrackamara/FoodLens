@@ -14,7 +14,7 @@ class BatchScan(CreatedAtMixin, table=True):
 
     scan_id: uuid.UUID = uuid_pk()
     # Normalised input as entered, truncated to 64 characters.
-    input_product_code: str | None = None
+    input_registration_number: str | None = None
     input_batch_number: str | None = None
     matched_batch_id: uuid.UUID | None = Field(
         default=None, foreign_key="product_batch.batch_id", index=True

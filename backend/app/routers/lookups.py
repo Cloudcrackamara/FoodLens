@@ -15,13 +15,17 @@ def today() -> date:
     return date.today()
 
 
-@router.post("/batch", dependencies=[Depends(limit_lookups)])
-def lookup_batch(
+@router.post("/registration", dependencies=[Depends(limit_lookups)])
+def lookup_registration(
     body: LookupRequest, db: DbSession, on_date: Annotated[date, Depends(today)]
 ) -> LookupResponse:
-    """Public: no sign-in, no cookies. Rate limited per network (D40)."""
-    response, batch = lookup_service.lookup_batch(
-        db, product_code=body.product_code, batch_number=body.batch_number, today=on_date
+    """Public: no sign-in, no cookies. Rate limited per network (D40).
+    Checks the registration number on the pack against the simulated register (D80-D85)."""
+    response, batch = lookup_service.lookup_registration(
+        db,
+        registration_number=body.registration_number,
+        batch_number=body.batch_number,
+        today=on_date,
     )
     lookup_service.record_scan(db, response, batch)
     return response

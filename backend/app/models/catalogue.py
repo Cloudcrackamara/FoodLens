@@ -6,9 +6,9 @@ from sqlmodel import Field
 
 from app.models.base import ReviewFieldsMixin, TimestampMixin, enum_column, uuid_pk
 from app.models.enums import (
-    CredentialStatus,
     DataMode,
     ProductStatus,
+    RegisterStatus,
     ReviewStatus,
 )
 
@@ -25,6 +25,9 @@ class Product(TimestampMixin, ReviewFieldsMixin, table=True):
     package_size: str | None = None
     manufacturer_name: str
     label_information: str | None = Field(default=None, sa_type=Text)
+    # Registration number printed on the pack, entered by the company. Not unique: a copied
+    # number on another product is exactly what the lookup must detect (D81).
+    registration_number: str | None = Field(default=None, index=True)
     status: ProductStatus = Field(
         default=ProductStatus.DRAFT, sa_type=enum_column(ProductStatus, "product_status")
     )
@@ -65,31 +68,23 @@ class RegulatoryAgency(TimestampMixin, table=True):
     data_mode: DataMode = Field(default=DataMode.DEMO, sa_type=enum_column(DataMode, "data_mode"))
 
 
-class CredentialRecord(TimestampMixin, ReviewFieldsMixin, table=True):
-    """Product-level credential. Never a batch test or batch certificate."""
+class RegulatorRegister(TimestampMixin, table=True):
+    """Simulated NAFDAC/SON register: the only source of registration status (D80).
 
-    __tablename__ = "credential_record"
-    __table_args__ = (
-        UniqueConstraint("agency_id", "reference_number"),
-        CheckConstraint(
-            "valid_until IS NULL OR valid_from IS NULL OR valid_until >= valid_from",
-            name="valid_until_after_from",
-        ),
-    )
+    Seeded fictional data with DEMO- numbers. No API writes to it; companies and admins cannot
+    create or edit records. It is not the regulators' own system.
+    """
 
-    credential_id: uuid.UUID = uuid_pk()
-    product_id: uuid.UUID = Field(foreign_key="product.product_id", index=True)
+    __tablename__ = "regulator_register"
+
+    register_id: uuid.UUID = uuid_pk()
     agency_id: uuid.UUID = Field(foreign_key="regulatory_agency.agency_id", index=True)
-    reference_number: str
-    status: CredentialStatus = Field(sa_type=enum_column(CredentialStatus, "credential_status"))
-    valid_from: date | None = None
-    valid_until: date | None = None
+    # Stored normalised (upper-case, no spaces); unique across the register.
+    registration_number: str = Field(unique=True)
+    registered_product_name: str
+    registered_company_name: str
+    status: RegisterStatus = Field(sa_type=enum_column(RegisterStatus, "register_status"))
+    expires_on: date | None = None
     data_mode: DataMode = Field(default=DataMode.DEMO, sa_type=enum_column(DataMode, "data_mode"))
     provenance: str = Field(sa_type=Text)
-    checked_on: date
-    # Null for seeded records.
-    submitted_by_user_id: uuid.UUID | None = Field(default=None, foreign_key="app_user.user_id")
-    review_status: ReviewStatus = Field(
-        default=ReviewStatus.PENDING_REVIEW,
-        sa_type=enum_column(ReviewStatus, "review_status"),
-    )
+    last_checked_on: date

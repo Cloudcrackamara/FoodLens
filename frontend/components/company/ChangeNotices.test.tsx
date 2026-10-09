@@ -16,10 +16,10 @@ const product: Product = {
   package_size: null,
   manufacturer_name: "Test Foods Ltd (fictional)",
   label_information: null,
+  registration_number: "DEMO-NAFDAC-7001",
   status: "PUBLISHED",
   created_at: "2026-10-09T10:00:00Z",
   batches: [{ batch_id: "b1", batch_number: "LOT-7", production_date: null, expiry_date: null, created_at: "2026-10-09T10:00:00Z" }],
-  credentials: [],
 };
 const notice: AdminNotice = {
   notice_id: "n1",
@@ -124,7 +124,6 @@ describe("AdminReview change notices", () => {
       "GET /api/auth/me": { body: { ...demoUser, is_admin: true } },
       "GET /api/admin/companies?review_status=PENDING_REVIEW": { body: [] },
       "GET /api/admin/locations?review_status=PENDING_REVIEW": { body: [] },
-      "GET /api/admin/credentials?review_status=PENDING_REVIEW": { body: [] },
       "GET /api/admin/change-notices": { body: [notice] },
       [`POST ${decisionUrl}`]: { body: { ...notice, review_status: "APPROVED" } },
     });

@@ -11,7 +11,6 @@ from app.models import AppUser, Company, Product, ProductAnnouncement
 from app.models.enums import (
     AnnouncementStatus,
     CompanyReviewStatus,
-    CredentialStatus,
     MemberRole,
     ProductStatus,
     ReviewStatus,
@@ -36,16 +35,14 @@ def company_with_product(
     company = f.make_company(session, review_status=status)
     f.make_member(session, user, company, role=MemberRole.OWNER)
     product = f.make_product(
-        session, company, product_code="DEMO-PC-8001", status=ProductStatus.PUBLISHED
+        session,
+        company,
+        product_code="DEMO-PC-8001",
+        registration_number="DEMO-NAFDAC-8001",
+        status=ProductStatus.PUBLISHED,
     )
     f.make_batch(session, product, batch_number="LOT-8", review_status=ReviewStatus.APPROVED)
-    f.make_credential(
-        session,
-        product,
-        f.make_agency(session),
-        status=CredentialStatus.ACTIVE,
-        review_status=ReviewStatus.APPROVED,
-    )
+    f.make_register(session, f.make_agency(session), registration_number="DEMO-NAFDAC-8001")
     return company, product
 
 
@@ -59,7 +56,8 @@ def post(client: TestClient, company: Company, product: Product, **body):
 
 def lookup(client: TestClient) -> dict:
     return client.post(
-        "/api/lookups/batch", json={"product_code": "DEMO-PC-8001", "batch_number": "LOT-8"}
+        "/api/lookups/registration",
+        json={"registration_number": "DEMO-NAFDAC-8001", "batch_number": "LOT-8"},
     ).json()
 
 
@@ -80,7 +78,7 @@ def test_announcement_goes_live_and_shows_in_lookup_with_label(
     assert response.status_code == 201
     assert response.json()["status"] == "LIVE"  # client cannot set status
     result = lookup(client)
-    assert result["result"] == "DEMO_RECORD_FOUND"
+    assert result["result"] == "REGISTERED_ACTIVE"
     assert result["announcements"] == [
         {
             "title": "New packaging",
@@ -246,5 +244,56 @@ def test_announcements_hidden_when_company_suspended(client: TestClient, session
 
     result = lookup(client)
 
-    assert result["result"] == "BATCH_NOT_FOUND"
+    assert result["result"] == "REGISTERED_ACTIVE"  # the register record itself is unaffected
+    assert [w["code"] for w in result["warnings"]] == ["BATCH_NOT_IN_CATALOGUE"]
     assert result["announcements"] == []
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Now NAFDAC approved!",
+        "nafdac-registered since 2020",
+        "Proudly NAFDAC Certified",
+        "SON approved packaging",
+        "son-certified factory",
+        "Approved by NAFDAC",
+        "registered by Nafdac",
+        "certified by SON",
+    ],
+)
+def test_regulator_claims_are_refused(client: TestClient, session: Session, text: str) -> None:
+    company, product = company_with_product(client, session)
+
+    response = post(client, company, product, message=text)
+
+    assert response.status_code == 422
+    assert "NAFDAC or SON" in response.json()["detail"]
+    assert session.exec(select(ProductAnnouncement)).all() == []
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Check the NAFDAC number printed on the cap.",
+        "Our SON MANCAP number is on the label.",
+        "Registered office moved to Ikeja.",
+    ],
+)
+def test_mentioning_regulators_without_a_claim_is_allowed(
+    client: TestClient, session: Session, text: str
+) -> None:
+    company, product = company_with_product(client, session)
+
+    assert post(client, company, product, message=text).status_code == 201
+
+
+def test_son_claim_filter_is_case_insensitive_even_for_everyday_son(
+    client: TestClient, session: Session
+) -> None:
+    """Known limitation (D86): matching "SON approved" in any case also catches this sentence."""
+    company, product = company_with_product(client, session)
+
+    assert (
+        post(client, company, product, message="My son approved the new taste").status_code == 422
+    )

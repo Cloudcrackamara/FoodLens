@@ -1,6 +1,6 @@
 # FoodLens database schema
 
-Describes the tables created by migrations `0002_initial_schema` and `0003_batch_scan` (models in `backend/app/models/`). Diagram: [`ERD.mmd`](ERD.mmd). Reasons for each choice: [`DECISIONS.md`](DECISIONS.md) D17–D30.
+Describes the tables created by migrations `0002_initial_schema`, `0003_batch_scan`, and `0004_regulator_register` (models in `backend/app/models/`). Diagram: [`ERD.mmd`](ERD.mmd). Reasons for each choice: [`DECISIONS.md`](DECISIONS.md) D17–D30.
 
 Migrations are the source of truth. If this file and the database disagree, the database wins and this file must be updated.
 
@@ -78,12 +78,13 @@ A physical site of a company, reviewed before it appears in the directory.
 
 ---
 
-## Catalogue and credentials
+## Register and catalogue
 
 ### `product`
 | Column | Notes |
 |---|---|
-| `product_code` | Barcode or FoodLens code. Unique **(DB)**. |
+| `product_code` | Internal FoodLens code (consumers never enter it). Unique **(DB)**. |
+| `registration_number` | NAFDAC/SON number printed on the pack, entered by the company; optional, normalised, not unique (D81). Checked against `regulator_register` at lookup; never treated as proof. |
 | `label_information` | Free text from the label. |
 | `status` | Products created by approved companies are `PUBLISHED` at once (D61). `DRAFT`, `PENDING_REVIEW`, `REJECTED`, `WITHDRAWN` remain available but are not used by the current workflow. Published products change only through a change notice **(service)**. Only `PUBLISHED` products of approved companies are visible to lookup **(service)**. |
 
@@ -91,27 +92,26 @@ A physical site of a company, reviewed before it appears in the directory.
 | Column | Notes |
 |---|---|
 | `(product_id, batch_number)` | Unique together **(DB)**. The same batch number may exist on different products. |
-| `expiry_date` | Must be on or after `production_date` when both are set **(DB)**. A past expiry gives lookup result `BATCH_EXPIRED` **(service)**. |
+| `expiry_date` | Must be on or after `production_date` when both are set **(DB)**. A past expiry adds the lookup warning `BATCH_EXPIRED` **(service)**. |
 | `qr_token` | Optional, unique, opaque. Not secret and not proof of authenticity. |
-| `review_status` | Batches created by approved companies are `APPROVED` with no reviewer, meaning "published by the company" (D61-D62). Pending and rejected batches are invisible to lookup (`BATCH_NOT_FOUND`) **(service)**. |
+| `review_status` | Batches created by approved companies are `APPROVED` with no reviewer, meaning "published by the company" (D61-D62). Pending and rejected batches are invisible to lookup **(service)**. |
 
 ### `regulatory_agency`
 Simulated issuer and scheme, e.g. "NAFDAC (simulated)" / "Food product registration (demo)". `(name, scheme)` unique **(DB)**. `data_mode` is always `DEMO` **(DB)**.
 
-### `credential_record`
-Product-level credential. Never presented as a batch test or batch certificate.
+### `regulator_register`
+Simulated NAFDAC/SON register: the **only** source of registration status (D80). Seeded fictional data; no API writes to it. It is not the regulators' own system.
 
 | Column | Notes |
 |---|---|
-| `(agency_id, reference_number)` | Unique together **(DB)**. Seed references start with `DEMO-`. |
-| `status` | `ACTIVE` or `INACTIVE` as stored in the demo record. "Expired" is computed from `valid_until`, never stored **(service)**. |
-| `valid_until` | On or after `valid_from` when both set **(DB)**. |
+| `agency_id` | Simulated issuer (NAFDAC or SON MANCAP). |
+| `registration_number` | `DEMO-` number, normalised (upper-case, no spaces), unique **(DB)**. |
+| `registered_product_name`, `registered_company_name` | What the register says the number belongs to. Compared with the catalogue product name and company claimed legal name, ignoring capitals and spaces (D83). |
+| `status`, `expires_on` | `ACTIVE`/`INACTIVE` **(DB)**; "expired" is computed from `expires_on` on the lookup date **(service)**. |
 | `data_mode` | Always `DEMO` **(DB)**. |
-| `provenance`, `checked_on` | Where the demo record came from and when it was last checked. |
-| `submitted_by_user_id` | Company user who entered it; null for seeded rows. Company-entered credentials are claims with fixed provenance text, stored `INACTIVE` until an admin approval sets them `ACTIVE` (D63, D67). |
-| `review_status` | `PENDING_REVIEW` default. Pending credentials are hidden from lookup **(service)**. |
+| `provenance`, `last_checked_on` | Where the demo record came from and when it was last checked. |
 
----
+`credential_record` was removed in `0004_regulator_register` (D80).
 
 ## Changes, announcements, and audit
 
@@ -120,8 +120,8 @@ A request to change published data. Nothing published changes until an admin app
 
 | Column | Notes |
 |---|---|
-| `product_id`, `batch_id`, `credential_id`, `location_id` | Exactly one is set **(DB)**, and it must exist **(DB)**. Target must belong to `company_id` **(service)**. |
-| `change_type` | `PACKAGING`, `LABEL`, `PRODUCT_DETAILS`, `BATCH_DETAILS`, `CREDENTIAL_DETAILS`, `LOCATION_DETAILS`, `OTHER`. |
+| `product_id`, `batch_id`, `location_id` | Exactly one is set **(DB)**, and it must exist **(DB)**. Target must belong to `company_id` **(service)**. |
+| `change_type` | `PACKAGING`, `LABEL`, `PRODUCT_DETAILS`, `BATCH_DETAILS`, `LOCATION_DETAILS`, `OTHER`. |
 | `review_status` | `PENDING_REVIEW` (default), `CLARIFICATION_REQUESTED`, `APPROVED`, `REJECTED`. Company reply to clarification returns it to `PENDING_REVIEW`. Submitter cannot approve **(service)**. |
 
 ### `change_notice_field`
@@ -179,13 +179,13 @@ Records which batch fulfilled a line. `allocated_quantity` > 0 **(DB)**. Batch m
 ## Lookups
 
 ### `batch_scan`
-Anonymised log of consumer lookups (D46). Append-only. Written by `POST /api/lookups/batch`.
+Anonymised log of consumer lookups (D46). Append-only. Written by `POST /api/lookups/registration`.
 
 | Column | Notes |
 |---|---|
-| `input_product_code`, `input_batch_number` | Normalised input (trimmed, upper-cased, max 64 characters). |
-| `matched_batch_id` | Batch the lookup resolved to, or null (not found, mismatch on product code, insufficient input). |
-| `result` | One of the six lookup states **(DB)**. |
+| `input_registration_number`, `input_batch_number` | Normalised input (max 64 characters). |
+| `matched_batch_id` | Catalogue batch the entered batch number resolved to, or null. |
+| `result` | One of the five lookup results **(DB)**. |
 
 There is deliberately **no** user, session, IP address, user agent, or location column; a test enforces the exact column list.
 

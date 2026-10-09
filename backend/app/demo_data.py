@@ -1,23 +1,24 @@
-"""Fictional demo dataset for the consumer lookup.
+"""Fictional demo dataset: simulated NAFDAC/SON register, catalogue, and supplier locations.
 
-Every name is invented and labelled "(fictional)"; every code starts with DEMO-; every agency is
-"(simulated)"; every credential has data_mode DEMO. Dates are set relative to the seeding day so
-each lookup state stays reproducible. SEED_CASES lists one lookup per state and is used by the
-tests and the README.
+Every name is invented and labelled "(fictional)"; every number starts with DEMO-; every agency
+is "(simulated)"; every register record has data_mode DEMO. Dates are set relative to the
+seeding day so each lookup result stays reproducible. SEED_CASES lists one lookup per result and
+is used by the tests and the README.
 
-Seeding is idempotent: rows are found by natural key and never overwritten.
+Seeding is idempotent: rows are found by natural key and not overwritten, except that a seeded
+product without a registration number gets one (for databases seeded before D81).
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, timedelta
 
 from sqlmodel import Session, select
 
 from app.models import (
     Company,
-    CredentialRecord,
     Product,
     ProductBatch,
+    RegulatorRegister,
     RegulatoryAgency,
     SupplierLocation,
 )
@@ -25,38 +26,42 @@ from app.models.base import utc_now
 from app.models.enums import (
     CompanyReviewStatus,
     CompanyType,
-    CredentialStatus,
     LookupResult,
     ProductStatus,
+    RegisterStatus,
     ReviewStatus,
 )
 
 SEED_NOTE = "Seeded fictional demo record"
-PROVENANCE = "Fictional record created for the FoodLens capstone demo. Not from any regulator."
+REGISTER_PROVENANCE = (
+    "Fictional record in the FoodLens simulated register for the capstone demo. "
+    "Not from NAFDAC or SON."
+)
 
 
 @dataclass(frozen=True)
 class SeedCase:
     description: str
-    product_code: str | None
+    registration_number: str | None
     batch_number: str | None
     expected: LookupResult
+    warnings: tuple[str, ...] = field(default_factory=tuple)
 
 
 SEED_CASES: list[SeedCase] = [
-    SeedCase("Active NAFDAC and SON credentials", "DEMO-PC-0001", "DEMO-LOT-101", LookupResult.DEMO_RECORD_FOUND),
-    SeedCase("Second product, active credential", "DEMO-PC-0002", "DEMO-LOT-201", LookupResult.DEMO_RECORD_FOUND),
-    SeedCase("Batch number not in demo data", "DEMO-PC-0001", "DEMO-LOT-999", LookupResult.BATCH_NOT_FOUND),
-    SeedCase("Batch awaiting review is hidden", "DEMO-PC-0001", "DEMO-LOT-102", LookupResult.BATCH_NOT_FOUND),
-    SeedCase("Draft product is hidden", "DEMO-PC-0007", "DEMO-LOT-701", LookupResult.BATCH_NOT_FOUND),
-    SeedCase("Company awaiting review is hidden", "DEMO-PC-0008", "DEMO-LOT-801", LookupResult.BATCH_NOT_FOUND),
-    SeedCase("Batch expiry date has passed", "DEMO-PC-0005", "DEMO-LOT-501", LookupResult.BATCH_EXPIRED),
-    SeedCase("Batch belongs to another product", "DEMO-PC-0001", "DEMO-LOT-201", LookupResult.DETAILS_MISMATCH),
-    SeedCase("Product has no approved credential", "DEMO-PC-0006", "DEMO-LOT-601", LookupResult.DETAILS_MISMATCH),
-    SeedCase("Credential expired", "DEMO-PC-0003", "DEMO-LOT-301", LookupResult.CREDENTIAL_EXPIRED_OR_INACTIVE),
-    SeedCase("Credential inactive", "DEMO-PC-0004", "DEMO-LOT-401", LookupResult.CREDENTIAL_EXPIRED_OR_INACTIVE),
-    SeedCase("Batch number on two products, no product code", None, "DEMO-LOT-001", LookupResult.INSUFFICIENT_OR_AMBIGUOUS),
+    SeedCase("Active record, batch belongs to that product", "DEMO-NAFDAC-0001", "DEMO-LOT-101", LookupResult.REGISTERED_ACTIVE),
+    SeedCase("Active record, number only", "DEMO-NAFDAC-0002", None, LookupResult.REGISTERED_ACTIVE),
+    SeedCase("Scanned text with a label", "NAFDAC Reg No: demo-nafdac-0001", None, LookupResult.REGISTERED_ACTIVE),
+    SeedCase("Lot number shared by two products, resolved by the number", "DEMO-NAFDAC-0002", "DEMO-LOT-001", LookupResult.REGISTERED_ACTIVE),
+    SeedCase("Batch not in the FoodLens catalogue", "DEMO-NAFDAC-0001", "DEMO-LOT-999", LookupResult.REGISTERED_ACTIVE, ("BATCH_NOT_IN_CATALOGUE",)),
+    SeedCase("Batch expiry date has passed", "DEMO-NAFDAC-0005", "DEMO-LOT-501", LookupResult.REGISTERED_ACTIVE, ("BATCH_EXPIRED",)),
+    SeedCase("Number not in the simulated register", "DEMO-NAFDAC-9999", None, LookupResult.REGISTRATION_NOT_FOUND),
+    SeedCase("Registration expired", "DEMO-NAFDAC-0003", "DEMO-LOT-301", LookupResult.REGISTRATION_EXPIRED_OR_INACTIVE),
+    SeedCase("SON registration inactive", "DEMO-MANCAP-0004", "DEMO-LOT-401", LookupResult.REGISTRATION_EXPIRED_OR_INACTIVE),
+    SeedCase("Batch belongs to a product with a different number", "DEMO-NAFDAC-0001", "DEMO-LOT-201", LookupResult.REGISTRATION_MISMATCH),
+    SeedCase("Number registered to another product and company", "DEMO-NAFDAC-0009", "DEMO-LOT-601", LookupResult.REGISTRATION_MISMATCH),
     SeedCase("Nothing entered", None, None, LookupResult.INSUFFICIENT_OR_AMBIGUOUS),
+    SeedCase("Batch number without a registration number", None, "DEMO-LOT-101", LookupResult.INSUFFICIENT_OR_AMBIGUOUS),
 ]  # fmt: skip
 
 
@@ -77,8 +82,56 @@ def seed_demo_data(db: Session, today: date | None = None) -> None:
     today = today or date.today()
     future = today + timedelta(days=400)
     past = today - timedelta(days=60)
-    long_ago = today - timedelta(days=500)
 
+    # --- Simulated register (the only source of registration status) ----------------------
+    nafdac = _get_or_create(
+        db,
+        RegulatoryAgency,
+        {"name": "NAFDAC (simulated)", "scheme": "Food product registration (demo)"},
+        {},
+    )
+    son = _get_or_create(
+        db,
+        RegulatoryAgency,
+        {
+            "name": "SON MANCAP (simulated)",
+            "scheme": "Mandatory Conformity Assessment Programme (demo)",
+        },
+        {},
+    )
+
+    def registered(agency: RegulatoryAgency, number: str, product_name: str, company_name: str,
+                   expires: date, status=RegisterStatus.ACTIVE) -> None:  # fmt: skip
+        _get_or_create(
+            db,
+            RegulatorRegister,
+            {"registration_number": number},
+            {
+                "agency_id": agency.agency_id,
+                "registered_product_name": product_name,
+                "registered_company_name": company_name,
+                "status": status,
+                "expires_on": expires,
+                "provenance": REGISTER_PROVENANCE,
+                "last_checked_on": today,
+            },
+        )
+
+    harvest_ltd = "Demo Harvest Foods (fictional) Ltd"
+    registered(nafdac, "DEMO-NAFDAC-0001", "Sample Palm Oil", harvest_ltd, future)
+    registered(nafdac, "DEMO-NAFDAC-0002", "Sample Groundnut Oil", harvest_ltd, future)
+    registered(nafdac, "DEMO-NAFDAC-0003", "Sample Table Water",
+               "Sample Springs Beverages (fictional) Ltd", past)  # fmt: skip
+    registered(son, "DEMO-MANCAP-0004", "Sample Maize Flour",
+               "Example Grain Mills (fictional) Ltd", future, RegisterStatus.INACTIVE)  # fmt: skip
+    registered(nafdac, "DEMO-NAFDAC-0005", "Sample Tomato Paste", harvest_ltd, future)
+    registered(nafdac, "DEMO-NAFDAC-0008", "Sample Plantain Chips",
+               "Pending Demo Snacks (fictional) Ltd", future)  # fmt: skip
+    # Registered to a company that is not in FoodLens; "Sample Honey" below copies the number.
+    registered(nafdac, "DEMO-NAFDAC-0009", "Sample Chin Chin",
+               "Northern Snacks (fictional) Ltd", future)  # fmt: skip
+
+    # --- Companies ------------------------------------------------------------------------
     def company(identifier: str, name: str, status=CompanyReviewStatus.APPROVED) -> Company:
         return _get_or_create(
             db,
@@ -101,9 +154,11 @@ def seed_demo_data(db: Session, today: date | None = None) -> None:
         "DEMO-RC-0004", "Pending Demo Snacks (fictional)", CompanyReviewStatus.PENDING_REVIEW
     )
 
+    # --- Catalogue: products carry the number printed on the pack -------------------------
     def product(company_row: Company, code: str, name: str, category: str, size: str,
+                registration_number: str | None,
                 status=ProductStatus.PUBLISHED) -> Product:  # fmt: skip
-        return _get_or_create(
+        row = _get_or_create(
             db,
             Product,
             {"product_code": code},
@@ -114,21 +169,38 @@ def seed_demo_data(db: Session, today: date | None = None) -> None:
                 "category": category,
                 "package_size": size,
                 "manufacturer_name": company_row.claimed_legal_name,
+                "registration_number": registration_number,
                 "status": status,
                 "reviewed_at": utc_now(),
                 "review_note": SEED_NOTE,
             },
         )
+        if row.registration_number is None and registration_number is not None:
+            row.registration_number = registration_number
+            db.add(row)
+        return row
 
-    palm_oil = product(harvest, "DEMO-PC-0001", "Sample Palm Oil", "Oils", "1 L")
-    groundnut_oil = product(harvest, "DEMO-PC-0002", "Sample Groundnut Oil", "Oils", "1 L")
-    water = product(springs, "DEMO-PC-0003", "Sample Table Water", "Beverages", "75 cl")
-    flour = product(mills, "DEMO-PC-0004", "Sample Maize Flour", "Flour", "2 kg")
-    paste = product(harvest, "DEMO-PC-0005", "Sample Tomato Paste", "Canned foods", "400 g")
-    honey = product(harvest, "DEMO-PC-0006", "Sample Honey", "Spreads", "500 g")
-    draft = product(mills, "DEMO-PC-0007", "Sample Semolina (draft)", "Flour", "1 kg",
+    palm_oil = product(
+        harvest, "DEMO-PC-0001", "Sample Palm Oil", "Oils", "1 L", "DEMO-NAFDAC-0001"
+    )
+    groundnut_oil = product(
+        harvest, "DEMO-PC-0002", "Sample Groundnut Oil", "Oils", "1 L", "DEMO-NAFDAC-0002"
+    )
+    water = product(
+        springs, "DEMO-PC-0003", "Sample Table Water", "Beverages", "75 cl", "DEMO-NAFDAC-0003"
+    )
+    flour = product(
+        mills, "DEMO-PC-0004", "Sample Maize Flour", "Flour", "2 kg", "DEMO-MANCAP-0004"
+    )
+    paste = product(
+        harvest, "DEMO-PC-0005", "Sample Tomato Paste", "Canned foods", "400 g", "DEMO-NAFDAC-0005"
+    )
+    honey = product(harvest, "DEMO-PC-0006", "Sample Honey", "Spreads", "500 g", "DEMO-NAFDAC-0009")
+    draft = product(mills, "DEMO-PC-0007", "Sample Semolina (draft)", "Flour", "1 kg", None,
                     ProductStatus.DRAFT)  # fmt: skip
-    snack = product(pending, "DEMO-PC-0008", "Sample Plantain Chips", "Snacks", "100 g")
+    snack = product(
+        pending, "DEMO-PC-0008", "Sample Plantain Chips", "Snacks", "100 g", "DEMO-NAFDAC-0008"
+    )
 
     def batch(product_row: Product, number: str, expiry: date,
               status=ReviewStatus.APPROVED) -> ProductBatch:  # fmt: skip
@@ -145,7 +217,7 @@ def seed_demo_data(db: Session, today: date | None = None) -> None:
 
     batch(palm_oil, "DEMO-LOT-101", future)
     batch(palm_oil, "DEMO-LOT-102", future, ReviewStatus.PENDING_REVIEW)
-    batch(palm_oil, "DEMO-LOT-001", future)  # shared lot number: ambiguous without product code
+    batch(palm_oil, "DEMO-LOT-001", future)  # lot number shared with groundnut oil
     batch(groundnut_oil, "DEMO-LOT-201", future)
     batch(groundnut_oil, "DEMO-LOT-001", future)
     batch(water, "DEMO-LOT-301", future)
@@ -155,51 +227,7 @@ def seed_demo_data(db: Session, today: date | None = None) -> None:
     batch(draft, "DEMO-LOT-701", future)
     batch(snack, "DEMO-LOT-801", future)
 
-    nafdac = _get_or_create(
-        db,
-        RegulatoryAgency,
-        {"name": "NAFDAC (simulated)", "scheme": "Food product registration (demo)"},
-        {},
-    )
-    son = _get_or_create(
-        db,
-        RegulatoryAgency,
-        {
-            "name": "SON MANCAP (simulated)",
-            "scheme": "Mandatory Conformity Assessment Programme (demo)",
-        },
-        {},
-    )
-
-    def credential(product_row: Product, agency: RegulatoryAgency, reference: str,
-                   valid_until: date, status=CredentialStatus.ACTIVE,
-                   review=ReviewStatus.APPROVED) -> None:  # fmt: skip
-        _get_or_create(
-            db,
-            CredentialRecord,
-            {"agency_id": agency.agency_id, "reference_number": reference},
-            {
-                "product_id": product_row.product_id,
-                "status": status,
-                "valid_from": long_ago,
-                "valid_until": valid_until,
-                "provenance": PROVENANCE,
-                "checked_on": today,
-                **_reviewed(review),
-            },
-        )
-
-    credential(palm_oil, nafdac, "DEMO-NAFDAC-0001", future)
-    credential(palm_oil, son, "DEMO-MANCAP-0001", future)
-    credential(groundnut_oil, nafdac, "DEMO-NAFDAC-0002", future)
-    credential(water, nafdac, "DEMO-NAFDAC-0003", past)  # expired
-    credential(flour, son, "DEMO-MANCAP-0004", future, CredentialStatus.INACTIVE)
-    credential(paste, nafdac, "DEMO-NAFDAC-0005", future)
-    # Company-entered, not yet reviewed: must not make Sample Honey look credentialed.
-    credential(honey, nafdac, "DEMO-NAFDAC-0006", future, review=ReviewStatus.PENDING_REVIEW)
-    credential(snack, nafdac, "DEMO-NAFDAC-0008", future)
-
-    # Supplier directory: only approved locations of approved companies are listed.
+    # --- Supplier directory: only approved locations of approved companies are listed -----
     def location(company_row: Company, name: str, address: str, area: str,
                  status=ReviewStatus.APPROVED) -> None:  # fmt: skip
         _get_or_create(

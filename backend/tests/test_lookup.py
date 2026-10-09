@@ -1,5 +1,5 @@
-"""Consumer batch lookup: one test per state, precedence, visibility, anonymised scan log,
-and wording rules (non-negotiable rules 1-3)."""
+"""Consumer registration lookup against the simulated register (D80-D85): one test per result,
+order of checks, batch warnings, scan-friendly input, wording, and the anonymised scan log."""
 
 import json
 import re
@@ -10,381 +10,339 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session, inspect, select
 
 from app.demo_data import SEED_CASES, seed_demo_data
-from app.models import BatchScan, Company, Product, ProductBatch
+from app.models import BatchScan, Company, Product, RegulatorRegister, RegulatoryAgency
 from app.models.enums import (
     CompanyReviewStatus,
-    CredentialStatus,
     LookupResult,
     ProductStatus,
+    RegisterStatus,
     ReviewStatus,
 )
-from app.services.lookup import lookup_batch
+from app.services.lookup import lookup_registration
+from app.services.register import normalize_registration_number
 from tests import factories as f
 
-TODAY = date(2026, 10, 8)
+TODAY = date(2026, 10, 9)
 FUTURE = TODAY + timedelta(days=365)
 PAST = TODAY - timedelta(days=30)
-BANNED_WORDS = re.compile(r"\b(safe|unsafe|fake)\b", re.IGNORECASE)
+URL = "/api/lookups/registration"
+BANNED = re.compile(r"\b(safe|unsafe|fake|genuine)\b|verified by nafdac", re.IGNORECASE)
 
 
-def visible_product(
-    session: Session,
-    code: str = "DEMO-PC-1",
-    *,
-    company_status=CompanyReviewStatus.APPROVED,
-    product_status=ProductStatus.PUBLISHED,
-) -> Product:
-    company = f.make_company(session, review_status=company_status)
-    return f.make_product(session, company, product_code=code, status=product_status)
-
-
-def approved_batch(
-    session: Session,
-    product: Product,
-    number: str = "DEMO-LOT-1",
-    *,
-    expiry: date | None = FUTURE,
-    status=ReviewStatus.APPROVED,
-) -> ProductBatch:
-    return f.make_batch(
-        session, product, batch_number=number, expiry_date=expiry, review_status=status
+@pytest.fixture
+def nafdac(session: Session) -> RegulatoryAgency:
+    return f.make_agency(
+        session, name="NAFDAC (simulated)", scheme="Food product registration (demo)"
     )
 
 
-def credential(session: Session, product: Product, **overrides) -> None:
-    values = {
-        "review_status": ReviewStatus.APPROVED,
-        "valid_from": TODAY - timedelta(days=365),
-        "valid_until": FUTURE,
-    } | overrides
-    f.make_credential(session, product, f.make_agency(session), **values)
+def registered(session: Session, agency: RegulatoryAgency, number="DEMO-NAFDAC-0001", **kw):
+    return f.make_register(
+        session,
+        agency,
+        registration_number=number,
+        expires_on=kw.pop("expires_on", FUTURE),
+        **kw,
+    )
 
 
-def lookup(session: Session, product_code: str | None, batch_number: str | None):
-    response, _ = lookup_batch(
-        session, product_code=product_code, batch_number=batch_number, today=TODAY
+def catalogue_product(
+    session: Session,
+    number: str | None = "DEMO-NAFDAC-0001",
+    batch_number: str = "DEMO-LOT-1",
+    *,
+    name: str = "Sample Palm Oil",
+    company_status=CompanyReviewStatus.APPROVED,
+    product_status=ProductStatus.PUBLISHED,
+    batch_status=ReviewStatus.APPROVED,
+    expiry: date | None = FUTURE,
+    code: str | None = None,
+) -> tuple[Company, Product]:
+    company = f.make_company(session, review_status=company_status)
+    overrides = {"product_code": code} if code else {}
+    product = f.make_product(
+        session, company, name=name, registration_number=number, status=product_status,
+        **overrides,
+    )  # fmt: skip
+    f.make_batch(
+        session, product, batch_number=batch_number, expiry_date=expiry, review_status=batch_status
+    )
+    return company, product
+
+
+def lookup(session: Session, number: str | None, batch: str | None = None):
+    response, _ = lookup_registration(
+        session, registration_number=number, batch_number=batch, today=TODAY
     )
     return response
 
 
-def found_setup(session: Session) -> Product:
-    product = visible_product(session)
-    approved_batch(session, product)
-    credential(session, product)
-    return product
+# --- One test per result --------------------------------------------------------------------
 
 
-# --- One test per state ------------------------------------------------------------------
+def test_registered_active_number_only(session: Session, nafdac) -> None:
+    registered(session, nafdac)
 
+    response = lookup(session, "DEMO-NAFDAC-0001")
 
-def test_demo_record_found(session: Session) -> None:
-    found_setup(session)
-
-    response = lookup(session, "DEMO-PC-1", "DEMO-LOT-1")
-
-    assert response.result == LookupResult.DEMO_RECORD_FOUND
-    assert response.title == "Demo record found"
-    assert response.product.product_code == "DEMO-PC-1"
-    assert response.batch.batch_number == "DEMO-LOT-1"
-    assert [c.status for c in response.credentials] == ["ACTIVE_IN_DEMO_DATA"]
-    assert response.warnings == []
-
-
-def test_batch_not_found(session: Session) -> None:
-    found_setup(session)
-
-    response = lookup(session, "DEMO-PC-1", "DEMO-LOT-404")
-
-    assert response.result == LookupResult.BATCH_NOT_FOUND
-    assert response.product is None
-    assert "says nothing about the product itself" in response.message
-
-
-def test_batch_expired(session: Session) -> None:
-    product = visible_product(session)
-    approved_batch(session, product, expiry=PAST)
-    credential(session, product)
-
-    response = lookup(session, "DEMO-PC-1", "DEMO-LOT-1")
-
-    assert response.result == LookupResult.BATCH_EXPIRED
-    assert "expiry date stored for this batch" in response.message
-
-
-def test_details_mismatch_when_batch_belongs_to_another_product(session: Session) -> None:
-    found_setup(session)
-    other = visible_product(session, "DEMO-PC-2")
-    approved_batch(session, other, "DEMO-LOT-2")
-
-    response = lookup(session, "DEMO-PC-1", "DEMO-LOT-2")
-
-    assert response.result == LookupResult.DETAILS_MISMATCH
-    assert response.mismatch.field == "product_code"
-    assert response.product is None  # does not reveal the other product
-
-
-def test_details_mismatch_when_product_has_no_credential(session: Session) -> None:
-    product = visible_product(session)
-    approved_batch(session, product)
-
-    response = lookup(session, "DEMO-PC-1", "DEMO-LOT-1")
-
-    assert response.result == LookupResult.DETAILS_MISMATCH
-    assert response.mismatch.field == "credential"
-    assert response.credentials == []
-
-
-def test_credential_expired(session: Session) -> None:
-    product = visible_product(session)
-    approved_batch(session, product)
-    credential(session, product, valid_until=PAST)
-
-    response = lookup(session, "DEMO-PC-1", "DEMO-LOT-1")
-
-    assert response.result == LookupResult.CREDENTIAL_EXPIRED_OR_INACTIVE
-    assert [c.status for c in response.credentials] == ["EXPIRED_IN_DEMO_DATA"]
-    assert "not an official enforcement result" in response.message
-
-
-def test_credential_inactive(session: Session) -> None:
-    product = visible_product(session)
-    approved_batch(session, product)
-    credential(session, product, status=CredentialStatus.INACTIVE)
-
-    response = lookup(session, "DEMO-PC-1", "DEMO-LOT-1")
-
-    assert response.result == LookupResult.CREDENTIAL_EXPIRED_OR_INACTIVE
-    assert [c.status for c in response.credentials] == ["INACTIVE_IN_DEMO_DATA"]
-
-
-def test_insufficient_when_nothing_entered(session: Session) -> None:
-    response = lookup(session, None, "   ")
-
-    assert response.result == LookupResult.INSUFFICIENT_OR_AMBIGUOUS
-    assert response.candidates == []
-
-
-def test_ambiguous_batch_number_offers_candidates_without_details(session: Session) -> None:
-    for code in ("DEMO-PC-1", "DEMO-PC-2"):
-        approved_batch(session, visible_product(session, code), "DEMO-LOT-SHARED")
-
-    response = lookup(session, None, "demo-lot-shared")
-
-    assert response.result == LookupResult.INSUFFICIENT_OR_AMBIGUOUS
-    assert [c.product_code for c in response.candidates] == ["DEMO-PC-1", "DEMO-PC-2"]
+    assert response.result == LookupResult.REGISTERED_ACTIVE
+    record = response.register_record
+    assert record.agency == "NAFDAC (simulated)"
+    assert record.registered_product_name == "Sample Palm Oil"
+    assert record.status == "ACTIVE_IN_DEMO_REGISTER"
+    assert record.data_mode == "DEMO"
+    assert "simulated NAFDAC register (demo data)" in response.message
     assert response.product is None and response.batch is None
 
 
-def test_batch_number_alone_never_shows_a_record(session: Session) -> None:
-    found_setup(session)
+def test_registered_active_with_matching_batch(session: Session, nafdac) -> None:
+    registered(session, nafdac)
+    catalogue_product(session)
 
-    response = lookup(session, None, "DEMO-LOT-1")
+    response = lookup(session, "DEMO-NAFDAC-0001", "DEMO-LOT-1")
 
-    assert response.result == LookupResult.INSUFFICIENT_OR_AMBIGUOUS
-    assert [c.product_code for c in response.candidates] == ["DEMO-PC-1"]
-    assert response.product is None
-
-
-def test_malformed_input_is_insufficient(session: Session) -> None:
-    response = lookup(session, "DEMO-PC-1", "<script>")
-
-    assert response.result == LookupResult.INSUFFICIENT_OR_AMBIGUOUS
-    assert "characters" in response.message
+    assert response.result == LookupResult.REGISTERED_ACTIVE
+    assert response.product.name == "Sample Palm Oil"
+    assert response.batch.batch_number == "DEMO-LOT-1"
+    assert response.warnings == []
 
 
-def test_overlong_input_is_insufficient(session: Session) -> None:
-    response = lookup(session, "DEMO-PC-1", "A" * 65)
+def test_registration_not_found(session: Session, nafdac) -> None:
+    registered(session, nafdac)
 
-    assert response.result == LookupResult.INSUFFICIENT_OR_AMBIGUOUS
-    assert len(response.input.batch_number) == 64
+    response = lookup(session, "DEMO-NAFDAC-9999", "DEMO-LOT-1")
 
-
-# --- Precedence and warnings (docs/DECISIONS.md Q4) ----------------------------------------
-
-
-def test_expired_batch_takes_precedence_and_warns_about_credential(session: Session) -> None:
-    product = visible_product(session)
-    approved_batch(session, product, expiry=PAST)
-    credential(session, product, valid_until=PAST)
-
-    response = lookup(session, "DEMO-PC-1", "DEMO-LOT-1")
-
-    assert response.result == LookupResult.BATCH_EXPIRED
-    assert [w.code for w in response.warnings] == ["CREDENTIAL_EXPIRED_OR_INACTIVE"]
+    assert response.result == LookupResult.REGISTRATION_NOT_FOUND
+    assert response.register_record is None
+    assert "does not show what the real regulator holds" in response.message
 
 
-def test_expired_batch_without_credential_warns(session: Session) -> None:
-    approved_batch(session, visible_product(session), expiry=PAST)
+def test_registration_expired(session: Session, nafdac) -> None:
+    registered(session, nafdac, expires_on=PAST)
 
-    response = lookup(session, "DEMO-PC-1", "DEMO-LOT-1")
+    response = lookup(session, "DEMO-NAFDAC-0001")
 
-    assert response.result == LookupResult.BATCH_EXPIRED
-    assert [w.code for w in response.warnings] == ["NO_CREDENTIAL_RECORD"]
-
-
-def test_one_active_credential_is_enough_but_others_are_warned(session: Session) -> None:
-    product = visible_product(session)
-    approved_batch(session, product)
-    credential(session, product)
-    credential(session, product, valid_until=PAST)
-
-    response = lookup(session, "DEMO-PC-1", "DEMO-LOT-1")
-
-    assert response.result == LookupResult.DEMO_RECORD_FOUND
-    assert [w.code for w in response.warnings] == ["CREDENTIAL_EXPIRED_OR_INACTIVE"]
+    assert response.result == LookupResult.REGISTRATION_EXPIRED_OR_INACTIVE
+    assert response.register_record.status == "EXPIRED_IN_DEMO_REGISTER"
+    assert "not an official enforcement result" in response.message
 
 
-def test_batch_expiring_today_is_not_expired(session: Session) -> None:
-    product = visible_product(session)
-    approved_batch(session, product, expiry=TODAY)
-    credential(session, product, valid_until=TODAY)
+def test_registration_inactive(session: Session, nafdac) -> None:
+    registered(session, nafdac, status=RegisterStatus.INACTIVE)
 
-    assert lookup(session, "DEMO-PC-1", "DEMO-LOT-1").result == LookupResult.DEMO_RECORD_FOUND
+    response = lookup(session, "DEMO-NAFDAC-0001")
 
-
-def test_credential_not_yet_valid_does_not_count_as_active(session: Session) -> None:
-    product = visible_product(session)
-    approved_batch(session, product)
-    credential(session, product, valid_from=TODAY + timedelta(days=1))
-
-    response = lookup(session, "DEMO-PC-1", "DEMO-LOT-1")
-
-    assert response.result == LookupResult.CREDENTIAL_EXPIRED_OR_INACTIVE
-    assert [c.status for c in response.credentials] == ["NOT_YET_VALID_IN_DEMO_DATA"]
+    assert response.result == LookupResult.REGISTRATION_EXPIRED_OR_INACTIVE
+    assert response.register_record.status == "INACTIVE_IN_DEMO_REGISTER"
 
 
-# --- Visibility: only reviewed, published data -------------------------------------------
+def test_mismatch_when_batch_belongs_to_product_with_other_number(session: Session, nafdac) -> None:
+    registered(session, nafdac)
+    catalogue_product(session, number="DEMO-NAFDAC-0002")
+
+    response = lookup(session, "DEMO-NAFDAC-0001", "DEMO-LOT-1")
+
+    assert response.result == LookupResult.REGISTRATION_MISMATCH
+    assert response.mismatch.reason == "different_registration_number"
+
+
+def test_mismatch_when_registered_names_differ(session: Session, nafdac) -> None:
+    registered(
+        session, nafdac, registered_product_name="Sample Chin Chin",
+        registered_company_name="Northern Snacks (fictional) Ltd",
+    )  # fmt: skip
+    catalogue_product(session, name="Sample Honey")  # copies the number
+
+    response = lookup(session, "DEMO-NAFDAC-0001", "DEMO-LOT-1")
+
+    assert response.result == LookupResult.REGISTRATION_MISMATCH
+    assert response.mismatch.reason == "registered_names_differ"
+    assert response.register_record.registered_product_name == "Sample Chin Chin"
+
+
+def test_insufficient_without_registration_number(session: Session, nafdac) -> None:
+    registered(session, nafdac)
+    catalogue_product(session)
+
+    assert lookup(session, None, "DEMO-LOT-1").result == LookupResult.INSUFFICIENT_OR_AMBIGUOUS
+    assert lookup(session, "   ").result == LookupResult.INSUFFICIENT_OR_AMBIGUOUS
+
+
+@pytest.mark.parametrize(
+    ("number", "batch"), [("<script>", None), ("A" * 65, None), ("DEMO-NAFDAC-0001", "<lot>")]
+)
+def test_malformed_input_is_insufficient(session: Session, number, batch) -> None:
+    assert lookup(session, number, batch).result == LookupResult.INSUFFICIENT_OR_AMBIGUOUS
+
+
+# --- Order of checks and warnings -------------------------------------------------------------
+
+
+def test_names_compared_ignoring_capitals_and_spaces(session: Session, nafdac) -> None:
+    registered(
+        session, nafdac, registered_product_name="SAMPLE  PALMOIL",
+        registered_company_name="demo harvest foods ltd (fictional)",
+    )  # fmt: skip
+    catalogue_product(session)
+
+    assert (
+        lookup(session, "DEMO-NAFDAC-0001", "DEMO-LOT-1").result == LookupResult.REGISTERED_ACTIVE
+    )
+
+
+def test_expired_record_takes_precedence_over_mismatch(session: Session, nafdac) -> None:
+    registered(session, nafdac, expires_on=PAST)
+    catalogue_product(session, number="DEMO-NAFDAC-0002")
+
+    response = lookup(session, "DEMO-NAFDAC-0001", "DEMO-LOT-1")
+
+    assert response.result == LookupResult.REGISTRATION_EXPIRED_OR_INACTIVE
+    assert [w.code for w in response.warnings] == ["REGISTRATION_MISMATCH"]
+    assert response.mismatch is None
+
+
+def test_batch_not_in_catalogue_is_a_warning(session: Session, nafdac) -> None:
+    registered(session, nafdac)
+
+    response = lookup(session, "DEMO-NAFDAC-0001", "DEMO-LOT-404")
+
+    assert response.result == LookupResult.REGISTERED_ACTIVE
+    assert [w.code for w in response.warnings] == ["BATCH_NOT_IN_CATALOGUE"]
+
+
+def test_expired_batch_is_a_warning(session: Session, nafdac) -> None:
+    registered(session, nafdac)
+    catalogue_product(session, expiry=PAST)
+
+    response = lookup(session, "DEMO-NAFDAC-0001", "DEMO-LOT-1")
+
+    assert response.result == LookupResult.REGISTERED_ACTIVE
+    assert [w.code for w in response.warnings] == ["BATCH_EXPIRED"]
+
+
+def test_record_expiring_today_is_still_active(session: Session, nafdac) -> None:
+    registered(session, nafdac, expires_on=TODAY)
+
+    assert lookup(session, "DEMO-NAFDAC-0001").result == LookupResult.REGISTERED_ACTIVE
+
+
+def test_shared_lot_number_resolved_by_registration_number(session: Session, nafdac) -> None:
+    registered(session, nafdac)
+    catalogue_product(session, number="DEMO-NAFDAC-0002", batch_number="LOT-SHARED", code="A")
+    catalogue_product(session, number="DEMO-NAFDAC-0001", batch_number="LOT-SHARED", code="B")
+
+    response = lookup(session, "DEMO-NAFDAC-0001", "LOT-SHARED")
+
+    assert response.result == LookupResult.REGISTERED_ACTIVE
 
 
 @pytest.mark.parametrize(
     "setup",
     [
         {"batch_status": ReviewStatus.PENDING_REVIEW},
-        {"batch_status": ReviewStatus.REJECTED},
         {"product_status": ProductStatus.DRAFT},
-        {"product_status": ProductStatus.PENDING_REVIEW},
-        {"product_status": ProductStatus.WITHDRAWN},
-        {"company_status": CompanyReviewStatus.PENDING_REVIEW},
         {"company_status": CompanyReviewStatus.SUSPENDED},
     ],
 )
-def test_unreviewed_or_unpublished_records_are_not_found(session: Session, setup: dict) -> None:
-    product = visible_product(
-        session,
-        company_status=setup.get("company_status", CompanyReviewStatus.APPROVED),
-        product_status=setup.get("product_status", ProductStatus.PUBLISHED),
-    )
-    approved_batch(session, product, status=setup.get("batch_status", ReviewStatus.APPROVED))
-    credential(session, product)
+def test_hidden_catalogue_data_is_ignored(session: Session, nafdac, setup: dict) -> None:
+    registered(session, nafdac)
+    catalogue_product(session, number="DEMO-NAFDAC-0002", **setup)  # would be a mismatch
 
-    assert lookup(session, "DEMO-PC-1", "DEMO-LOT-1").result == LookupResult.BATCH_NOT_FOUND
+    response = lookup(session, "DEMO-NAFDAC-0001", "DEMO-LOT-1")
+
+    assert response.result == LookupResult.REGISTERED_ACTIVE
+    assert [w.code for w in response.warnings] == ["BATCH_NOT_IN_CATALOGUE"]
 
 
-@pytest.mark.parametrize("review", [ReviewStatus.PENDING_REVIEW, ReviewStatus.REJECTED])
-def test_unreviewed_credentials_are_ignored(session: Session, review: ReviewStatus) -> None:
-    product = visible_product(session)
-    approved_batch(session, product)
-    credential(session, product, review_status=review)
-
-    response = lookup(session, "DEMO-PC-1", "DEMO-LOT-1")
-
-    assert response.result == LookupResult.DETAILS_MISMATCH
-    assert response.mismatch.field == "credential"
+# --- Scan-friendly input ----------------------------------------------------------------------
 
 
-# --- Normalisation and response shape ------------------------------------------------------
-
-
-def test_input_is_normalised(session: Session) -> None:
-    found_setup(session)
-
-    response = lookup(session, "  demo-pc-1 ", "demo-lot-1")
-
-    assert response.result == LookupResult.DEMO_RECORD_FOUND
-    assert response.input.product_code == "DEMO-PC-1"
-    assert response.input.batch_number == "DEMO-LOT-1"
-
-
-def test_inner_whitespace_is_collapsed(session: Session) -> None:
-    product = visible_product(session, "DEMO PC 1")
-    approved_batch(session, product, "LOT 1")
-    credential(session, product)
-
-    assert lookup(session, "demo   pc 1", " lot  1").result == LookupResult.DEMO_RECORD_FOUND
-
-
-def test_credentials_are_product_level_only(session: Session) -> None:
-    found_setup(session)
-
-    response = lookup(session, "DEMO-PC-1", "DEMO-LOT-1")
-
-    assert {c.scope for c in response.credentials} == {"PRODUCT"}
-    assert {c.data_mode for c in response.credentials} == {"DEMO"}
-    assert "not to this batch" in response.credential_scope_note
-    assert "not a batch certificate" in response.credential_scope_note
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("DEMO-NAFDAC-0001", "DEMO-NAFDAC-0001"),
+        ("  demo-nafdac-0001 ", "DEMO-NAFDAC-0001"),
+        ("NAFDAC Reg No: DEMO-NAFDAC-0001", "DEMO-NAFDAC-0001"),
+        ("NAFDAC NO. demo-nafdac-0001", "DEMO-NAFDAC-0001"),
+        ("Reg. No #DEMO-NAFDAC-0001", "DEMO-NAFDAC-0001"),
+        ("DEMO - NAFDAC - 0001", "DEMO-NAFDAC-0001"),
+        ("NAFDAC", "NAFDAC"),  # nothing else left: keep the text
+        ("", None),
+    ],
+)
+def test_registration_number_normalisation(raw: str, expected: str | None) -> None:
+    assert normalize_registration_number(raw) == expected
 
 
 # --- API ------------------------------------------------------------------------------------
 
 
-def post(client: TestClient, product_code: str | None, batch_number: str | None):
-    return client.post(
-        "/api/lookups/batch",
-        json={"product_code": product_code, "batch_number": batch_number},
-    )
+def post(client: TestClient, number: str | None, batch: str | None = None):
+    return client.post(URL, json={"registration_number": number, "batch_number": batch})
 
 
 def test_api_needs_no_sign_in_and_sets_no_cookie(client: TestClient, session: Session) -> None:
     seed_demo_data(session)
 
-    response = post(client, "DEMO-PC-0001", "DEMO-LOT-101")
+    response = post(client, "DEMO-NAFDAC-0001", "DEMO-LOT-101")
 
     assert response.status_code == 200
-    assert response.json()["result"] == "DEMO_RECORD_FOUND"
+    assert response.json()["result"] == "REGISTERED_ACTIVE"
     assert "set-cookie" not in response.headers
 
 
-def test_api_accepts_empty_body(client: TestClient) -> None:
-    response = client.post("/api/lookups/batch", json={})
+def test_api_ignores_product_code(client: TestClient, session: Session) -> None:
+    seed_demo_data(session)
 
-    assert response.status_code == 200
+    response = client.post(URL, json={"product_code": "DEMO-PC-0001"})
+
     assert response.json()["result"] == "INSUFFICIENT_OR_AMBIGUOUS"
 
 
 @pytest.mark.parametrize("case", SEED_CASES, ids=lambda c: c.description)
-def test_every_seed_case_returns_its_documented_state(
+def test_every_seed_case_returns_its_documented_result(
     client: TestClient, session: Session, case
 ) -> None:
     seed_demo_data(session)
 
-    body = post(client, case.product_code, case.batch_number).json()
+    body = post(client, case.registration_number, case.batch_number).json()
 
     assert body["result"] == case.expected
+    assert tuple(w["code"] for w in body["warnings"]) == case.warnings
     assert body["data_mode"] == "DEMO"
-    assert body["disclaimer"].startswith("DEMO DATA — NOT AN OFFICIAL REGULATOR SERVICE")
 
 
-def test_seed_covers_every_lookup_state() -> None:
+def test_seed_covers_every_lookup_result() -> None:
     assert {case.expected for case in SEED_CASES} == set(LookupResult)
 
 
-def test_no_response_ever_says_safe_unsafe_or_fake(client: TestClient, session: Session) -> None:
-    seed_demo_data(session)
-    extra_inputs = [("DEMO-PC-0001", "<bad>"), ("x" * 70, "DEMO-LOT-101"), (None, None)]
-    inputs = [(c.product_code, c.batch_number) for c in SEED_CASES] + extra_inputs
-
-    for product_code, batch_number in inputs:
-        text = json.dumps(post(client, product_code, batch_number).json())
-        assert not BANNED_WORDS.search(text), (product_code, batch_number, text)
-
-
-def test_every_response_has_data_mode_and_disclaimer(client: TestClient, session: Session) -> None:
+def test_no_response_says_safe_genuine_fake_or_verified(
+    client: TestClient, session: Session
+) -> None:
     seed_demo_data(session)
 
     for case in SEED_CASES:
-        body = post(client, case.product_code, case.batch_number).json()
+        text = json.dumps(post(client, case.registration_number, case.batch_number).json())
+        assert not BANNED.search(text), (case.description, text)
+
+
+def test_every_response_is_labelled_demo(client: TestClient, session: Session) -> None:
+    seed_demo_data(session)
+
+    for case in SEED_CASES:
+        body = post(client, case.registration_number, case.batch_number).json()
         assert body["data_mode"] == "DEMO"
-        assert "not a NAFDAC or SON decision" in body["disclaimer"]
+        assert body["disclaimer"].startswith("DEMO DATA — NOT AN OFFICIAL REGULATOR SERVICE")
+        assert "not NAFDAC's or SON's own system" in body["disclaimer"]
+        if body["register_record"]:
+            assert body["register_record"]["data_mode"] == "DEMO"
+
+
+def test_register_cannot_be_written_through_the_api(client: TestClient) -> None:
+    paths = list(client.app.openapi()["paths"])
+
+    assert not any("register" in path and path != "/api/auth/register" for path in paths)
+    assert not any("credential" in path for path in paths)
 
 
 # --- Anonymised scan log ------------------------------------------------------------------
@@ -393,12 +351,12 @@ def test_every_response_has_data_mode_and_disclaimer(client: TestClient, session
 def test_each_lookup_logs_an_anonymised_scan(client: TestClient, session: Session) -> None:
     seed_demo_data(session)
 
-    post(client, "demo-pc-0001", "demo-lot-101")
-    post(client, "DEMO-PC-0001", "DEMO-LOT-999")
+    post(client, "nafdac reg no: demo-nafdac-0001", "demo-lot-101")
+    post(client, "DEMO-NAFDAC-9999")
 
     scans = session.exec(select(BatchScan).order_by(BatchScan.created_at)).all()
-    assert [s.result for s in scans] == ["DEMO_RECORD_FOUND", "BATCH_NOT_FOUND"]
-    assert scans[0].input_product_code == "DEMO-PC-0001"
+    assert [s.result for s in scans] == ["REGISTERED_ACTIVE", "REGISTRATION_NOT_FOUND"]
+    assert scans[0].input_registration_number == "DEMO-NAFDAC-0001"
     assert scans[0].matched_batch_id is not None
     assert scans[1].matched_batch_id is None
 
@@ -409,17 +367,17 @@ def test_scan_log_has_no_identifying_columns(engine) -> None:
     assert columns == {
         "scan_id",
         "created_at",
-        "input_product_code",
+        "input_registration_number",
         "input_batch_number",
         "matched_batch_id",
         "result",
     }
 
 
-def test_lookups_are_rate_limited(make_client, session: Session) -> None:
+def test_lookups_are_rate_limited(make_client) -> None:
     client = make_client(client_ip="203.0.113.77")
 
-    statuses = [post(client, "DEMO-PC-0001", "DEMO-LOT-101").status_code for _ in range(21)]
+    statuses = [post(client, "DEMO-NAFDAC-0001").status_code for _ in range(21)]
 
     assert statuses[:20] == [200] * 20
     assert statuses[20] == 429
@@ -430,4 +388,4 @@ def test_seed_is_idempotent(session: Session) -> None:
     seed_demo_data(session)
 
     assert len(session.exec(select(Company)).all()) == 4
-    assert len(session.exec(select(Product)).all()) == 8
+    assert len(session.exec(select(RegulatorRegister)).all()) == 7

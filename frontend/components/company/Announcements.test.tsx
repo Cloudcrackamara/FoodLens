@@ -7,7 +7,7 @@ import { Announcements } from "./Announcements";
 
 describe("Announcements on the lookup result", () => {
   it("shows the company message with the not-reviewed label and can be closed", () => {
-    render(<LookupResultView response={lookupFixtures.DEMO_RECORD_FOUND} />);
+    render(<LookupResultView response={lookupFixtures.REGISTERED_ACTIVE} />);
 
     const box = screen.getByRole("complementary", { name: "Messages from the company" });
     expect(box).toHaveTextContent("Message from the company — not reviewed by FoodLens");
@@ -17,7 +17,7 @@ describe("Announcements on the lookup result", () => {
   });
 
   it("shows nothing when there are no announcements", () => {
-    render(<LookupResultView response={lookupFixtures.BATCH_NOT_FOUND} />);
+    render(<LookupResultView response={lookupFixtures.REGISTRATION_NOT_FOUND} />);
 
     expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
   });
@@ -33,7 +33,7 @@ describe("Announcements (company)", () => {
         body: [{
           product_id: "p1", product_code: "DEMO-PC-8001", name: "Sample Oil", brand: "B", category: "Oils",
           package_size: null, manufacturer_name: "M", label_information: null, status: "PUBLISHED",
-          created_at: "2026-10-09T10:00:00Z", batches: [], credentials: [],
+          registration_number: "DEMO-NAFDAC-8001", created_at: "2026-10-09T10:00:00Z", batches: [],
         }],
       },
       "GET /api/companies/c1/announcements": { body: [] },

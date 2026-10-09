@@ -35,6 +35,7 @@ export const productFields = {
   package_size: "Package size",
   manufacturer_name: "Manufacturer",
   label_information: "Label information",
+  registration_number: "Registration number on the pack",
 } as const;
 export const batchFields = { production_date: "Production date", expiry_date: "Expiry date" } as const;
 export const fieldLabels: Record<string, string> = { ...productFields, ...batchFields };

@@ -59,7 +59,7 @@ def test_new_records_default_to_unreviewed_states(session: Session) -> None:
     member = f.make_member(session, user, company)
     product = f.make_product(session, company)
     batch = f.make_batch(session, product)
-    credential = f.make_credential(session, product, f.make_agency(session))
+    record = f.make_register(session, f.make_agency(session))
     notice = f.make_notice(session, company, user, product_id=product.product_id)
 
     assert user.is_admin is False
@@ -70,8 +70,8 @@ def test_new_records_default_to_unreviewed_states(session: Session) -> None:
     assert member.is_public_contact is False
     assert product.status == ProductStatus.DRAFT
     assert batch.review_status == ReviewStatus.PENDING_REVIEW
-    assert credential.review_status == ReviewStatus.PENDING_REVIEW
-    assert credential.data_mode == DataMode.DEMO
+    assert record.data_mode == DataMode.DEMO
+    assert product.registration_number is None
     assert notice.review_status == ChangeNoticeStatus.PENDING_REVIEW
     assert isinstance(product.product_id, uuid.UUID)
     assert product.created_at is not None
@@ -122,19 +122,20 @@ def test_user_email_is_unique(session: Session) -> None:
         ("company", "review_status"),
         ("product", "status"),
         ("product_batch", "review_status"),
-        ("credential_record", "data_mode"),
+        ("regulator_register", "data_mode"),
+        ("regulator_register", "status"),
     ],
 )
 def test_enum_columns_reject_unknown_values(session: Session, table: str, column: str) -> None:
     company = f.make_company(session)
     product = f.make_product(session, company)
     batch = f.make_batch(session, product)
-    credential = f.make_credential(session, product, f.make_agency(session))
+    record = f.make_register(session, f.make_agency(session))
     ids = {
         "company": ("company_id", company.company_id),
         "product": ("product_id", product.product_id),
         "product_batch": ("batch_id", batch.batch_id),
-        "credential_record": ("credential_id", credential.credential_id),
+        "regulator_register": ("register_id", record.register_id),
     }
     pk_name, pk_value = ids[table]
 
@@ -157,17 +158,24 @@ def test_batch_expiry_cannot_precede_production(session: Session) -> None:
         )
 
 
-def test_credential_validity_cannot_end_before_start(session: Session) -> None:
-    product = f.make_product(session, f.make_company(session))
+def test_registration_number_is_unique_in_register(session: Session) -> None:
+    agency = f.make_agency(session)
+    f.make_register(session, agency, registration_number="DEMO-NAFDAC-0001")
 
     with pytest.raises(IntegrityError):
-        f.make_credential(
-            session,
-            product,
-            f.make_agency(session),
-            valid_from=date(2027, 1, 1),
-            valid_until=date(2026, 1, 1),
-        )
+        f.make_register(session, agency, registration_number="DEMO-NAFDAC-0001")
+
+
+def test_products_may_share_a_registration_number(session: Session) -> None:
+    company = f.make_company(session)
+    first = f.make_product(session, company, registration_number="DEMO-NAFDAC-0001")
+    copy = f.make_product(session, company, registration_number="DEMO-NAFDAC-0001")
+
+    assert first.product_id != copy.product_id
+
+
+def test_credential_table_is_gone(engine) -> None:
+    assert "credential_record" not in inspect(engine).get_table_names()
 
 
 def test_change_notice_requires_exactly_one_target(session: Session) -> None:

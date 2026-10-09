@@ -104,7 +104,7 @@ Note: the pytest DB fixture was added in Phase 1 with the first models.
 
 ---
 
-## Phase 3 — Credential record display
+## Phase 3 — Credential record display (replaced 2026-10-09 by the simulated regulator register, D80-D87)
 
 **Goal:** Lookup results show product-level credential provenance honestly.
 

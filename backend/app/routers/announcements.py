@@ -28,6 +28,7 @@ _HANDLED = (
     company_service.ConflictOfInterestError,
     company_service.InvalidTransitionError,
     announcement_service.SafetyClaimError,
+    announcement_service.RegulatorClaimError,
 )
 
 
@@ -49,6 +50,12 @@ def _http(exc: Exception) -> HTTPException:
         return HTTPException(
             status.HTTP_422_UNPROCESSABLE_CONTENT,
             'Announcements cannot claim a product is "safe" or "unsafe".',
+        )
+    if isinstance(exc, announcement_service.RegulatorClaimError):
+        return HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            "Announcements cannot claim NAFDAC or SON approval, registration, or certification. "
+            "Consumers check registration against the register instead.",
         )
     raise exc
 

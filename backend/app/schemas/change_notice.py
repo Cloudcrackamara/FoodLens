@@ -29,7 +29,9 @@ class _Changes(BaseModel):
 
 
 class ProductChanges(_Changes):
-    nullable: ClassVar[frozenset[str]] = frozenset({"package_size", "label_information"})
+    nullable: ClassVar[frozenset[str]] = frozenset(
+        {"package_size", "label_information", "registration_number"}
+    )
 
     name: str | None = Field(default=None, min_length=1, max_length=120)
     brand: str | None = Field(default=None, min_length=1, max_length=120)
@@ -37,6 +39,7 @@ class ProductChanges(_Changes):
     package_size: str | None = Field(default=None, max_length=40)
     manufacturer_name: str | None = Field(default=None, min_length=1, max_length=200)
     label_information: str | None = Field(default=None, max_length=2000)
+    registration_number: str | None = Field(default=None, max_length=200)
 
 
 class BatchChanges(_Changes):

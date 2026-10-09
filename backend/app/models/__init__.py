@@ -1,6 +1,6 @@
 """SQLModel table models. Import every model module here so Alembic autogenerate sees it."""
 
-from app.models.catalogue import CredentialRecord, Product, ProductBatch, RegulatoryAgency
+from app.models.catalogue import Product, ProductBatch, RegulatorRegister, RegulatoryAgency
 from app.models.change import (
     AuditLog,
     ChangeNotice,
@@ -21,13 +21,13 @@ __all__ = [
     "ChangeNoticeField",
     "Company",
     "CompanyMember",
-    "CredentialRecord",
     "NoticeAttachment",
     "OrderBatchAllocation",
     "OrderLine",
     "Product",
     "ProductAnnouncement",
     "ProductBatch",
+    "RegulatorRegister",
     "RegulatoryAgency",
     "SupplierLocation",
     "UserSession",

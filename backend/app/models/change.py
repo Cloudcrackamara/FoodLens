@@ -29,7 +29,7 @@ class ChangeNotice(TimestampMixin, ReviewFieldsMixin, table=True):
     __tablename__ = "change_notice"
     __table_args__ = (
         CheckConstraint(
-            "num_nonnulls(product_id, batch_id, credential_id, location_id) = 1",
+            "num_nonnulls(product_id, batch_id, location_id) = 1",
             name="exactly_one_target",
         ),
     )
@@ -40,9 +40,6 @@ class ChangeNotice(TimestampMixin, ReviewFieldsMixin, table=True):
     # Exactly one target is set.
     product_id: uuid.UUID | None = Field(default=None, foreign_key="product.product_id")
     batch_id: uuid.UUID | None = Field(default=None, foreign_key="product_batch.batch_id")
-    credential_id: uuid.UUID | None = Field(
-        default=None, foreign_key="credential_record.credential_id"
-    )
     location_id: uuid.UUID | None = Field(default=None, foreign_key="supplier_location.location_id")
 
     change_type: ChangeType = Field(sa_type=enum_column(ChangeType, "change_type"))

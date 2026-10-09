@@ -76,6 +76,7 @@ erDiagram
         string package_size "nullable"
         string manufacturer_name
         text label_information "nullable"
+        string registration_number "printed on pack, nullable, not unique"
         enum status "DRAFT, PENDING_REVIEW, PUBLISHED, REJECTED, WITHDRAWN"
         uuid reviewed_by_user_id FK "nullable"
         datetime reviewed_at "nullable"
@@ -108,22 +109,17 @@ erDiagram
         datetime updated_at
     }
 
-    CREDENTIAL_RECORD {
-        uuid credential_id PK
-        uuid product_id FK "product-level only"
-        uuid agency_id FK "UK with reference_number"
-        string reference_number "DEMO- prefix"
+    REGULATOR_REGISTER {
+        uuid register_id PK
+        uuid agency_id FK
+        string registration_number UK "DEMO- prefix, normalised"
+        string registered_product_name
+        string registered_company_name
         enum status "ACTIVE, INACTIVE"
-        date valid_from "nullable"
-        date valid_until "nullable, >= valid_from"
+        date expires_on "nullable"
         enum data_mode "DEMO"
         text provenance
-        date checked_on
-        uuid submitted_by_user_id FK "nullable for seed"
-        enum review_status "PENDING_REVIEW, APPROVED, REJECTED"
-        uuid reviewed_by_user_id FK "nullable"
-        datetime reviewed_at "nullable"
-        string review_note "nullable"
+        date last_checked_on
         datetime created_at
         datetime updated_at
     }
@@ -133,7 +129,6 @@ erDiagram
         uuid company_id FK
         uuid product_id FK "exactly one target set"
         uuid batch_id FK "exactly one target set"
-        uuid credential_id FK "exactly one target set"
         uuid location_id FK "exactly one target set"
         enum change_type
         text reason
@@ -226,10 +221,10 @@ erDiagram
 
     BATCH_SCAN {
         uuid scan_id PK "anonymised: no user, IP, or device"
-        string input_product_code "normalised, nullable"
+        string input_registration_number "normalised, nullable"
         string input_batch_number "normalised, nullable"
         uuid matched_batch_id FK "nullable"
-        enum result "six lookup states"
+        enum result "five lookup results"
         datetime created_at
     }
 
@@ -258,12 +253,10 @@ erDiagram
     COMPANY ||--o{ WHOLESALE_ORDER : "buys in"
     COMPANY ||--o{ WHOLESALE_ORDER : "sells in"
     PRODUCT ||--o{ PRODUCT_BATCH : "has"
-    PRODUCT ||--o{ CREDENTIAL_RECORD : "credentialed by"
     PRODUCT ||--o{ PRODUCT_ANNOUNCEMENT : "announced in"
-    REGULATORY_AGENCY ||--o{ CREDENTIAL_RECORD : "issues (simulated)"
+    REGULATORY_AGENCY ||--o{ REGULATOR_REGISTER : "keeps (simulated)"
     PRODUCT o|--o{ CHANGE_NOTICE : "target"
     PRODUCT_BATCH o|--o{ CHANGE_NOTICE : "target"
-    CREDENTIAL_RECORD o|--o{ CHANGE_NOTICE : "target"
     SUPPLIER_LOCATION o|--o{ CHANGE_NOTICE : "target"
     CHANGE_NOTICE ||--|{ CHANGE_NOTICE_FIELD : "proposes"
     CHANGE_NOTICE ||--o{ NOTICE_ATTACHMENT : "supported by"
@@ -277,7 +270,8 @@ erDiagram
     PRODUCT o|--o{ CONCERN_REPORT : "optional match (Phase 8)"
     PRODUCT_BATCH o|--o{ CONCERN_REPORT : "optional match (Phase 8)"
 
-%% Matches backend/app/models and migrations 0002_initial_schema, 0003_batch_scan (2026-10-08).
+%% Matches backend/app/models and migrations 0002-0004 (2026-10-09). PRODUCT.registration_number is compared with
+%% REGULATOR_REGISTER.registration_number at lookup time; there is deliberately no foreign key (copied numbers must be storable).
 %% Migrations are the source of truth; see docs/SCHEMA.md for rules per table.
 %% Every reviewer FK (reviewed_by_user_id, hidden_by_user_id) references APP_USER; omitted above for readability.
 %% CONCERN_REPORT is planned for Phase 8 and does not exist in the database yet.

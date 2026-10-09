@@ -50,6 +50,7 @@ from app.services.companies import (
     InvalidTransitionError,
     NotFoundError,
 )
+from app.services.register import is_valid_registration_number, normalize_registration_number
 
 MAX_ATTACHMENTS_PER_NOTICE = 5
 OPEN_STATUSES = {ChangeNoticeStatus.PENDING_REVIEW, ChangeNoticeStatus.CLARIFICATION_REQUESTED}
@@ -131,6 +132,12 @@ def submit_notice(
         first = exc.errors()[0]
         where = ".".join(str(part) for part in first["loc"]) or "proposed_changes"
         raise InvalidChangesError(f"{where}: {first['msg']}") from None
+
+    if "registration_number" in changes.model_fields_set:
+        number = normalize_registration_number(changes.registration_number)
+        if number is not None and not is_valid_registration_number(number):
+            raise InvalidChangesError("registration_number: use letters, numbers, and - . / _")
+        changes.registration_number = number
 
     rows = []
     for field in sorted(changes.model_fields_set):

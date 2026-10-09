@@ -2,7 +2,7 @@
 
 Software engineering capstone prototype. Consumers look up **simulated** product and batch records; companies manage demo-reviewed catalogue data; wholesalers find demo-reviewed suppliers and send order requests.
 
-> **DEMO DATA — NOT AN OFFICIAL REGULATOR SERVICE.** All companies, products, and credentials are fictional. A lookup is not a laboratory test, not a safety guarantee, and not a NAFDAC or SON decision.
+> **DEMO DATA — NOT AN OFFICIAL REGULATOR SERVICE.** All companies, products, and register records are fictional. A lookup is not a laboratory test, not a safety guarantee, and not a NAFDAC or SON decision.
 
 Project docs: [`docs/HANDOFF.md`](docs/HANDOFF.md) (brief), [`docs/PLAN.md`](docs/PLAN.md) (phases), [`docs/DECISIONS.md`](docs/DECISIONS.md), [`docs/ERD.mmd`](docs/ERD.mmd) (draft data model).
 
@@ -57,25 +57,25 @@ Check: `http://localhost:3000/api/health` returns `{"status":"ok"}`.
 
 ## Demo lookups
 
-Open `http://localhost:3000/check` (no account needed) after running the seed. Each row is tested automatically (`backend/app/demo_data.py` `SEED_CASES`):
+Open `http://localhost:3000/check` (no account needed) after running the seed, or a link such as `/check?reg=DEMO-NAFDAC-0001&batch=DEMO-LOT-101`, which fills in and checks immediately. Each row is tested automatically (`backend/app/demo_data.py` `SEED_CASES`):
 
-| Case | Product code | Batch number | Result |
+| Case | Registration number | Batch number | Result |
 |---|---|---|---|
-| Active NAFDAC and SON credentials | `DEMO-PC-0001` | `DEMO-LOT-101` | `DEMO_RECORD_FOUND` |
-| Second product, active credential | `DEMO-PC-0002` | `DEMO-LOT-201` | `DEMO_RECORD_FOUND` |
-| Batch number not in demo data | `DEMO-PC-0001` | `DEMO-LOT-999` | `BATCH_NOT_FOUND` |
-| Batch awaiting review is hidden | `DEMO-PC-0001` | `DEMO-LOT-102` | `BATCH_NOT_FOUND` |
-| Draft product is hidden | `DEMO-PC-0007` | `DEMO-LOT-701` | `BATCH_NOT_FOUND` |
-| Company awaiting review is hidden | `DEMO-PC-0008` | `DEMO-LOT-801` | `BATCH_NOT_FOUND` |
-| Batch expiry date has passed | `DEMO-PC-0005` | `DEMO-LOT-501` | `BATCH_EXPIRED` |
-| Batch belongs to another product | `DEMO-PC-0001` | `DEMO-LOT-201` | `DETAILS_MISMATCH` |
-| Product has no approved credential | `DEMO-PC-0006` | `DEMO-LOT-601` | `DETAILS_MISMATCH` |
-| Credential expired | `DEMO-PC-0003` | `DEMO-LOT-301` | `CREDENTIAL_EXPIRED_OR_INACTIVE` |
-| Credential inactive | `DEMO-PC-0004` | `DEMO-LOT-401` | `CREDENTIAL_EXPIRED_OR_INACTIVE` |
-| Batch number on two products, no product code | `(blank)` | `DEMO-LOT-001` | `INSUFFICIENT_OR_AMBIGUOUS` |
+| Active record, batch belongs to that product | `DEMO-NAFDAC-0001` | `DEMO-LOT-101` | `REGISTERED_ACTIVE` |
+| Active record, number only | `DEMO-NAFDAC-0002` | `(blank)` | `REGISTERED_ACTIVE` |
+| Scanned text with a label | `NAFDAC Reg No: demo-nafdac-0001` | `(blank)` | `REGISTERED_ACTIVE` |
+| Lot number shared by two products, resolved by the number | `DEMO-NAFDAC-0002` | `DEMO-LOT-001` | `REGISTERED_ACTIVE` |
+| Batch not in the FoodLens catalogue | `DEMO-NAFDAC-0001` | `DEMO-LOT-999` | `REGISTERED_ACTIVE` + BATCH_NOT_IN_CATALOGUE |
+| Batch expiry date has passed | `DEMO-NAFDAC-0005` | `DEMO-LOT-501` | `REGISTERED_ACTIVE` + BATCH_EXPIRED |
+| Number not in the simulated register | `DEMO-NAFDAC-9999` | `(blank)` | `REGISTRATION_NOT_FOUND` |
+| Registration expired | `DEMO-NAFDAC-0003` | `DEMO-LOT-301` | `REGISTRATION_EXPIRED_OR_INACTIVE` |
+| SON registration inactive | `DEMO-MANCAP-0004` | `DEMO-LOT-401` | `REGISTRATION_EXPIRED_OR_INACTIVE` |
+| Batch belongs to a product with a different number | `DEMO-NAFDAC-0001` | `DEMO-LOT-201` | `REGISTRATION_MISMATCH` |
+| Number registered to another product and company | `DEMO-NAFDAC-0009` | `DEMO-LOT-601` | `REGISTRATION_MISMATCH` |
 | Nothing entered | `(blank)` | `(blank)` | `INSUFFICIENT_OR_AMBIGUOUS` |
+| Batch number without a registration number | `(blank)` | `DEMO-LOT-101` | `INSUFFICIENT_OR_AMBIGUOUS` |
 
-All companies, products, and credentials are fictional; agencies are labelled "(simulated)". Every lookup is logged anonymously in `batch_scan` (no IP, user, or device details).
+The register is a **simulated, fictional** NAFDAC/SON register held by FoodLens, not the regulators' own system; a match never proves a pack is the original. Every lookup is logged anonymously in `batch_scan` (no IP, user, or device details).
 
 ## Accounts and the seed admin
 
@@ -100,10 +100,10 @@ Running the seed again is safe. If an account with that email already exists it 
 |---|---|---|
 | `/suppliers` | Anyone | Approved companies with demo-reviewed locations, badge "FoodLens demo-reviewed profile" |
 | `/company/register` | Signed-in user without a company | Registers a company (starts pending; you become owner) |
-| `/company` | Company members | Review status, locations, products, batches, credential claims, change notices with attachments, announcements (once approved) |
-| `/admin` | Admins (seed admin) | Approve, reject, or suspend companies; mark locations demo-reviewed; approve or reject credential claims; approve, reject, or request clarification on change notices; hide announcements |
+| `/company` | Company members | Review status, locations, products (with the registration number on the pack), batches, change notices with attachments, announcements (once approved) |
+| `/admin` | Admins (seed admin) | Approve, reject, or suspend companies; mark locations demo-reviewed; approve, reject, or request clarification on change notices; hide announcements |
 
-Try the full flow: create an account at `/register`, register a company, sign in as the seed admin in another browser (or a private window) and approve it at `/admin`, add a location at `/company`, mark it demo-reviewed at `/admin`, then see it at `/suppliers`. Products and batches a company adds are searchable at `/check` immediately, but show "Details do not match" (no credential) until an admin approves a credential claim. A FoodLens demo review is never a NAFDAC or SON approval.
+Try the full flow: create an account at `/register`, register a company, sign in as the seed admin in another browser (or a private window) and approve it at `/admin`, add a location at `/company`, mark it demo-reviewed at `/admin`, then see it at `/suppliers`. A company's products only show as registered at `/check` if their printed number matches an active record in the simulated register. A FoodLens demo review is never a NAFDAC or SON approval.
 
 ## Rate limits
 

@@ -1,7 +1,6 @@
-"""Company catalogue routes: products, batches, and credential claims for a member's company."""
+"""Company catalogue routes: products and batches for a member's company."""
 
 import uuid
-from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -9,12 +8,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.core.auth import require_company_member
 from app.core.db import DbSession
 from app.models import CompanyMember
-from app.routers.lookups import today
 from app.schemas.catalogue import (
-    AgencyRead,
     BatchCreateRequest,
     BatchRead,
-    CredentialCreateRequest,
     ProductCreateRequest,
     ProductRead,
 )
@@ -34,8 +30,11 @@ def _error(exc: Exception) -> HTTPException:
         return HTTPException(status.HTTP_404_NOT_FOUND, "Product not found")
     if isinstance(exc, catalogue_service.DuplicateCodeError):
         return HTTPException(status.HTTP_409_CONFLICT, exc.message)
-    if isinstance(exc, catalogue_service.UnknownAgencyError):
-        return HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Unknown agency")
+    if isinstance(exc, catalogue_service.InvalidRegistrationNumberError):
+        return HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            "Enter the registration number as printed, using letters, numbers, and - . / _",
+        )
     raise exc
 
 
@@ -43,17 +42,8 @@ _HANDLED = (
     company_service.CompanyNotApprovedError,
     company_service.NotFoundError,
     catalogue_service.DuplicateCodeError,
-    catalogue_service.UnknownAgencyError,
+    catalogue_service.InvalidRegistrationNumberError,
 )
-
-
-@router.get("/api/agencies")
-def list_agencies(db: DbSession) -> list[AgencyRead]:
-    """Simulated agencies a company can choose when claiming a credential."""
-    return [
-        AgencyRead.model_validate(a, from_attributes=True)
-        for a in catalogue_service.list_agencies(db)
-    ]
 
 
 @router.get("/api/companies/{company_id}/products")
@@ -69,7 +59,7 @@ def add_product(
         product = catalogue_service.add_product(db, member, body)
     except _HANDLED as exc:
         raise _error(exc) from None
-    return ProductRead(**product.model_dump(), batches=[], credentials=[])
+    return ProductRead(**product.model_dump(), batches=[])
 
 
 @router.post(
@@ -88,22 +78,3 @@ def add_batch(
     except _HANDLED as exc:
         raise _error(exc) from None
     return BatchRead.model_validate(batch, from_attributes=True)
-
-
-@router.post(
-    "/api/companies/{company_id}/products/{product_id}/credentials",
-    status_code=status.HTTP_201_CREATED,
-)
-def add_credential(
-    company_id: uuid.UUID,
-    product_id: uuid.UUID,
-    body: CredentialCreateRequest,
-    member: Member,
-    db: DbSession,
-    on_date: Annotated[date, Depends(today)],
-) -> list[ProductRead]:
-    try:
-        catalogue_service.add_credential(db, member, product_id, body, on_date)
-    except _HANDLED as exc:
-        raise _error(exc) from None
-    return catalogue_service.company_catalogue(db, member.company_id)

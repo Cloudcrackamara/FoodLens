@@ -11,19 +11,19 @@ from app.models import (
     ChangeNotice,
     Company,
     CompanyMember,
-    CredentialRecord,
     OrderLine,
     Product,
     ProductBatch,
+    RegulatorRegister,
     RegulatoryAgency,
     WholesaleOrder,
 )
 from app.models.enums import (
     ChangeType,
     CompanyType,
-    CredentialStatus,
     FulfilmentMethod,
     MemberRole,
+    RegisterStatus,
 )
 
 
@@ -98,21 +98,21 @@ def make_agency(db: Session, **overrides) -> RegulatoryAgency:
     return agency
 
 
-def make_credential(
-    db: Session, product: Product, agency: RegulatoryAgency, **overrides
-) -> CredentialRecord:
+def make_register(db: Session, agency: RegulatoryAgency, **overrides) -> RegulatorRegister:
+    """A simulated register record. Tests only: no API can create these."""
     values = {
-        "product_id": product.product_id,
         "agency_id": agency.agency_id,
-        "reference_number": f"DEMO-NAFDAC-{_suffix()}",
-        "status": CredentialStatus.ACTIVE,
-        "provenance": "Seeded fictional record for the FoodLens capstone demo",
-        "checked_on": date(2026, 10, 1),
+        "registration_number": f"DEMO-NAFDAC-{_suffix().upper()}",
+        "registered_product_name": "Sample Palm Oil",
+        "registered_company_name": "Demo Harvest Foods Ltd (fictional)",
+        "status": RegisterStatus.ACTIVE,
+        "provenance": "Fictional register record for FoodLens tests",
+        "last_checked_on": date(2026, 10, 1),
     }
-    credential = CredentialRecord(**(values | overrides))
-    db.add(credential)
+    record = RegulatorRegister(**(values | overrides))
+    db.add(record)
     db.flush()
-    return credential
+    return record
 
 
 def make_notice(db: Session, company: Company, user: AppUser, **targets) -> ChangeNotice:

@@ -1,16 +1,19 @@
-"""Consumer batch lookup against the fictional demo dataset.
+"""Consumer registration lookup against the simulated NAFDAC/SON register (D80-D85).
 
-Returns exactly one primary state, using the precedence in docs/DECISIONS.md Q4:
-  1. INSUFFICIENT_OR_AMBIGUOUS  input missing, malformed, or matching several products
-  2. BATCH_NOT_FOUND            no visible batch; DETAILS_MISMATCH (product_code) if the
-                                batch number exists under a different product
-  3. BATCH_EXPIRED              batch expiry date has passed
-  4. CREDENTIAL_EXPIRED_OR_INACTIVE  approved credentials exist, none currently active
-  5. DETAILS_MISMATCH (credential)   no approved credential for the product
-  6. DEMO_RECORD_FOUND
+Input: the registration number printed on the pack (required) and the batch number (optional).
+Exactly one primary result, checked in this order:
+  1. INSUFFICIENT_OR_AMBIGUOUS         number missing or malformed (or batch malformed)
+  2. REGISTRATION_NOT_FOUND            number not in the simulated register
+  3. REGISTRATION_EXPIRED_OR_INACTIVE  record inactive or past its expiry date
+  4. REGISTRATION_MISMATCH             the entered batch belongs to a FoodLens product whose
+                                       number differs, or whose product/company names differ
+                                       from the register record
+  5. REGISTERED_ACTIVE                 matches an active record
+Batch findings (not in the catalogue, expired) are warnings, not results. A mismatch found
+alongside an expired record is also a warning.
 
-Only published products of approved companies, approved batches, and approved credentials are
-visible. Results never say "safe", "unsafe", or "fake" (non-negotiable rule 1).
+Wording never says "safe", "genuine", or "verified by NAFDAC"; every response carries
+data_mode DEMO and the disclaimer (rules 1-2).
 """
 
 import re
@@ -19,108 +22,64 @@ from datetime import date
 from sqlalchemy import func
 from sqlmodel import Session, select
 
-from app.models import (
-    BatchScan,
-    Company,
-    CredentialRecord,
-    Product,
-    ProductBatch,
-    RegulatoryAgency,
-)
+from app.models import BatchScan, Company, Product, ProductBatch
 from app.models.enums import (
     CompanyReviewStatus,
-    CredentialStatus,
     LookupResult,
     ProductStatus,
     ReviewStatus,
 )
 from app.schemas.lookup import (
-    CredentialDisplayStatus,
     LookupBatch,
-    LookupCandidate,
-    LookupCredential,
     LookupInput,
     LookupMismatch,
     LookupProduct,
     LookupResponse,
     LookupWarning,
+    RegisterRecordStatus,
 )
-from app.services import announcements
+from app.services import announcements, register
 
 MAX_CODE_LENGTH = 64
 _CODE_PATTERN = re.compile(r"^[A-Z0-9][A-Z0-9 ._/-]*$")
 
 DISCLAIMER = (
-    "DEMO DATA — NOT AN OFFICIAL REGULATOR SERVICE. FoodLens compares what you entered with "
-    "fictional demonstration records. It is not a laboratory or food-safety test, it does not "
-    "check the package in your hand, and it is not a NAFDAC or SON decision."
-)
-CREDENTIAL_SCOPE_NOTE = (
-    "Credentials shown are product-level records in the demo data. They apply to the product "
-    "in general, not to this batch, and are not a batch certificate or a test result."
+    "DEMO DATA — NOT AN OFFICIAL REGULATOR SERVICE. FoodLens compares the number you entered "
+    "with a simulated, fictional register held by FoodLens. It is not NAFDAC's or SON's own "
+    "system, it is not a laboratory or food-safety test, and a matching number cannot rule out "
+    "a copied number on the pack."
 )
 
 TITLES = {
-    LookupResult.DEMO_RECORD_FOUND: "Demo record found",
-    LookupResult.BATCH_NOT_FOUND: "No match in demo data",
-    LookupResult.BATCH_EXPIRED: "Batch expiry date has passed in demo data",
-    LookupResult.DETAILS_MISMATCH: "Details do not match",
-    LookupResult.CREDENTIAL_EXPIRED_OR_INACTIVE: (
-        "Credential shown as expired or inactive in demo data"
+    LookupResult.REGISTERED_ACTIVE: "Matches an active record in the simulated register",
+    LookupResult.REGISTRATION_NOT_FOUND: "Number not found in the simulated register",
+    LookupResult.REGISTRATION_EXPIRED_OR_INACTIVE: (
+        "Registration expired or inactive in the simulated register"
     ),
+    LookupResult.REGISTRATION_MISMATCH: "Number belongs to a different product or company",
     LookupResult.INSUFFICIENT_OR_AMBIGUOUS: "More details needed",
 }
 
-MESSAGES = {
-    "found": (
-        "A matching product and batch record was found in the FoodLens demonstration dataset, "
-        "with at least one active product-level credential record."
+MISSING = "Enter the NAFDAC or SON registration number printed on the pack."
+MALFORMED = (
+    "The registration or batch number contains characters that are not used in these numbers. "
+    "Use only letters, numbers, and - . / _ as printed on the pack."
+)
+MISMATCH_MESSAGES = {
+    "different_registration_number": (
+        "The batch number you entered belongs to a product listed in FoodLens under a different "
+        "registration number. Check both numbers on the pack."
     ),
-    "not_found": (
-        "No matching batch was found in the FoodLens demonstration dataset. This only means the "
-        "batch is not in the demo data; it says nothing about the product itself. Check the "
-        "numbers on the package and try again."
-    ),
-    "batch_expired": (
-        "A matching record was found, but the expiry date stored for this batch in the demo "
-        "data has passed."
-    ),
-    "mismatch_product_code": (
-        "This batch number is recorded in the demo data under a different product code. Check "
-        "the product code and batch number printed on the package."
-    ),
-    "mismatch_credential": (
-        "The product and batch were found, but no credential record matches this product in "
-        "the demo data."
-    ),
-    "credential_expired": (
-        "The product and batch were found. The credential records stored for this product are "
-        "expired or inactive in the demo data. This is the status of the stored demo record, "
-        "not an official enforcement result."
-    ),
-    "missing": "Enter both the product code and the batch number as printed on the package.",
-    "malformed": (
-        "The product code or batch number contains characters that are not used in codes. "
-        "Use only letters, numbers, spaces, and - . / _ as printed on the package."
-    ),
-    "choose_product": (
-        "Enter the product code too. If your product is listed below, choose it to continue."
+    "registered_names_differ": (
+        "This number is recorded in the {register} (demo data) for a different product or "
+        "company than the product the batch belongs to. Compare the registered names below "
+        "with the pack."
     ),
 }
 
-WARNING_CREDENTIALS_NOT_CURRENT = LookupWarning(
-    code="CREDENTIAL_EXPIRED_OR_INACTIVE",
-    message="One or more credential records for this product are expired or inactive in the "
-    "demo data.",
-)
-WARNING_NO_CREDENTIAL = LookupWarning(
-    code="NO_CREDENTIAL_RECORD",
-    message="No credential record matches this product in the demo data.",
-)
-
 
 def normalize_code(value: str | None) -> str | None:
-    """Trim, collapse inner whitespace, upper-case. Empty becomes None."""
+    """Batch numbers and product codes: trim, collapse inner whitespace, upper-case."""
     if value is None:
         return None
     normalized = " ".join(value.split()).upper()
@@ -131,17 +90,7 @@ def _is_valid_code(value: str) -> bool:
     return len(value) <= MAX_CODE_LENGTH and bool(_CODE_PATTERN.match(value))
 
 
-def credential_status(credential: CredentialRecord, today: date) -> CredentialDisplayStatus:
-    if credential.status == CredentialStatus.INACTIVE:
-        return CredentialDisplayStatus.INACTIVE_IN_DEMO_DATA
-    if credential.valid_until is not None and credential.valid_until < today:
-        return CredentialDisplayStatus.EXPIRED_IN_DEMO_DATA
-    if credential.valid_from is not None and credential.valid_from > today:
-        return CredentialDisplayStatus.NOT_YET_VALID_IN_DEMO_DATA
-    return CredentialDisplayStatus.ACTIVE_IN_DEMO_DATA
-
-
-def _visible_batches():
+def _visible_batches(batch_number: str):
     """Batches a consumer may see: approved batch, published product, approved company."""
     return (
         select(ProductBatch, Product, Company)
@@ -151,159 +100,152 @@ def _visible_batches():
             ProductBatch.review_status == ReviewStatus.APPROVED,
             Product.status == ProductStatus.PUBLISHED,
             Company.review_status == CompanyReviewStatus.APPROVED,
+            func.upper(ProductBatch.batch_number) == batch_number,
         )
+        .order_by(Product.product_code)
     )
 
 
-def _response(
-    result: LookupResult,
-    message: str,
-    lookup_input: LookupInput,
-    **fields,
-) -> LookupResponse:
+def _response(result: LookupResult, message: str, lookup_input: LookupInput, **fields):
     return LookupResponse(
         result=result,
         disclaimer=DISCLAIMER,
         title=TITLES[result],
         message=message,
         input=lookup_input,
-        credential_scope_note=CREDENTIAL_SCOPE_NOTE,
         **fields,
     )
 
 
-def lookup_batch(
+def lookup_registration(
     db: Session,
     *,
-    product_code: str | None,
+    registration_number: str | None,
     batch_number: str | None,
     today: date,
 ) -> tuple[LookupResponse, ProductBatch | None]:
-    """Look up a product code + batch number. Returns the response and the matched batch
-    (for the anonymised scan log), or None if no batch was resolved."""
-    code = normalize_code(product_code)
+    """Returns the response plus the matched batch (for the anonymised scan log)."""
+    number = register.normalize_registration_number(registration_number)
     batch_no = normalize_code(batch_number)
     lookup_input = LookupInput(
-        product_code=code[:MAX_CODE_LENGTH] if code else None,
+        registration_number=number[:MAX_CODE_LENGTH] if number else None,
         batch_number=batch_no[:MAX_CODE_LENGTH] if batch_no else None,
     )
     insufficient = LookupResult.INSUFFICIENT_OR_AMBIGUOUS
 
-    if batch_no is None:
-        return _response(insufficient, MESSAGES["missing"], lookup_input), None
-    if not _is_valid_code(batch_no) or (code is not None and not _is_valid_code(code)):
-        return _response(insufficient, MESSAGES["malformed"], lookup_input), None
+    if number is None:
+        return _response(insufficient, MISSING, lookup_input), None
+    if not register.is_valid_registration_number(number) or (
+        batch_no is not None and not _is_valid_code(batch_no)
+    ):
+        return _response(insufficient, MALFORMED, lookup_input), None
 
-    same_batch_number = func.upper(ProductBatch.batch_number) == batch_no
-
-    if code is None:
-        rows = db.exec(_visible_batches().where(same_batch_number)).all()
-        candidates = sorted(
-            (
-                LookupCandidate(product_code=p.product_code, name=p.name, brand=p.brand)
-                for _, p, _ in rows
-            ),
-            key=lambda c: c.product_code,
+    found = register.find_record(db, number)
+    if found is None:
+        message = (
+            "This number is not in the simulated NAFDAC/SON register (demo data). The demo "
+            "register is small and fictional, so this does not show what the real regulator "
+            "holds. Check the number on the pack."
         )
-        message = MESSAGES["choose_product"] if candidates else MESSAGES["missing"]
-        return _response(insufficient, message, lookup_input, candidates=candidates), None
+        return _response(LookupResult.REGISTRATION_NOT_FOUND, message, lookup_input), None
 
-    row = db.exec(
-        _visible_batches().where(same_batch_number, func.upper(Product.product_code) == code)
-    ).first()
-
-    if row is None:
-        elsewhere = db.exec(_visible_batches().where(same_batch_number)).first()
-        if elsewhere is not None:
-            return (
-                _response(
-                    LookupResult.DETAILS_MISMATCH,
-                    MESSAGES["mismatch_product_code"],
-                    lookup_input,
-                    mismatch=LookupMismatch(field="product_code"),
-                ),
-                None,
-            )
-        return _response(LookupResult.BATCH_NOT_FOUND, MESSAGES["not_found"], lookup_input), None
-
-    batch, product, company = row
-    credentials = _approved_credentials(db, product, today)
-    statuses = [c.status for c in credentials]
-    any_active = CredentialDisplayStatus.ACTIVE_IN_DEMO_DATA in statuses
-    some_not_active = any(s != CredentialDisplayStatus.ACTIVE_IN_DEMO_DATA for s in statuses)
-    batch_expired = batch.expiry_date is not None and batch.expiry_date < today
-
+    record, agency = found
+    register_name = register.register_label(agency)
+    record_read = register.record_read(record, agency, today)
     warnings: list[LookupWarning] = []
-    mismatch = None
-    if batch_expired:
-        result, message = LookupResult.BATCH_EXPIRED, MESSAGES["batch_expired"]
-        if not credentials:
-            warnings.append(WARNING_NO_CREDENTIAL)
-        elif some_not_active:
-            warnings.append(WARNING_CREDENTIALS_NOT_CURRENT)
-    elif credentials and not any_active:
-        result, message = (
-            LookupResult.CREDENTIAL_EXPIRED_OR_INACTIVE,
-            MESSAGES["credential_expired"],
+
+    # --- Batch: which FoodLens product does it belong to? -----------------------------------
+    product = company = batch = None
+    mismatch_reason = None
+    if batch_no is not None:
+        rows = db.exec(_visible_batches(batch_no)).all()
+        same_number = [
+            row for row in rows if (row[1].registration_number or "") == record.registration_number
+        ]
+        if not rows:
+            warnings.append(
+                LookupWarning(
+                    code="BATCH_NOT_IN_CATALOGUE",
+                    message="This batch number is not in the FoodLens demo catalogue.",
+                )
+            )
+        elif not same_number:
+            mismatch_reason = "different_registration_number"
+            batch, product, company = rows[0]
+        else:
+            batch, product, company = same_number[0]
+            names_match = register.normalize_name(product.name) == register.normalize_name(
+                record.registered_product_name
+            ) and register.normalize_name(company.claimed_legal_name) == register.normalize_name(
+                record.registered_company_name
+            )
+            if not names_match:
+                mismatch_reason = "registered_names_differ"
+        if batch is not None and batch.expiry_date is not None and batch.expiry_date < today:
+            warnings.append(
+                LookupWarning(
+                    code="BATCH_EXPIRED",
+                    message="The expiry date recorded for this batch in the demo data has passed.",
+                )
+            )
+
+    # --- Primary result -------------------------------------------------------------------
+    if record_read.status != RegisterRecordStatus.ACTIVE_IN_DEMO_REGISTER:
+        result = LookupResult.REGISTRATION_EXPIRED_OR_INACTIVE
+        state = "expired" if record_read.status.startswith("EXPIRED") else "inactive"
+        message = (
+            f"This number is in the {register_name} (demo data), but the record is {state}. "
+            "This is the status of the demo record, not an official enforcement result."
         )
-    elif not credentials:
-        result, message = LookupResult.DETAILS_MISMATCH, MESSAGES["mismatch_credential"]
-        mismatch = LookupMismatch(field="credential")
+        if mismatch_reason:
+            warnings.append(
+                LookupWarning(
+                    code="REGISTRATION_MISMATCH",
+                    message="The batch also belongs to a different product or company than "
+                    "this record.",
+                )
+            )
+    elif mismatch_reason:
+        result = LookupResult.REGISTRATION_MISMATCH
+        message = MISMATCH_MESSAGES[mismatch_reason].format(register=register_name)
     else:
-        result, message = LookupResult.DEMO_RECORD_FOUND, MESSAGES["found"]
-        if some_not_active:
-            warnings.append(WARNING_CREDENTIALS_NOT_CURRENT)
+        result = LookupResult.REGISTERED_ACTIVE
+        message = (
+            f"This number matches an active record in the {register_name} (demo data). "
+            "Compare the registered product and company names below with the pack. A matching "
+            "number cannot rule out a copied number."
+        )
 
     response = _response(
         result,
         message,
         lookup_input,
         warnings=warnings,
-        mismatch=mismatch,
+        register_record=record_read,
+        mismatch=LookupMismatch(reason=mismatch_reason)
+        if mismatch_reason and result == LookupResult.REGISTRATION_MISMATCH
+        else None,
         product=LookupProduct(
-            product_code=product.product_code,
             name=product.name,
             brand=product.brand,
             category=product.category,
             package_size=product.package_size,
             manufacturer_name=product.manufacturer_name,
             company_display_name=company.display_name,
-        ),
+            registration_number=product.registration_number,
+        )
+        if product is not None
+        else None,
         batch=LookupBatch(
             batch_number=batch.batch_number,
             production_date=batch.production_date,
             expiry_date=batch.expiry_date,
-        ),
-        credentials=credentials,
-        announcements=announcements.for_lookup(db, product.product_id),
+        )
+        if batch is not None
+        else None,
+        announcements=announcements.for_lookup(db, product.product_id) if product else [],
     )
     return response, batch
-
-
-def _approved_credentials(db: Session, product: Product, today: date) -> list[LookupCredential]:
-    rows = db.exec(
-        select(CredentialRecord, RegulatoryAgency)
-        .join(RegulatoryAgency, RegulatoryAgency.agency_id == CredentialRecord.agency_id)
-        .where(
-            CredentialRecord.product_id == product.product_id,
-            CredentialRecord.review_status == ReviewStatus.APPROVED,
-        )
-        .order_by(RegulatoryAgency.name, CredentialRecord.reference_number)
-    ).all()
-    return [
-        LookupCredential(
-            agency=agency.name,
-            scheme=agency.scheme,
-            reference_number=credential.reference_number,
-            status=credential_status(credential, today),
-            valid_from=credential.valid_from,
-            valid_until=credential.valid_until,
-            data_mode=credential.data_mode,
-            provenance=credential.provenance,
-            checked_on=credential.checked_on,
-        )
-        for credential, agency in rows
-    ]
 
 
 def record_scan(db: Session, response: LookupResponse, batch: ProductBatch | None) -> None:
@@ -311,7 +253,7 @@ def record_scan(db: Session, response: LookupResponse, batch: ProductBatch | Non
     identifies the person (no IP, session, user, or device details)."""
     db.add(
         BatchScan(
-            input_product_code=response.input.product_code,
+            input_registration_number=response.input.registration_number,
             input_batch_number=response.input.batch_number,
             matched_batch_id=batch.batch_id if batch is not None else None,
             result=response.result,

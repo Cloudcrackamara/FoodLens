@@ -19,7 +19,7 @@ class CompanyReviewStatus(StrEnum):
 
 
 class ReviewStatus(StrEnum):
-    """Batches, credentials, and supplier locations."""
+    """Batches and supplier locations."""
 
     PENDING_REVIEW = "PENDING_REVIEW"
     APPROVED = "APPROVED"
@@ -44,8 +44,8 @@ class MembershipStatus(StrEnum):
     INACTIVE = "INACTIVE"
 
 
-class CredentialStatus(StrEnum):
-    """Status stored in the demo record. Expiry is computed from valid_until, not stored."""
+class RegisterStatus(StrEnum):
+    """Status stored in the simulated regulator register. Expiry is computed from expires_on."""
 
     ACTIVE = "ACTIVE"
     INACTIVE = "INACTIVE"
@@ -63,7 +63,6 @@ class ChangeType(StrEnum):
     LABEL = "LABEL"
     PRODUCT_DETAILS = "PRODUCT_DETAILS"
     BATCH_DETAILS = "BATCH_DETAILS"
-    CREDENTIAL_DETAILS = "CREDENTIAL_DETAILS"
     LOCATION_DETAILS = "LOCATION_DETAILS"
     OTHER = "OTHER"
 
@@ -93,11 +92,10 @@ class FulfilmentMethod(StrEnum):
 
 
 class LookupResult(StrEnum):
-    """One primary state per lookup (docs/DECISIONS.md Q4)."""
+    """One primary state per lookup, checked in this order (docs/DECISIONS.md D80-D84)."""
 
-    DEMO_RECORD_FOUND = "DEMO_RECORD_FOUND"
-    BATCH_NOT_FOUND = "BATCH_NOT_FOUND"
-    BATCH_EXPIRED = "BATCH_EXPIRED"
-    DETAILS_MISMATCH = "DETAILS_MISMATCH"
-    CREDENTIAL_EXPIRED_OR_INACTIVE = "CREDENTIAL_EXPIRED_OR_INACTIVE"
     INSUFFICIENT_OR_AMBIGUOUS = "INSUFFICIENT_OR_AMBIGUOUS"
+    REGISTRATION_NOT_FOUND = "REGISTRATION_NOT_FOUND"
+    REGISTRATION_EXPIRED_OR_INACTIVE = "REGISTRATION_EXPIRED_OR_INACTIVE"
+    REGISTRATION_MISMATCH = "REGISTRATION_MISMATCH"
+    REGISTERED_ACTIVE = "REGISTERED_ACTIVE"

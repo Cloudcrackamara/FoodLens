@@ -62,12 +62,14 @@ def setup_company(client: TestClient, session: Session) -> tuple[Company, Produc
         session,
         company,
         product_code="DEMO-PC-7001",
+        registration_number="DEMO-NAFDAC-7001",
         name="Old Name",
         status=ProductStatus.PUBLISHED,
     )
     batch = f.make_batch(
         session, product, batch_number="LOT-7", review_status=ReviewStatus.APPROVED
     )
+    f.make_register(session, f.make_agency(session), registration_number="DEMO-NAFDAC-7001")
     return company, product, batch
 
 
@@ -209,11 +211,13 @@ def test_approved_change_shows_in_lookup(setup, session: Session) -> None:
     ).json()["notice_id"]
 
     before = company_client.post(
-        "/api/lookups/batch", json={"product_code": "DEMO-PC-7001", "batch_number": "LOT-7"}
+        "/api/lookups/registration",
+        json={"registration_number": "DEMO-NAFDAC-7001", "batch_number": "LOT-7"},
     )
     decide(admin_client, notice_id, "APPROVE")
     after = company_client.post(
-        "/api/lookups/batch", json={"product_code": "DEMO-PC-7001", "batch_number": "LOT-7"}
+        "/api/lookups/registration",
+        json={"registration_number": "DEMO-NAFDAC-7001", "batch_number": "LOT-7"},
     )
 
     assert before.json()["product"]["name"] == "Old Name"
@@ -517,3 +521,21 @@ def test_original_filename_is_sanitised(notice, session: Session) -> None:
     upload(company_client, company, notice_id, "../../etc/<label>.pdf", PDF)
 
     assert session.exec(select(NoticeAttachment)).one().original_filename == "_label_.pdf"
+
+
+def test_registration_number_change_goes_through_review(setup, session: Session) -> None:
+    company_client, admin_client, company, product, _ = setup
+    notice = submit(
+        company_client,
+        company,
+        product_id=str(product.product_id),
+        change_type="LABEL",
+        proposed_changes={"registration_number": " nafdac reg no: demo-nafdac-7002 "},
+    ).json()
+
+    assert notice["fields"][0]["proposed_value"] == "DEMO-NAFDAC-7002"  # normalised
+    session.refresh(product)
+    assert product.registration_number == "DEMO-NAFDAC-7001"  # unchanged while pending
+    decide(admin_client, notice["notice_id"], "APPROVE")
+    session.refresh(product)
+    assert product.registration_number == "DEMO-NAFDAC-7002"

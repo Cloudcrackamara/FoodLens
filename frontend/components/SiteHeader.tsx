@@ -20,7 +20,7 @@ export function SiteHeader() {
             FoodLens
           </Link>
           <Link href="/check" className="text-sm underline">
-            Check a product
+            Check a number
           </Link>
           <Link href="/suppliers" className="text-sm underline">
             Suppliers
