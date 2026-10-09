@@ -111,7 +111,7 @@ Changes to the draft ERD, all approved by the student. Implemented in migration 
 | D20 | Database checks: quantities > 0, attachment size 1 byte–5 MB, `valid_until >= valid_from`, `expiry_date >= production_date`, buyer ≠ seller. | Enforce simple invariants even if a service has a bug. |
 | D21 | Company-asserted identity fields are prefixed `claimed_` (`claimed_legal_name`, `claimed_business_identifier`, `claimed_address`). | Keeps claimed data visibly separate from reviewed fields. |
 | D22 | All reviewable tables (company, product, batch, credential, location, change notice) share `review_status` / `status`, `reviewed_by_user_id`, `reviewed_at`, `review_note`. | One review pattern for services and tests. |
-| D23 | Publishing a product needs admin review: `DRAFT → PENDING_REVIEW → PUBLISHED / REJECTED`, plus `WITHDRAWN`. | Without it a company could put any product in front of consumers unreviewed. Extends non-negotiable rule 4. |
+| D23 | **Superseded by D61 (2026-10-09).** Publishing a product needs admin review: `DRAFT → PENDING_REVIEW → PUBLISHED / REJECTED`, plus `WITHDRAWN`. | Without it a company could put any product in front of consumers unreviewed. Extends non-negotiable rule 4. |
 | D24 | `USER_SESSION` table holds hashed session tokens with expiry and revocation. | Server-side sessions can be revoked on logout; JWT cookies cannot. |
 | D25 | `COMPANY_MEMBER` gains `is_public_contact`, `public_title`, `public_phone`, `public_email`. | Supplier pages can name representatives without exposing login emails. |
 | D26 | Member roles are `OWNER` and `REPRESENTATIVE` only. | `STAFF` had no distinct permissions. |
@@ -177,3 +177,16 @@ Code: `backend/app/services/companies.py`, `services/suppliers.py`, `routers/com
 | D58 | `GET /api/suppliers` is public, at the student's request (the handoff had wholesalers signing in). It lists approved companies that have at least one demo-reviewed location, shows only those locations, the company's public contact details, and members who opted in as public contacts. It never shows claimed fields, review notes, or login emails. | Rules 4 and 7; privacy of claimed data and accounts. |
 | D59 | Badge text is exactly "FoodLens demo-reviewed profile", always with the note "Reviewed for the FoodLens demonstration database only. This is not a NAFDAC or SON approval, and it does not verify the company's identity or products." | Rule 4 wording. |
 | D60 | Seed adds five fictional locations: three reviewed (Demo Harvest ×2, Sample Springs) and two pending (Example Grain Mills, Pending Demo Snacks), so the directory shows two suppliers. | Demonstrates both listed and hidden cases. |
+
+## Company catalogue (2026-10-09)
+
+Student decision: keep the catalogue simple. Code: `backend/app/services/catalogue.py`, `routers/catalogue.py`; `frontend/components/company/Catalogue.tsx`.
+
+| # | Decision | Reason |
+|---|---|---|
+| D61 | Approved companies publish new products and batches directly: products are `PUBLISHED` and batches `APPROVED` on creation, with no admin step. **Supersedes D23** and the "new batches stay pending" part of rule 5. Pending, rejected, or suspended companies cannot add products (409), and their products are hidden from lookups anyway. | Less friction for companies; the credential review (D63) still stops unreviewed data from looking trustworthy. |
+| D62 | A batch with `review_status = APPROVED` and no reviewer means "published by the company". Product codes, batch numbers, and credential references are stored normalised (trimmed, upper-case) and must be unique case-insensitively: product code across the catalogue, batch number per product, reference per agency. | Lookups normalise input, so stored codes must match exactly. |
+| D63 | Company-entered credentials are claims: `PENDING_REVIEW`, status `ACTIVE`, `data_mode` `DEMO`, and fixed provenance "Entered by the company as a claim…", all set by the server (the client cannot set status). Hidden from lookups until an admin approves; rejected claims stay hidden. Admins review them at `/admin` with the same conflict-of-interest and audit rules as companies (D55-D56). | Rule 3 and Q5. Until a claim is approved, a company's new product returns `DETAILS_MISMATCH (credential)`, never "Demo record found". |
+| D64 | Editing a published product is not built here; it goes through change notices (Phase 5). No separate product-approval flow. Extra representatives and a supplier detail page are skipped (one owner per company is enough). | Avoid over-engineering. |
+| D65 | On company registration the owner becomes the directory contact: `is_public_contact`, title "Owner", and the company's contact email and phone. The owner's login email is never shown. | Directory must show the owner's contact (student request) without breaking D58. |
+| D66 | Registration offers three company types: Manufacturer, Wholesaler, or Manufacturer and wholesaler (`MANUFACTURER`, `WHOLESALER`, `BOTH`). Any approved company type may add products. | Confirmed by the student; tested for all three. |

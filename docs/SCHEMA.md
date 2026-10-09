@@ -85,7 +85,7 @@ A physical site of a company, reviewed before it appears in the directory.
 |---|---|
 | `product_code` | Barcode or FoodLens code. Unique **(DB)**. |
 | `label_information` | Free text from the label. |
-| `status` | `DRAFT` (default) → `PENDING_REVIEW` → `PUBLISHED` / `REJECTED`; `WITHDRAWN` later. Companies edit drafts directly; published products change only through a change notice **(service)**. Only `PUBLISHED` products are visible to lookup and directory **(service)**. |
+| `status` | Products created by approved companies are `PUBLISHED` at once (D61). `DRAFT`, `PENDING_REVIEW`, `REJECTED`, `WITHDRAWN` remain available but are not used by the current workflow. Published products change only through a change notice **(service)**. Only `PUBLISHED` products of approved companies are visible to lookup **(service)**. |
 
 ### `product_batch`
 | Column | Notes |
@@ -93,7 +93,7 @@ A physical site of a company, reviewed before it appears in the directory.
 | `(product_id, batch_number)` | Unique together **(DB)**. The same batch number may exist on different products. |
 | `expiry_date` | Must be on or after `production_date` when both are set **(DB)**. A past expiry gives lookup result `BATCH_EXPIRED` **(service)**. |
 | `qr_token` | Optional, unique, opaque. Not secret and not proof of authenticity. |
-| `review_status` | `PENDING_REVIEW` default. Pending and rejected batches are invisible to lookup (`BATCH_NOT_FOUND`) **(service)**. |
+| `review_status` | Batches created by approved companies are `APPROVED` with no reviewer, meaning "published by the company" (D61-D62). Pending and rejected batches are invisible to lookup (`BATCH_NOT_FOUND`) **(service)**. |
 
 ### `regulatory_agency`
 Simulated issuer and scheme, e.g. "NAFDAC (simulated)" / "Food product registration (demo)". `(name, scheme)` unique **(DB)**. `data_mode` is always `DEMO` **(DB)**.
@@ -108,7 +108,7 @@ Product-level credential. Never presented as a batch test or batch certificate.
 | `valid_until` | On or after `valid_from` when both set **(DB)**. |
 | `data_mode` | Always `DEMO` **(DB)**. |
 | `provenance`, `checked_on` | Where the demo record came from and when it was last checked. |
-| `submitted_by_user_id` | Company user who entered it; null for seeded rows. |
+| `submitted_by_user_id` | Company user who entered it; null for seeded rows. Company-entered credentials are claims with fixed provenance text (D63). |
 | `review_status` | `PENDING_REVIEW` default. Pending credentials are hidden from lookup **(service)**. |
 
 ---

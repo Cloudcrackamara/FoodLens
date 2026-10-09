@@ -16,6 +16,11 @@ import {
   type CompanyDecision,
   type CompanyStatus,
 } from "@/lib/companies";
+import {
+  useAdminCredentials,
+  useCredentialDecision,
+  type AdminCredential,
+} from "@/lib/catalogue";
 import { formatDate } from "@/lib/lookup";
 
 const companyActions: Record<CompanyStatus, CompanyDecision[]> = {
@@ -117,6 +122,36 @@ function LocationRow({ location }: { location: AdminLocation }) {
   );
 }
 
+function CredentialRow({ credential }: { credential: AdminCredential }) {
+  const decide = useCredentialDecision();
+  const [note, setNote] = useState("");
+  const send = (decision: "APPROVE" | "REJECT") =>
+    decide.mutate({ credentialId: credential.credential_id, decision, note });
+
+  return (
+    <li aria-label={credential.reference_number} className="flex flex-col gap-2 rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
+      <div>
+        <h3 className="font-semibold">{credential.agency} · {credential.reference_number}</h3>
+        <p className="text-sm">{credential.scheme}</p>
+        <p className="text-sm">
+          {credential.product_name} ({credential.product_code}) · {credential.company_display_name}
+          {credential.submitted_by_display_name && ` · claimed by ${credential.submitted_by_display_name}`}
+        </p>
+        <p className="text-sm">Valid {formatDate(credential.valid_from)} to {formatDate(credential.valid_until)}</p>
+      </div>
+      <label className="flex flex-col gap-1 text-sm">
+        <span className="font-medium">Review note (optional)</span>
+        <input value={note} onChange={(event) => setNote(event.target.value)} className="rounded-md border border-zinc-400 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-900" />
+      </label>
+      <div className="flex flex-wrap gap-2">
+        <button type="button" disabled={decide.isPending} onClick={() => send("APPROVE")} className="rounded-md border border-zinc-600 px-3 py-1 font-medium disabled:opacity-60">Approve for lookups</button>
+        <button type="button" disabled={decide.isPending} onClick={() => send("REJECT")} className="rounded-md border border-zinc-600 px-3 py-1 font-medium disabled:opacity-60">Reject</button>
+      </div>
+      {decide.isError && <p role="alert" className="text-red-700 dark:text-red-400">{describeError(decide.error)}</p>}
+    </li>
+  );
+}
+
 const companyFilters: (CompanyStatus | "ALL")[] = ["PENDING_REVIEW", "APPROVED", "SUSPENDED", "REJECTED", "ALL"];
 
 export function AdminReview() {
@@ -124,6 +159,7 @@ export function AdminReview() {
   const [companyFilter, setCompanyFilter] = useState<CompanyStatus | "ALL">("PENDING_REVIEW");
   const companies = useAdminCompanies(companyFilter);
   const locations = useAdminLocations("PENDING_REVIEW");
+  const credentials = useAdminCredentials();
 
   if (isPending) return <p>Loading…</p>;
   if (!user?.is_admin) return <p role="alert">Admin access required.</p>;
@@ -153,6 +189,16 @@ export function AdminReview() {
         {locations.data?.length === 0 && <p>No locations awaiting review.</p>}
         <ul className="flex flex-col gap-3">
           {locations.data?.map((location) => <LocationRow key={location.location_id} location={location} />)}
+        </ul>
+      </section>
+
+      <section aria-labelledby="credentials-heading" className="flex flex-col gap-3">
+        <h2 id="credentials-heading" className="text-xl font-bold">Credential claims awaiting review</h2>
+        <p className="text-sm text-zinc-700 dark:text-zinc-300">Approved claims appear in consumer lookups as product-level demo records.</p>
+        {credentials.isError && <p role="alert">{describeError(credentials.error)}</p>}
+        {credentials.data?.length === 0 && <p>No credential claims awaiting review.</p>}
+        <ul className="flex flex-col gap-3">
+          {credentials.data?.map((credential) => <CredentialRow key={credential.credential_id} credential={credential} />)}
         </ul>
       </section>
     </div>

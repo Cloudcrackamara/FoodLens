@@ -139,20 +139,22 @@ Note: delivered together with the Phase 2 lookup (2026-10-08); expiry is compute
 - Company dashboard and admin review queue screens
 
 **Done when**
-- [ ] Test: new batch and credential invisible to lookup until admin approves
+- [x] Test: credential claim invisible to lookup until admin approves (new batches now go live directly, D61)
 - [ ] Test: contact detail edit writes an audit entry with actor and time
 - [ ] Test: published product fields cannot be edited directly (only via change notice, Phase 5)
 - [ ] Test: company user cannot approve own company, location, or credential
 - [ ] Test: client cannot set status, reviewer, or ownership fields on any create/update
 - [ ] Test: member cannot edit another company's products, batches, or locations
 - [ ] Test: unapproved company cannot publish products to lookups or the directory
-- [ ] Test: company cannot publish its own product; only admin moves `PENDING_REVIEW` to `PUBLISHED`
+- [x] ~~Test: company cannot publish its own product~~ (superseded by D61: approved companies publish directly; pending companies cannot)
 - [ ] Test: admin decisions record reviewer and timestamp
 
 **Progress (2026-10-08)**
 - Done: company registration (`PENDING_REVIEW` + owner), admin approve/reject/suspend with reviewer, time, note, and audit; supplier locations (pending until admin review, only for approved companies); company dashboard and admin review screens.
 - Tested so far: company cannot approve itself or its locations; admin cannot review a company they belong to; client cannot set review/ownership fields on company or location create; member cannot add locations to another company; decisions record reviewer and time.
-- Remaining: representative management, product drafts / batches / credential entry and their review, contact-detail edits with audit, and the related tests above.
+- Done (2026-10-09): products and batches published directly by approved companies (D61); credential claims reviewed by admins before they reach lookups (D63); owner shown as directory contact (D65).
+- Dropped as over-engineering (D64): extra representatives, product-approval flow, supplier detail page.
+- Remaining: contact-detail edits with audit (optional).
 
 ---
 

@@ -87,6 +87,12 @@ def register_company(db: Session, user: AppUser, data: CompanyRegisterRequest) -
             company_id=company.company_id,
             role=MemberRole.OWNER,
             membership_status=MembershipStatus.ACTIVE,
+            # The owner is the directory contact, using the company's public contact details
+            # (never their login email, D58/D63).
+            is_public_contact=True,
+            public_title="Owner",
+            public_email=company.contact_email,
+            public_phone=company.contact_phone,
         )
     )
     audit.record(

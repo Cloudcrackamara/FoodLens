@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { FormField } from "@/components/auth/FormField";
+import { Catalogue } from "./Catalogue";
 import { describeError } from "@/lib/api";
 import { fieldErrors, useCurrentUser } from "@/lib/auth";
 import {
@@ -99,6 +100,8 @@ export function CompanyView({ company }: { company: Company }) {
         )}
         {company.review_status === "APPROVED" && <AddLocationForm companyId={company.company_id} />}
       </section>
+
+      {company.review_status === "APPROVED" && <Catalogue companyId={company.company_id} />}
     </div>
   );
 }

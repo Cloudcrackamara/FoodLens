@@ -57,3 +57,12 @@ Problems met while building FoodLens, what caused them, and how they were resolv
 | 35 | Requirements | Supplier directory requested as public; handoff had wholesalers signing in to search. | Requirement changed. | Public directory showing only reviewed data (D58). | Decision |
 | 36 | Dev data | No admin account exists in the dev database, so `/admin` cannot be used yet. | Test accounts were cleaned up and `SEED_ADMIN_*` is not set. | Set `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` in `backend/.env` and run `uv run python -m app.seed`. | Open |
 | 37 | Scope | Phase 4 is only partly done (no representative management or product/batch/credential entry yet). | Request covered registration, review, locations, and directory only. | Remaining items listed in `docs/PLAN.md` Phase 4 progress. | Open |
+
+## 2026-10-09 — Company catalogue
+
+| # | Area | Challenge | Cause | Resolution | Status |
+|---|---|---|---|---|---|
+| 38 | Docker | Test run hung past 5 minutes; every test errored. | Docker Desktop was closed again at the start of a new session (same as #19). | Started Docker Desktop and waited for Postgres to be healthy. Lesson: start Docker Desktop first each day. | Resolved |
+| 39 | Requirements | New request: products and batches go live without admin review, which contradicted rule 4, rule 5, and D23. | Student simplified the workflow. | Rules and decisions updated (D61-D63); the credential review remains the gate, so unreviewed products never show "Demo record found". | Decision |
+| 40 | Privacy | Directory had to show the owner's contact, but D58 forbids showing login emails. | Two requirements overlapping. | Owner shown with the company's public contact email and phone (D65). | Decision |
+| 41 | Tooling | A long inline script failed with "unexpected EOF while looking for matching quote". | Bash heredoc quoting broke on mixed quotes in a long document edit. | Wrote the script to a scratch file and ran it from there. | Resolved |
