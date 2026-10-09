@@ -4,7 +4,7 @@
 
 Build a responsive, role-based FoodLens prototype where consumers can look up simulated product/batch/credential records, companies can manage reviewed catalogue data and submit change notices, and wholesalers can discover demo-reviewed suppliers and place traceable order requests—without making official certification or product-safety claims.
 
-Product brief: `docs/HANDOFF.md`. Schema: `docs/SCHEMA.md` (tables and rules) and `docs/ERD.mmd` (diagram). Phase plan: `docs/PLAN.md`. Decisions (answered 2026-10-07): `docs/DECISIONS.md` — read it before implementing lookup, change notices, or announcements.
+Product brief: `docs/HANDOFF.md`. Schema: `docs/SCHEMA.md` (tables and rules) and `docs/ERD.mmd` (diagram). Phase plan: `docs/PLAN.md`. Challenge log: `docs/log.md`. Decisions (answered 2026-10-07): `docs/DECISIONS.md` — read it before implementing lookup, change notices, or announcements.
 `docs/archive/ERD_v1_consumer_only.mmd` is superseded history; do not build from it.
 
 ## Non-negotiable rules
@@ -88,3 +88,4 @@ npm test
 - Keep `README.md` install/run/test/seed/migrate instructions current.
 - Schema changes go through an Alembic migration; read the generated file before applying, and keep `docs/SCHEMA.md` and `docs/ERD.mmd` in step. `uv run alembic check` must pass.
 - Never commit secrets; use environment variables and keep `.env.example` up to date.
+- Log every real challenge (error, blocker, conflicting requirement, surprising tool behaviour) in `docs/log.md` as it happens: date section, area, challenge, cause, resolution, status. Add to it in the same task, not later.
