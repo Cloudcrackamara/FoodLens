@@ -50,6 +50,7 @@ Product brief: `docs/HANDOFF.md`. Schema: `docs/SCHEMA.md` (tables and rules) an
   lib/               typed API client, Zod schemas, query hooks
   server.mjs         custom server: replaces X-Forwarded-For with the real client IP (D45)
 /docs                handoff, PLAN.md, DECISIONS.md, schema docs
+/scripts             dev.mjs: start DB, migrate, seed, API and web app in one command
 docker-compose.yml
 ```
 
@@ -58,6 +59,9 @@ docker-compose.yml
 These exist after Phase 0.
 
 ```bash
+# Everything at once (from the repo root): DB, migrations, seed, API, web app
+node scripts/dev.mjs
+
 # Database
 docker compose up -d db
 

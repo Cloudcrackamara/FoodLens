@@ -104,3 +104,11 @@ Problems met while building FoodLens, what caused them, and how they were resolv
 | # | Area | Challenge | Cause | Resolution | Status |
 |---|---|---|---|---|---|
 | 64 | Scope | Seven Phase 4 checklist items were still unticked after Phase 7. | Most were covered by tests written in Phases 4-7 but never ticked; contact-detail editing was never built (marked "optional"). | Matched each item to its tests; built the owner contact edit with audit (D103); added a test that products and batches have no direct edit routes. | Resolved |
+
+## 2026-10-12 — One-command local start
+
+| # | Area | Challenge | Cause | Resolution | Status |
+|---|---|---|---|---|---|
+| 65 | Seed | `uv run python -m app.seed` crashed with `DetachedInstanceError` after seeding. | Once `SEED_ADMIN_*` was set, `main()` printed `admin.email` after the session had closed and later commits had expired the object. It had never run before because no admin was configured. | Read the email inside the session block. The data had already been committed. | Resolved |
+| 66 | Local env | Appending `SEED_DEMO_PASSWORD` to `backend/.env` glued a comment onto the end of the `SEED_ADMIN_PASSWORD` line. | The file had no final newline. | Removed the glued text straight away and checked the line. Lesson: check for a final newline before appending to `.env`. | Resolved |
+| 67 | Running the app | Port 3000 was still in use after stopping the earlier dev server. | Stopping the background shell left the `node server.mjs --dev` child process running. | Checked the process command line, then stopped its process tree. `scripts/dev.mjs` stops its servers with `taskkill /T` on Windows. | Resolved |

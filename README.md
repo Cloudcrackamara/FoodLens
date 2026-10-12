@@ -41,7 +41,27 @@ cd ../frontend
 npm install
 ```
 
-## Run
+## Start everything with one command
+
+After first-time setup (dependencies installed, `backend/.env` created), run from the repo root:
+
+```bash
+node scripts/dev.mjs
+```
+
+It starts Postgres with Docker Compose and waits until it is healthy. Then it applies migrations, runs the seed, and starts the API (`http://localhost:8000`) and the web app (`http://localhost:3000`) with `[api]` / `[web]` log prefixes. It waits for both health checks and prints the URLs. Docker Desktop must be running, and ports 3000 and 8000 must be free.
+
+Stop: press **Ctrl+C** to stop the API and web app. The database keeps its data and keeps running until `docker compose stop db`.
+
+Sign-ins after seeding:
+
+| Account | Email | Password |
+|---|---|---|
+| Admin | `SEED_ADMIN_EMAIL` in `backend/.env` | `SEED_ADMIN_PASSWORD` in `backend/.env` |
+| Demo wholesaler (buyer) | `buyer@demo.foodlens.invalid` | `SEED_DEMO_PASSWORD` in `backend/.env` |
+| Demo supplier (Demo Harvest Foods) | `seller@demo.foodlens.invalid` | `SEED_DEMO_PASSWORD` in `backend/.env` |
+
+## Run (separate terminals)
 
 ```bash
 # Terminal 1 — API on http://localhost:8000 (docs at /docs)
