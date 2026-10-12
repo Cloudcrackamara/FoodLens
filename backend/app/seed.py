@@ -72,12 +72,14 @@ def main() -> None:
     password = demo_password(settings)
     with Session(get_engine()) as db:
         admin = seed_admin(db, settings)
+        # Read now: later commits expire the object, and the session closes after this block.
+        admin_email = admin.email if admin else None
         seed_demo_data(db)
         seed_demo_orders(db, password)
-    if admin is None:
+    if admin_email is None:
         print("Seed admin skipped: set SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD in backend/.env.")
     else:
-        print(f"Seed admin ready: {admin.email}")
+        print(f"Seed admin ready: {admin_email}")
     print(f"Demo lookup data ready ({len(SEED_CASES)} documented cases; see README).")
     if password:
         print(f"Demo order accounts ready: {DEMO_BUYER_EMAIL}, {DEMO_SELLER_EMAIL}")
