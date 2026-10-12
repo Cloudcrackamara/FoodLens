@@ -1,7 +1,8 @@
 """Load demo data. Run with: uv run python -m app.seed
 
 Creates the seed admin from SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD when both are set, then the
-fictional lookup dataset (app/demo_data.py). Safe to run repeatedly.
+fictional lookup dataset and demo orders (app/demo_data.py). The demo buyer and seller
+accounts can sign in only when SEED_DEMO_PASSWORD is set. Safe to run repeatedly.
 """
 
 from sqlmodel import Session, select
@@ -9,7 +10,13 @@ from sqlmodel import Session, select
 from app.core.config import Settings, get_settings
 from app.core.db import get_engine
 from app.core.security import MAX_PASSWORD_BYTES, MIN_PASSWORD_LENGTH, hash_password
-from app.demo_data import SEED_CASES, seed_demo_data
+from app.demo_data import (
+    DEMO_BUYER_EMAIL,
+    DEMO_SELLER_EMAIL,
+    SEED_CASES,
+    seed_demo_data,
+    seed_demo_orders,
+)
 from app.models import AppUser
 from app.services.auth import normalize_email
 
@@ -47,15 +54,35 @@ def seed_admin(db: Session, settings: Settings) -> AppUser | None:
     return user
 
 
+def demo_password(settings: Settings) -> str | None:
+    """SEED_DEMO_PASSWORD, checked like any account password; None when not set."""
+    password = settings.seed_demo_password or None
+    if password and (
+        len(password) < MIN_PASSWORD_LENGTH or len(password.encode("utf-8")) > MAX_PASSWORD_BYTES
+    ):
+        raise SeedConfigError(
+            f"SEED_DEMO_PASSWORD must be {MIN_PASSWORD_LENGTH} characters to "
+            f"{MAX_PASSWORD_BYTES} bytes long"
+        )
+    return password
+
+
 def main() -> None:
+    settings = get_settings()
+    password = demo_password(settings)
     with Session(get_engine()) as db:
-        admin = seed_admin(db, get_settings())
+        admin = seed_admin(db, settings)
         seed_demo_data(db)
+        seed_demo_orders(db, password)
     if admin is None:
         print("Seed admin skipped: set SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD in backend/.env.")
     else:
         print(f"Seed admin ready: {admin.email}")
     print(f"Demo lookup data ready ({len(SEED_CASES)} documented cases; see README).")
+    if password:
+        print(f"Demo order accounts ready: {DEMO_BUYER_EMAIL}, {DEMO_SELLER_EMAIL}")
+    else:
+        print("Demo order accounts cannot sign in: set SEED_DEMO_PASSWORD in backend/.env.")
 
 
 if __name__ == "__main__":

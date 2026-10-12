@@ -131,6 +131,16 @@ Running the seed again is safe. If an account with that email already exists it 
 
 Try the full flow: create an account at `/register`, register a company, sign in as the seed admin in another browser (or a private window) and approve it at `/admin`, add a location at `/company`, mark it demo-reviewed at `/admin`, then see it at `/suppliers`. A company's products only show as registered at `/check` if their printed number matches an active record in the simulated register. A FoodLens demo review is never a NAFDAC or SON approval.
 
+## Wholesale order requests
+
+Order requests are requests only: no prices or payments (D95-D101).
+
+- `/suppliers`: search approved suppliers by name, area, or product, then open a supplier page. It shows the supplier's reviewed locations, contacts, and each published product's result in the simulated register (demo data).
+- Members of approved wholesaler (or "manufacturer and wholesaler") companies see **Request an order** on a supplier page. They choose quantities, units, and pickup or delivery, then track requests at `/orders` and cancel while a request is still "Requested".
+- Suppliers see **Incoming orders** at `/company`: Accept, Decline (optional reason), Reply, and Mark fulfilled, optionally linking their own batches to each line.
+
+Demo accounts: set `SEED_DEMO_PASSWORD` in `backend/.env` (at least 10 characters) and run `uv run python -m app.seed`. Then sign in as `buyer@demo.foodlens.invalid` (Demo Market Traders) or `seller@demo.foodlens.invalid` (Demo Harvest Foods) with that password. The seed adds one order in each status. Without `SEED_DEMO_PASSWORD` these accounts cannot sign in.
+
 ## Rate limits
 
 Requests are limited per network (IP address); no cookies or identifiers are used. Defaults, all changeable in `backend/.env`:

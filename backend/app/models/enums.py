@@ -79,7 +79,9 @@ class AnnouncementStatus(StrEnum):
 
 
 class OrderStatus(StrEnum):
-    SUBMITTED = "SUBMITTED"
+    """REQUESTED -> ACCEPTED | DECLINED | CANCELLED; ACCEPTED -> FULFILLED (D96)."""
+
+    REQUESTED = "REQUESTED"
     ACCEPTED = "ACCEPTED"
     DECLINED = "DECLINED"
     FULFILLED = "FULFILLED"

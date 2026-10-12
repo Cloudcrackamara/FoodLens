@@ -11,22 +11,32 @@ product without a registration number gets one (for databases seeded before D81)
 
 from dataclasses import dataclass, field
 from datetime import date, timedelta
+from decimal import Decimal
 
 from sqlmodel import Session, select
 
+from app.core.security import hash_password
 from app.models import (
+    AppUser,
     Company,
+    CompanyMember,
+    OrderBatchAllocation,
+    OrderLine,
     Product,
     ProductBatch,
     RegulatorRegister,
     RegulatoryAgency,
     SupplierLocation,
+    WholesaleOrder,
 )
 from app.models.base import utc_now
 from app.models.enums import (
     CompanyReviewStatus,
     CompanyType,
+    FulfilmentMethod,
     LookupResult,
+    MemberRole,
+    OrderStatus,
     ProductStatus,
     RegisterStatus,
     ReviewStatus,
@@ -245,4 +255,140 @@ def seed_demo_data(db: Session, today: date | None = None) -> None:
     location(pending, "Pending Demo Snacks store (fictional)", "9 Test Street", "Abuja",
              ReviewStatus.PENDING_REVIEW)  # fmt: skip
 
+    db.commit()
+
+
+# --- Demo wholesale orders (D101) -------------------------------------------------------------
+
+DEMO_BUYER_EMAIL = "buyer@demo.foodlens.invalid"
+DEMO_SELLER_EMAIL = "seller@demo.foodlens.invalid"
+# Not a bcrypt hash, so no password matches it: the account cannot sign in.
+UNUSABLE_PASSWORD_HASH = "!login-disabled-set-SEED_DEMO_PASSWORD"
+
+
+def _demo_owner(
+    db: Session, email: str, name: str, company: Company, password: str | None
+) -> AppUser:
+    """Owner account for a demo company. Can sign in only when SEED_DEMO_PASSWORD is set."""
+    user = db.exec(select(AppUser).where(AppUser.email == email)).first()
+    if user is None:
+        user = AppUser(email=email, display_name=name, password_hash=UNUSABLE_PASSWORD_HASH)
+    if password:
+        user.password_hash = hash_password(password)
+    db.add(user)
+    db.flush()
+    _get_or_create(
+        db,
+        CompanyMember,
+        {"user_id": user.user_id},
+        {
+            "company_id": company.company_id,
+            "role": MemberRole.OWNER,
+            "is_public_contact": True,
+            "public_title": "Owner",
+            "public_email": company.contact_email,
+        },
+    )
+    return user
+
+
+def seed_demo_orders(db: Session, password: str | None = None) -> None:
+    """A demo wholesaler, owner accounts for it and Demo Harvest Foods, and one order in each
+    status. Requires seed_demo_data first. Idempotent (orders are found by their buyer note)."""
+    harvest = db.exec(
+        select(Company).where(Company.claimed_business_identifier == "DEMO-RC-0001")
+    ).one()
+    market = _get_or_create(
+        db,
+        Company,
+        {"claimed_business_identifier": "DEMO-RC-0005"},
+        {
+            "company_type": CompanyType.WHOLESALER,
+            "display_name": "Demo Market Traders (fictional)",
+            "contact_email": "contact@demo-rc-0005.example",
+            "claimed_legal_name": "Demo Market Traders (fictional) Ltd",
+            "claimed_address": "Stall 7, Sample Market (fictional)",
+            **_reviewed(CompanyReviewStatus.APPROVED),
+        },
+    )
+    buyer = _demo_owner(db, DEMO_BUYER_EMAIL, "Demo Buyer", market, password)
+    _demo_owner(db, DEMO_SELLER_EMAIL, "Demo Seller", harvest, password)
+
+    products = {
+        p.product_code: p
+        for p in db.exec(select(Product).where(Product.company_id == harvest.company_id))
+    }
+    depot = db.exec(
+        select(SupplierLocation)
+        .where(
+            SupplierLocation.company_id == harvest.company_id,
+            SupplierLocation.review_status == ReviewStatus.APPROVED,
+        )
+        .order_by(SupplierLocation.name)
+    ).first()
+
+    def order(note: str, status: OrderStatus, lines: list[tuple[str, str, str]], *,
+              delivery: str | None = None, seller_note: str | None = None,
+              batches: dict[str, str] | None = None) -> None:  # fmt: skip
+        existing = db.exec(
+            select(WholesaleOrder).where(
+                WholesaleOrder.buyer_company_id == market.company_id,
+                WholesaleOrder.buyer_note == note,
+            )
+        ).first()
+        if existing is not None:
+            return
+        row = WholesaleOrder(
+            buyer_company_id=market.company_id,
+            seller_company_id=harvest.company_id,
+            created_by_user_id=buyer.user_id,
+            fulfilment_method=FulfilmentMethod.DELIVERY if delivery else FulfilmentMethod.PICKUP,
+            pickup_location_id=None if delivery else depot.location_id,
+            delivery_details=delivery,
+            status=status,
+            buyer_note=note,
+            seller_note=seller_note,
+        )
+        db.add(row)
+        db.flush()
+        for code, quantity, unit in lines:
+            line = OrderLine(
+                order_id=row.order_id,
+                product_id=products[code].product_id,
+                quantity=Decimal(quantity),
+                unit=unit,
+            )
+            db.add(line)
+            db.flush()
+            batch_number = (batches or {}).get(code)
+            if batch_number:
+                batch_row = db.exec(
+                    select(ProductBatch).where(
+                        ProductBatch.product_id == products[code].product_id,
+                        ProductBatch.batch_number == batch_number,
+                    )
+                ).one()
+                db.add(OrderBatchAllocation(line_id=line.line_id, batch_id=batch_row.batch_id))
+
+    order(
+        "Demo order: weekly palm oil restock",
+        OrderStatus.REQUESTED,
+        [("DEMO-PC-0001", "20", "carton")],
+    )
+    order(
+        "Demo order: groundnut oil for the shop",
+        OrderStatus.ACCEPTED,
+        [("DEMO-PC-0002", "10", "carton")],
+        delivery="Stall 7, Sample Market (fictional)",
+        seller_note="Accepted. Delivery on Friday morning.",
+    )
+    order(
+        "Demo order: tomato paste",
+        OrderStatus.DECLINED,
+        [("DEMO-PC-0005", "50", "carton")],
+        seller_note="Not available this month.",
+    )
+    order("Demo order: palm oil and honey", OrderStatus.FULFILLED,
+          [("DEMO-PC-0001", "5", "carton"), ("DEMO-PC-0006", "12", "jar")],
+          batches={"DEMO-PC-0001": "DEMO-LOT-101"})  # fmt: skip
     db.commit()

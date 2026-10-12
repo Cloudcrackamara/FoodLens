@@ -1,7 +1,7 @@
 import uuid
 from decimal import Decimal
 
-from sqlalchemy import CheckConstraint, Text
+from sqlalchemy import CheckConstraint, Text, UniqueConstraint
 from sqlmodel import Field
 
 from app.models.base import CreatedAtMixin, TimestampMixin, enum_column, uuid_pk
@@ -28,7 +28,7 @@ class WholesaleOrder(TimestampMixin, table=True):
     )
     delivery_details: str | None = Field(default=None, sa_type=Text)
     status: OrderStatus = Field(
-        default=OrderStatus.SUBMITTED, sa_type=enum_column(OrderStatus, "order_status")
+        default=OrderStatus.REQUESTED, sa_type=enum_column(OrderStatus, "order_status")
     )
     buyer_note: str | None = Field(default=None, sa_type=Text)
     seller_note: str | None = Field(default=None, sa_type=Text)
@@ -46,14 +46,12 @@ class OrderLine(CreatedAtMixin, table=True):
 
 
 class OrderBatchAllocation(CreatedAtMixin, table=True):
-    """Batch used to fulfil a line. The service checks the batch belongs to the line's product."""
+    """Batch used to fulfil a line; no quantities, since FoodLens keeps no stock (D99).
+    The service checks the batch belongs to the line's product and the seller."""
 
     __tablename__ = "order_batch_allocation"
-    __table_args__ = (
-        CheckConstraint("allocated_quantity > 0", name="allocated_quantity_positive"),
-    )
+    __table_args__ = (UniqueConstraint("line_id", "batch_id"),)
 
     allocation_id: uuid.UUID = uuid_pk()
     line_id: uuid.UUID = Field(foreign_key="order_line.line_id", index=True)
     batch_id: uuid.UUID = Field(foreign_key="product_batch.batch_id", index=True)
-    allocated_quantity: Decimal = Field(max_digits=12, decimal_places=3)

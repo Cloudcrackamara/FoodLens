@@ -1,6 +1,6 @@
 # FoodLens build plan
 
-Follows Section 12 of the handoff. Section 12 step 1 ("confirm scope") is a gate before Phase 0, not a build phase. Section 12 step 8 is split into Phase 6 (supplier discovery) and Phase 7 (order requests), giving phases 0–9.
+Follows Section 12 of the handoff. Section 12 step 1 ("confirm scope") is a gate before Phase 0, not a build phase. Section 12 step 8 is split into Phase 6 (supplier discovery) and Phase 7 (order requests). Re-ordered 2026-10-12 (D102): after Phase 7 come 8 Deployment and 9 Polish and evaluation; concern reports are deferred.
 
 Every phase is done only when all tests listed under "Done when" exist and pass, existing tests still pass, docs are updated, and the student signs off. Do not start the next phase without being asked.
 
@@ -195,59 +195,9 @@ Note: delivered together with the Phase 2 lookup (2026-10-08); expiry is compute
 **Done when**
 - [x] Test: pending/rejected/suspended companies and unreviewed locations never listed
 - [x] Test: badge wording exact and never implies official certification
-- [ ] Test: only wholesaler-capable users reach buyer screens (directory itself is public, D58; applies to ordering in Phase 7)
+- [x] Test: only wholesaler-capable users reach buyer screens (directory itself is public, D58; order form and My orders only for approved wholesaler/both members, D95)
 
 ---
-
-## Phase 7 — Order requests
-
-**Goal:** Wholesalers send order requests; sellers respond; fulfilment can record batches.
-
-**Deliverables**
-- Order status lifecycle service (see `docs/DECISIONS.md`)
-- Seller accept/decline/reply; buyer cancel before acceptance
-- Batch allocation at fulfilment
-- Buyer and seller order screens
-
-**Done when**
-- [ ] Test: buyer can order only approved products from approved sellers (buyer companies need no approval)
-- [ ] Test: only the seller company can accept/decline; only the buyer company can cancel
-- [ ] Test: invalid status transitions rejected
-- [ ] Test: allocated batch must belong to the order line's product
-- [ ] Test: no payment fields exist in models or schemas
-
----
-
-## Phase 8 — Optional: concern reports and scan analytics
-
-**Goal:** If time allows, consumers can privately report a concern; anonymized scan stats if approved.
-
-**Deliverables**
-- `CONCERN_REPORT` with product/batch snapshots, optional contact, optional photo, private admin queue
-- Optional anonymized `BATCH_SCAN` (no user/IP link)
-
-**Done when**
-- [ ] Test: reports never exposed via public endpoints
-- [ ] Test: report wording never states it reached a regulator
-- [ ] Test: scan log stores no personal identifiers
-- [ ] Retention/deletion rule documented
-
----
-
-## Phase 9 — Evaluation and documentation
-
-**Goal:** Evidence the prototype works and is understood; capstone-ready docs.
-
-**Deliverables**
-- End-to-end smoke tests for the four main workflows
-- Usability study script, consent form, and task list (lookup, interpret result, find supplier, place order request)
-- Measures: completion, errors, time, comprehension of demo-data limitation
-- Schema/migration docs, demo script, final README
-
-**Done when**
-- [ ] All backend and frontend tests pass
-- [ ] Study materials approved by supervisor before any participant session
-- [ ] Docs let a reader install, seed, run, and test from a clean clone
 
 ## Addition — Camera scanning (2026-10-12, D88-D94)
 
@@ -261,7 +211,36 @@ Note: delivered together with the Phase 2 lookup (2026-10-08); expiry is compute
 - [x] `server.mjs` trusts `CF-Connecting-IP` only from cloudflared when enabled (D90)
 - [ ] Accuracy measured on about 20 real packs (`docs/OCR_ACCURACY.md`)
 
-## Phase 10 — Deployment (planned, not built)
+---
+
+## Phase 7 — Wholesale order requests (2026-10-12, D95-D101)
+
+**Goal:** Wholesalers find approved suppliers and send order requests; suppliers respond. Secondary, business side: kept minimal.
+
+**Deliverables**
+- Supplier search (name, area, or product) and a public supplier page: reviewed locations, owner contact, published products with their result in the simulated register (demo data)
+- Order request from one supplier at a time: published products, positive quantity, unit; pickup from a reviewed location or delivery with details; no payment fields
+- Seller on `/company`: accept, decline (optional reason), reply, mark fulfilled with optional batch links
+- Status flow `REQUESTED -> ACCEPTED | DECLINED | CANCELLED`, `ACCEPTED -> FULFILLED`; buyer cancels only while requested
+- Buyer "My orders" at `/orders`
+- Seed: demo wholesaler, demo owner accounts (`SEED_DEMO_PASSWORD`), one order per status
+- Migration `0005_order_requests`
+
+**Done when**
+- [x] Test: only the addressed seller can respond; buyer and outsiders cannot
+- [x] Test: invalid transitions rejected (409); cancel only by the buyer and only while requested
+- [x] Test: allocated batch must be the seller's own approved batch of the line's product
+- [x] Test: unpublished products, non-positive quantities, mixed suppliers, self-orders rejected
+- [x] Test: only approved wholesaler/both companies order; pending/suspended companies cannot place or receive orders
+- [x] Test: only buyer and seller see an order (403 for non-members of the path company, 404 for other companies)
+- [x] Test: client cannot set status, company IDs, user IDs, or seller notes
+- [x] Test: no payment fields in tables or the order/supplier API
+- [x] Test: supplier page shows each registration result with `data_mode` DEMO, never "safe"
+- [x] Frontend tests: supplier page badges and banner, order form payload, buyer cancel, seller actions and batch allocation
+
+---
+
+## Phase 8 — Deployment (planned, not built)
 
 **Goal:** A public demo reachable on the student's own domain without opening ports on the server.
 
@@ -269,7 +248,7 @@ Note: delivered together with the Phase 2 lookup (2026-10-08); expiry is compute
 - Cloud VM (small Linux instance) running Docker Compose: Postgres, the FastAPI API, and the Next.js web server (`npm run build && npm run start`)
 - A named Cloudflare Tunnel (`cloudflared` container or service) routing the student's own domain to the web container; the VM has no inbound ports open except SSH
 - `TRUST_CLOUDFLARE_TUNNEL=true` with `CLOUDFLARED_IPS` set to the cloudflared container's address (D90); the API trusts only the web container as proxy (`TRUSTED_PROXY_IPS`)
-- Secrets from environment files on the VM, never in git; production settings (secure cookies, `BCRYPT_ROUNDS` default, seed admin from env)
+- Secrets from environment files on the VM, never in git; production settings (secure cookies, `BCRYPT_ROUNDS` default, seed admin and demo password from env)
 - Database backups and a short runbook (deploy, migrate, seed, roll back)
 
 **Done when**
@@ -277,3 +256,28 @@ Note: delivered together with the Phase 2 lookup (2026-10-08); expiry is compute
 - [ ] Rate limits see each visitor's own IP through the tunnel
 - [ ] Camera scanning works on an iPhone and an Android phone over the domain
 - [ ] A fresh VM can be set up from the runbook
+
+---
+
+## Phase 9 — Polish and evaluation
+
+**Goal:** Evidence the prototype works and is understood; capstone-ready docs.
+
+**Deliverables**
+- Close the open Phase 0 and Phase 4 checklist items (clean-clone check, audit and ownership tests)
+- Camera scanning accuracy on about 20 real packs (`docs/OCR_ACCURACY.md`)
+- End-to-end smoke tests for the main workflows (lookup, scan, supplier search, order request)
+- Usability study script, consent form, and task list (check a number, interpret the result, find a supplier, send an order request)
+- Measures: completion, errors, time, comprehension of the demo-data limitation
+- Demo script and final README
+
+**Done when**
+- [ ] All backend and frontend tests pass
+- [ ] Study materials approved by supervisor before any participant session
+- [ ] Docs let a reader install, seed, run, and test from a clean clone
+
+---
+
+## Deferred (not planned)
+
+Concern reports (private consumer reports with an admin queue) and scan analytics were optional Phase 8 items. They are deferred by the 2026-10-12 re-ordering (D102) and will only be built if the student asks. The anonymised `batch_scan` log from Phase 2 stays.

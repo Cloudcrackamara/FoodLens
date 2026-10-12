@@ -230,5 +230,6 @@ def test_me_includes_company_membership(client: TestClient, session: Session) ->
         "company_id": str(company.company_id),
         "company_display_name": "Demo Harvest Foods",
         "company_review_status": "PENDING_REVIEW",
+        "company_type": "MANUFACTURER",
         "role": "OWNER",
     }

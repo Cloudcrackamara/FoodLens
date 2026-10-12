@@ -1,6 +1,7 @@
 import { screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { demoUser, mockFetch, renderWithQuery } from "@/test/utils";
+import { manufacturerUser, wholesalerUser } from "@/test/orderFixtures";
 import { SiteHeader } from "./SiteHeader";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
@@ -44,6 +45,7 @@ describe("SiteHeader role links", () => {
           company_id: "c1",
           company_display_name: "Demo Co",
           company_review_status: "PENDING_REVIEW",
+          company_type: "MANUFACTURER",
           role: "OWNER",
         },
       },
@@ -57,5 +59,21 @@ describe("SiteHeader role links", () => {
 
     expect(await screen.findByRole("link", { name: label })).toHaveAttribute("href", href);
     expect(screen.getByRole("link", { name: "Suppliers" })).toHaveAttribute("href", "/suppliers");
+  });
+});
+
+describe("SiteHeader orders link", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("shows My orders only to approved wholesaler members", async () => {
+    mockFetch({ status: 200, body: wholesalerUser });
+    const { unmount } = renderWithQuery(<SiteHeader />);
+    expect(await screen.findByRole("link", { name: "My orders" })).toHaveAttribute("href", "/orders");
+    unmount();
+
+    mockFetch({ status: 200, body: manufacturerUser });
+    renderWithQuery(<SiteHeader />);
+    await screen.findByRole("link", { name: "My company" });
+    expect(screen.queryByRole("link", { name: "My orders" })).not.toBeInTheDocument();
   });
 });

@@ -86,3 +86,15 @@ Problems met while building FoodLens, what caused them, and how they were resolv
 | 54 | Frontend | ESLint reported errors in `public/ocr/`. | It linted the copied, minified third-party files. | Ignored `public/ocr/**` in `eslint.config.mjs`. | Resolved |
 | 55 | Phone testing | `TRUST_CLOUDFLARE_TUNNEL=true` in `.env.local` would have been ignored. | `server.mjs` read the setting before Next.js loaded `.env.local`. | Read it after `app.prepare()`; checked the server log shows the trusted addresses. | Resolved |
 | 56 | OCR | Accuracy on real packs is unknown; only synthetic images were tried. | No real packs tested yet. | `docs/OCR_ACCURACY.md` sheet for about 20 packs. | Open |
+
+## 2026-10-12 — Wholesale order requests
+
+| # | Area | Challenge | Cause | Resolution | Status |
+|---|---|---|---|---|---|
+| 57 | Requirements | The order request said only approved wholesalers may order; Q6 said buyers need no approval. Status was `SUBMITTED`, the request said "requested". Allocations required a quantity, but inventory was skipped. | Requirements changed since Phase 1. | Followed the new request and recorded it: D95 supersedes Q6; `SUBMITTED` renamed `REQUESTED` (D96); `allocated_quantity` dropped (D99); migration `0005`. | Decision |
+| 58 | Docker | `docker compose` could not connect to the Docker engine. | Docker Desktop was closed again (as in #19 and #38). | Started Docker Desktop. | Resolved |
+| 59 | Migrations | Migration 0005 failed: constraint `ck_wholesale_order_ck_wholesale_order_order_status` does not exist. Then `downgrade -1` rolled the dev database back from 0004 to 0003, which emptied the simulated register. | The naming convention added the `ck_wholesale_order_` prefix a second time; and `downgrade -1` was chained after the failed upgrade. | Wrapped the names in `op.f()`. Upgrade, downgrade, upgrade, and `alembic check` all pass. Re-seeded the dev database. Lesson: stop if an upgrade fails, and don't chain a downgrade after it. | Resolved |
+| 60 | Tooling | A long inline seed edit failed with "unexpected EOF while looking for matching quote". | Bash heredoc quoting, as in #41. | Wrote the edit as a script file. | Resolved |
+| 61 | Tooling | The smoke-test commands failed with `python: command not found`. | No system Python on PATH; Python only runs through `uv`. | Ran the smoke test with `uv run python`. | Resolved |
+| 62 | Wording | The live smoke test showed "Sample Honey" as "Active" on the supplier page, though its number belongs to another product and company. | The first version only checked the register status, not the names (D83). | Added `REGISTERED_TO_ANOTHER_PRODUCT` ("Number belongs to a different product or company in the simulated register (demo data)"), same name check as lookups (D100). Reuses approved lookup wording; flagged for the student. | Decision |
+| 63 | Requirements | Seed orders need user accounts, but seeded companies have none, and a default password in the code would be a secret. | Orders reference `created_by_user_id`. | Demo accounts get a password only from `SEED_DEMO_PASSWORD`; otherwise login is impossible (D101). | Decision |

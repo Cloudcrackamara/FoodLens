@@ -6,6 +6,7 @@ import { FormField } from "@/components/auth/FormField";
 import { Catalogue } from "./Catalogue";
 import { Announcements } from "./Announcements";
 import { ChangeNotices } from "./ChangeNotices";
+import { IncomingOrders } from "./IncomingOrders";
 import { describeError } from "@/lib/api";
 import { fieldErrors, useCurrentUser } from "@/lib/auth";
 import {
@@ -106,6 +107,7 @@ export function CompanyView({ company }: { company: Company }) {
       {company.review_status === "APPROVED" && <Catalogue companyId={company.company_id} />}
       {company.review_status === "APPROVED" && <ChangeNotices companyId={company.company_id} />}
       {company.review_status === "APPROVED" && <Announcements companyId={company.company_id} />}
+      {company.review_status === "APPROVED" && <IncomingOrders companyId={company.company_id} />}
     </div>
   );
 }

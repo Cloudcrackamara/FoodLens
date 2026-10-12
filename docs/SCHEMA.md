@@ -163,16 +163,16 @@ An order **request**. No payment fields.
 
 | Column | Notes |
 |---|---|
-| `buyer_company_id`, `seller_company_id` | Must differ **(DB)**. Seller must be approved **(service)**. |
-| `pickup_location_id` | Optional; must be an approved location of the seller **(service)**. |
-| `status` | `SUBMITTED` (default) → `ACCEPTED` / `DECLINED`; `ACCEPTED` → `FULFILLED`; buyer may `CANCELLED` while `SUBMITTED` **(service)**. Only the seller accepts or declines **(service)**. |
-| `buyer_note`, `seller_note` | Free-text replies. |
+| `buyer_company_id`, `seller_company_id` | Must differ **(DB)**. Buyer must be an approved `WHOLESALER`/`BOTH` company; seller must be listed (approved, with a reviewed location); seller is derived from the ordered products **(service, D95, D97)**. |
+| `pickup_location_id`, `delivery_details` | `PICKUP` needs an approved location of the seller; `DELIVERY` needs details and no location **(service)**. |
+| `status` | `REQUESTED` (default) → `ACCEPTED` / `DECLINED` / `CANCELLED`; `ACCEPTED` → `FULFILLED` **(service, D96)**. Only the seller accepts, declines, replies, or fulfils; only the buyer cancels, and only while `REQUESTED`. |
+| `buyer_note`, `seller_note` | Buyer's note; the seller's latest reply or decline reason (history in `audit_log`, D98). |
 
 ### `order_line`
-`quantity` > 0 **(DB)**, `NUMERIC(12,3)`. Product must be a published product of the seller **(service)**. Not edited after submission (no `updated_at`).
+`quantity` > 0 **(DB)**, `NUMERIC(12,3)`. Product must be a published product of the seller, once per order **(service)**. Not edited after submission (no `updated_at`).
 
 ### `order_batch_allocation`
-Records which batch fulfilled a line. `allocated_quantity` > 0 **(DB)**. Batch must belong to the line's product **(service)**.
+Records which batch fulfilled a line. No quantity (no stock kept, D99). `(line_id, batch_id)` unique **(DB)**. Batch must be an approved batch of the line's product and the seller **(service)**.
 
 ---
 

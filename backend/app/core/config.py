@@ -43,6 +43,8 @@ class Settings(BaseSettings):
     seed_admin_email: str | None = None
     seed_admin_password: str | None = None
     seed_admin_display_name: str = "FoodLens Demo Admin"
+    # Password for the demo buyer/seller accounts; blank means they cannot sign in (D101).
+    seed_demo_password: str | None = None
 
     @field_validator("rate_limit_exempt_ips", "trusted_proxy_ips")
     @classmethod

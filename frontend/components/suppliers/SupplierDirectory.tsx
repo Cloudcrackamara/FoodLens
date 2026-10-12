@@ -1,11 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { describeError } from "@/lib/api";
 import { companyTypes, useSuppliers, type Supplier } from "@/lib/companies";
 import { formatDate } from "@/lib/lookup";
 
-export function SupplierCard({ supplier }: { supplier: Supplier }) {
+export function SupplierCard({ supplier, linked = false }: { supplier: Supplier; linked?: boolean }) {
   return (
     <li
       aria-label={supplier.display_name}
@@ -13,7 +14,15 @@ export function SupplierCard({ supplier }: { supplier: Supplier }) {
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <h2 className="text-lg font-semibold">{supplier.display_name}</h2>
+          <h2 className="text-lg font-semibold">
+            {linked ? (
+              <Link href={`/suppliers/${supplier.company_id}`} className="underline">
+                {supplier.display_name}
+              </Link>
+            ) : (
+              supplier.display_name
+            )}
+          </h2>
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
             {companyTypes[supplier.company_type]}
           </p>
@@ -28,7 +37,7 @@ export function SupplierCard({ supplier }: { supplier: Supplier }) {
         <h3 className="font-medium">Demo-reviewed locations</h3>
         <ul className="mt-1 flex flex-col gap-1">
           {supplier.locations.map((location) => (
-            <li key={location.name}>
+            <li key={location.location_id}>
               <span className="font-medium">{location.name}</span>: {location.address},{" "}
               {location.area}
               {location.reviewed_at && (
@@ -72,7 +81,7 @@ export function SupplierDirectory() {
   return (
     <div className="flex flex-col gap-4">
       <label className="flex flex-col gap-1">
-        <span className="font-medium">Search by name or area</span>
+        <span className="font-medium">Search by name, area, or product</span>
         <input
           type="search"
           value={search}
@@ -92,7 +101,7 @@ export function SupplierDirectory() {
       {suppliers.isSuccess && suppliers.data.length > 0 && (
         <ul className="flex flex-col gap-4">
           {suppliers.data.map((supplier) => (
-            <SupplierCard key={supplier.company_id} supplier={supplier} />
+            <SupplierCard key={supplier.company_id} supplier={supplier} linked />
           ))}
         </ul>
       )}

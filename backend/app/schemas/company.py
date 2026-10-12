@@ -109,6 +109,7 @@ class AdminLocationRead(LocationRead):
 
 
 class SupplierLocationRead(BaseModel):
+    location_id: uuid.UUID
     name: str
     address: str
     area: str

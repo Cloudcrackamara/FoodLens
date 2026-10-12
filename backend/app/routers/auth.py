@@ -36,6 +36,7 @@ def _user_read(db: DbSession, user: AppUser) -> UserRead:
             company_id=company.company_id,
             company_display_name=company.display_name,
             company_review_status=company.review_status,
+            company_type=company.company_type,
             role=member.role,
         )
     return UserRead(

@@ -54,7 +54,7 @@ export const supplier: Supplier = {
     "approval, and it does not verify the company's identity or products.",
   reviewed_at: "2026-10-08T12:00:00Z",
   locations: [
-    { name: "Demo Harvest Ikeja depot (fictional)", address: "12 Sample Road", area: "Ikeja, Lagos", reviewed_at: "2026-10-08T12:00:00Z" },
+    { location_id: "55555555-5555-5555-5555-555555555555", name: "Demo Harvest Ikeja depot (fictional)", address: "12 Sample Road", area: "Ikeja, Lagos", reviewed_at: "2026-10-08T12:00:00Z" },
   ],
   contacts: [{ display_name: "Ada Rep", title: "Sales lead", phone: null, email: "sales@company.example" }],
 };

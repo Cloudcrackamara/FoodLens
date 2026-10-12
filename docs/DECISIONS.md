@@ -15,7 +15,7 @@ Open choices from Section 13 of the handoff and answers to the pre-Phase-0 quest
 | D7 | Change-notice attachments | PDF, PNG, JPEG only; max 5 MB; private local storage; admin and owning company can download | Proposed |
 | D8 | Scan logs | Off by default. If enabled, no user, IP, or location link. | Proposed |
 | D9 | Fulfilment batch allocation | In MVP (Phase 7), simple allocation without inventory tracking | Proposed |
-| D10 | Order status lifecycle | `SUBMITTED` → `ACCEPTED` or `DECLINED`; `ACCEPTED` → `FULFILLED`; buyer may cancel (`CANCELLED`) while `SUBMITTED`. Seller replies are notes on the order. | Proposed |
+| D10 | Order status lifecycle | `SUBMITTED` → `ACCEPTED` or `DECLINED`; `ACCEPTED` → `FULFILLED`; buyer may cancel (`CANCELLED`) while `SUBMITTED`. Seller replies are notes on the order. | Superseded by D96 (`SUBMITTED` renamed `REQUESTED`) |
 | D11 | Supplier-location review checklist | Address and area present; linked to an approved company; named contact representative; reviewer and timestamp recorded | Proposed |
 
 ## Implementation defaults
@@ -26,7 +26,7 @@ Open choices from Section 13 of the handoff and answers to the pre-Phase-0 quest
 | D13 | Admin model | `is_admin` flag on `APP_USER`, set only by seed/CLI (not the separate `ADMIN_USER` table in the old ERD) | Proposed |
 | D14 | DB session style | Sync SQLModel sessions | Proposed |
 | D15 | Frontend tests | Vitest + Testing Library; Playwright E2E in Phase 9 | Proposed |
-| D16 | Phase numbering | Gate + phases 0–9; handoff §12 step 8 split into supplier discovery (6) and order requests (7) | Proposed |
+| D16 | Phase numbering | Gate + phases 0–9; handoff §12 step 8 split into supplier discovery (6) and order requests (7) | Amended by D102 (8 Deployment, 9 Polish and evaluation) |
 
 ## Answers to pre-Phase-0 questions (2026-10-07)
 
@@ -79,7 +79,7 @@ Every response carries `data_mode: "DEMO"` and the disclaimer regardless of resu
 ### Q5 — Company-entered credentials (superseded by D80-D81, 2026-10-09)
 Hidden from consumer lookups until an admin approves them.
 
-### Q6 — Buyer approval
+### Q6 — Buyer approval (superseded by D95, 2026-10-12)
 Wholesaler/buyer companies do not need admin approval to order. Protection comes from the seller side: buyers can only see and order from approved seller companies, approved products, and reviewed locations.
 
 ### Q7 — "POPs"
@@ -246,3 +246,18 @@ Code: `frontend/lib/ocr/` (`extract.ts`, `preprocess.ts`, `engine.ts`, `readImag
 | D92 | Image clean-up: crop to the on-screen guide box (mapped through `object-fit: cover`), scale to about 1400 px wide, greyscale, 2-98% contrast stretch, Otsu threshold, invert light-on-dark print. Page mode: single block. | Small, low-contrast pack print; works offline on cheap phones. |
 | D93 | No camera, or permission refused: the scanner offers a photo picker (`capture="environment"`) read the same way; typing always remains. The camera uses the back lens, no audio, and every track is stopped after each capture step. | Works on any phone; no camera left running. |
 | D94 | The confirm screen is always shown: both values editable, other readings as one-tap choices, the batch optional, "Check the register" disabled until a registration number is present. Only then does the normal lookup run, with the same `data_mode` DEMO banner and wording. | OCR misreads; the person stays in control and the result wording rules are unchanged. |
+
+## Wholesale order requests (2026-10-12)
+
+Code: `backend/app/services/orders.py`, `routers/orders.py`, `services/suppliers.py`, `schemas/order.py`; migration `0005_order_requests`; `frontend/components/suppliers/SupplierPage.tsx`, `components/orders/`, `components/company/IncomingOrders.tsx`.
+
+| # | Decision | Reason |
+|---|---|---|
+| D95 | Only members of **approved** `WHOLESALER` or `BOTH` companies can send order requests. Pending, rejected, or suspended companies cannot place orders, and a seller that is not listed in the directory (approved, with a reviewed location) cannot receive them or respond. A suspended seller's open requests can still be cancelled by the buyer. Supersedes Q6. | Student instruction for this phase. |
+| D96 | Status flow: `REQUESTED` → `ACCEPTED` / `DECLINED` (seller) / `CANCELLED` (buyer); `ACCEPTED` → `FULFILLED` (seller). Every other change is refused with 409. `SUBMITTED` was renamed `REQUESTED` (migration 0005). Every action writes an audit entry with actor and old/new status. | Student wording; one place (`TRANSITIONS`) defines the flow. |
+| D97 | The buyer is the company in the URL (membership checked); the seller is the company that owns the ordered products. Input never carries status, company IDs, user IDs, reviewer, or payment fields. One supplier per order, 1-20 lines, each product once, quantity > 0 (up to 3 decimals), unit 1-30 characters. Pickup needs one of the seller's reviewed locations; delivery needs an address or notes (5-500 characters). | Client input cannot set ownership; keeps the form simple. |
+| D98 | Seller messages: "Reply" (while requested or accepted) and a decline reason are stored in `seller_note`; the latest one is shown, earlier ones stay in the audit log. No message threads or notifications. | Minimal scope. |
+| D99 | When marking fulfilled, the seller may link each line to one or more of its own **approved** batches of that product. Allocations carry no quantity (FoodLens keeps no stock); `allocated_quantity` was dropped and a line links a batch only once. | Student skipped inventory. |
+| D100 | `GET /api/suppliers/{company_id}` is public like the directory (D58) and returns 404 for unlisted companies. Each published product shows its result in the simulated register, checked in this order: `NO_NUMBER_GIVEN`, `NOT_FOUND_IN_DEMO_REGISTER`, `EXPIRED_OR_INACTIVE_IN_DEMO_REGISTER`, `REGISTERED_TO_ANOTHER_PRODUCT` (product or company name differs from the register record, compared as in D83), `ACTIVE_IN_DEMO_REGISTER`. Every label says "(demo data)"; the response has `data_mode` DEMO and a disclaimer; the page shows the demo banner. Directory search also matches published product names and brands. | Student request (active / expired or inactive / not found). The extra "different product or company" result was added because the seeded "Sample Honey" carries a copied number and would otherwise show "Active". |
+| D101 | Seed adds "Demo Market Traders (fictional)" (wholesaler), owner accounts `buyer@demo.foodlens.invalid` (that company) and `seller@demo.foodlens.invalid` (Demo Harvest Foods), and one order in each of requested, accepted, declined, fulfilled. The accounts sign in only when `SEED_DEMO_PASSWORD` is set; otherwise their password hash is unusable. `/api/auth/me` membership now includes `company_type`. | Orders need users; no default password in the code. |
+| D102 | Remaining phases re-ordered: 7 Wholesale order requests, 8 Deployment (cloud VM, Docker Compose, named Cloudflare Tunnel), 9 Polish and evaluation. Concern reports and scan analytics are deferred. | Student instruction (2026-10-12). |

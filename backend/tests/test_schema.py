@@ -45,12 +45,15 @@ def test_append_only_tables_have_no_updated_at(engine) -> None:
         assert "updated_at" not in {c["name"] for c in inspector.get_columns(name)}
 
 
+PAYMENT_WORDS = ("payment", "price", "amount", "currency", "total", "card", "checkout")
+
+
 def test_no_payment_columns_anywhere(engine) -> None:
     inspector = inspect(engine)
     for table in inspector.get_table_names():
         for column in inspector.get_columns(table):
-            assert "payment" not in column["name"], f"{table}.{column['name']}"
-            assert "price" not in column["name"], f"{table}.{column['name']}"
+            for word in PAYMENT_WORDS:
+                assert word not in column["name"], f"{table}.{column['name']}"
 
 
 def test_new_records_default_to_unreviewed_states(session: Session) -> None:
@@ -251,10 +254,9 @@ def test_order_quantities_must_be_positive(session: Session) -> None:
         with session.begin_nested():
             f.make_line(session, order, product, quantity=Decimal("0"))
 
+    # Allocations carry no quantity (no stock, D99), and a line links a batch only once.
+    session.add(OrderBatchAllocation(line_id=line.line_id, batch_id=batch.batch_id))
+    session.flush()
     with pytest.raises(IntegrityError):
-        session.add(
-            OrderBatchAllocation(
-                line_id=line.line_id, batch_id=batch.batch_id, allocated_quantity=Decimal("-1")
-            )
-        )
+        session.add(OrderBatchAllocation(line_id=line.line_id, batch_id=batch.batch_id))
         session.flush()

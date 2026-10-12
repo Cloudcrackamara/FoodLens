@@ -14,6 +14,7 @@ from app.routers import (
     companies,
     health,
     lookups,
+    orders,
     suppliers,
 )
 
@@ -40,6 +41,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(announcements.router)
     app.include_router(admin.router)
     app.include_router(suppliers.router)
+    app.include_router(orders.router)
     return app
 
 

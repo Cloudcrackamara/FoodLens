@@ -33,7 +33,7 @@ describe("SupplierDirectory", () => {
     });
     renderWithQuery(<SupplierDirectory />);
 
-    fireEvent.change(screen.getByLabelText("Search by name or area"), {
+    fireEvent.change(screen.getByLabelText("Search by name, area, or product"), {
       target: { value: "kano" },
     });
 

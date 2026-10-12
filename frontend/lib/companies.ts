@@ -83,6 +83,7 @@ export const supplierSchema = z.object({
   reviewed_at: z.string().nullable(),
   locations: z.array(
     z.object({
+      location_id: z.string(),
       name: z.string(),
       address: z.string(),
       area: z.string(),
@@ -103,6 +104,35 @@ export type Company = z.infer<typeof companySchema>;
 export type AdminCompany = z.infer<typeof adminCompanySchema>;
 export type AdminLocation = z.infer<typeof adminLocationSchema>;
 export type Supplier = z.infer<typeof supplierSchema>;
+
+// Mirrors backend/app/schemas/order.py SupplierDetailRead (D100).
+export const registrationResults = [
+  "ACTIVE_IN_DEMO_REGISTER",
+  "EXPIRED_OR_INACTIVE_IN_DEMO_REGISTER",
+  "REGISTERED_TO_ANOTHER_PRODUCT",
+  "NOT_FOUND_IN_DEMO_REGISTER",
+  "NO_NUMBER_GIVEN",
+] as const;
+export type RegistrationResult = (typeof registrationResults)[number];
+
+export const supplierDetailSchema = supplierSchema.extend({
+  products: z.array(
+    z.object({
+      product_id: z.string(),
+      name: z.string(),
+      brand: z.string(),
+      category: z.string(),
+      package_size: z.string().nullable(),
+      registration_number: z.string().nullable(),
+      registration_result: z.enum(registrationResults),
+      registration_label: z.string(),
+      register_name: z.string().nullable(),
+    }),
+  ),
+  data_mode: z.literal("DEMO"),
+  disclaimer: z.string(),
+});
+export type SupplierDetail = z.infer<typeof supplierDetailSchema>;
 
 export const companyRegisterFormSchema = z.object({
   company_type: z.enum(companyTypeValues, "Choose a company type"),
@@ -217,5 +247,12 @@ export function useSuppliers(search: string) {
   return useQuery({
     queryKey: ["suppliers", search.trim()],
     queryFn: () => apiFetch(`/api/suppliers${query}`, z.array(supplierSchema)),
+  });
+}
+
+export function useSupplier(companyId: string) {
+  return useQuery({
+    queryKey: ["supplier", companyId],
+    queryFn: () => apiFetch(`/api/suppliers/${companyId}`, supplierDetailSchema),
   });
 }

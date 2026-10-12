@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCurrentUser, useLogout } from "@/lib/auth";
+import { canOrder, useCurrentUser, useLogout } from "@/lib/auth";
 
 export function SiteHeader() {
   const router = useRouter();
@@ -33,9 +33,16 @@ export function SiteHeader() {
                 Admin
               </Link>
             ) : user.membership ? (
-              <Link href="/company" className="underline">
-                My company
-              </Link>
+              <>
+                <Link href="/company" className="underline">
+                  My company
+                </Link>
+                {canOrder(user) && (
+                  <Link href="/orders" className="underline">
+                    My orders
+                  </Link>
+                )}
+              </>
             ) : (
               <Link href="/company/register" className="underline">
                 Register company

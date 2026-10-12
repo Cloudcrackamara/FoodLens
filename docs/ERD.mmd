@@ -195,7 +195,7 @@ erDiagram
         uuid pickup_location_id FK "nullable"
         enum fulfilment_method "PICKUP, DELIVERY"
         text delivery_details "nullable"
-        enum status "SUBMITTED, ACCEPTED, DECLINED, FULFILLED, CANCELLED"
+        enum status "REQUESTED, ACCEPTED, DECLINED, FULFILLED, CANCELLED"
         text buyer_note "nullable"
         text seller_note "nullable"
         datetime created_at
@@ -214,8 +214,7 @@ erDiagram
     ORDER_BATCH_ALLOCATION {
         uuid allocation_id PK
         uuid line_id FK
-        uuid batch_id FK "must belong to line product (service)"
-        decimal allocated_quantity "> 0"
+        uuid batch_id FK "seller's batch of the line product (service); unique per line"
         datetime created_at
     }
 

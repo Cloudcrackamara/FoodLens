@@ -4,6 +4,8 @@
 
 Build a responsive FoodLens prototype whose core purpose is letting consumers check the NAFDAC/SON registration number printed on a food pack against a simulated regulator register (demo data); secondarily, companies manage their catalogue and change notices, and wholesalers discover demo-reviewed suppliers and place order requests—without making official certification or product-safety claims.
 
+Remaining phases (D102): 7 wholesale order requests, 8 deployment (cloud VM + Docker Compose + named Cloudflare Tunnel), 9 polish and evaluation.
+
 Product brief: `docs/HANDOFF.md`. Schema: `docs/SCHEMA.md` (tables and rules) and `docs/ERD.mmd` (diagram). Phase plan: `docs/PLAN.md`. Challenge log: `docs/log.md`. Decisions (answered 2026-10-07): `docs/DECISIONS.md` — read it before implementing lookup, change notices, or announcements.
 `docs/archive/ERD_v1_consumer_only.mmd` is superseded history; do not build from it.
 
@@ -16,7 +18,7 @@ Product brief: `docs/HANDOFF.md`. Schema: `docs/SCHEMA.md` (tables and rules) an
 5. **Change notices need admin approval.** Changes to published product details (including the registration number), batches, or reviewed locations go through a change notice with structured current/proposed values. While `PENDING_REVIEW` or `CLARIFICATION_REQUESTED`, published data is unchanged. Only approval applies it, recording old value, new value, approver, and time. New products and batches from approved companies go live immediately (D61).
    - **Exception — product announcements ("POPs"):** approved companies may post pop-up announcements that go live without review. They are labelled "Message from the company — not reviewed by FoodLens", never change product data, and admins can hide them. They may not claim "safe"/"unsafe" or NAFDAC/SON approval, registration, or certification (D77, D86).
    - Company contact details and private account settings are edited directly but logged with actor and time.
-6. **No payments.** Orders are requests only. No payment fields, providers, or checkout.
+6. **No payments.** Orders are requests only. No payment fields, providers, or checkout. Only members of approved wholesaler/both companies send orders, to one listed supplier at a time; only the buyer and seller companies can see an order (D95-D99).
 7. **Server-side authorization.** Every protected route checks the user's role and company ownership on the server. The frontend hiding a button is never the control.
 8. **Fictional seed data.** All companies, products, register records, and contacts are obviously fictional, reference numbers are prefixed `DEMO-`, agencies are labelled "(simulated)", and no real regulator logos are used.
 
