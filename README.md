@@ -55,6 +55,32 @@ Check: `http://localhost:3000/api/health` returns `{"status":"ok"}`.
 
 `npm run dev` and `npm run start` run `frontend/server.mjs`, a small custom Next.js server that replaces any client-supplied `X-Forwarded-For` with the real connection address so rate limits cannot be dodged (D45). It listens on all interfaces, so other devices on the same network can open `http://<this-computer's-IP>:3000` during usability tests.
 
+## Scan a pack with the phone camera
+
+On `/check`, tap **Scan pack**, fit the NAFDAC/SON number inside the box, and tap **Capture**; then do the same for the batch number or skip it. A confirm screen always shows what was read so you can correct it before the register is checked. Reading happens in the browser (Tesseract.js); no photo is uploaded or saved (D88-D94).
+
+The OCR files (about 7 MB) are copied from `node_modules` to `frontend/public/ocr/` automatically before `npm run dev` and `npm run build` (or run `npm run ocr:assets`). The folder is git-ignored.
+
+Phone cameras only work on HTTPS pages (or `localhost`), so a phone cannot scan at `http://<computer-IP>:3000`. Use a tunnel:
+
+### Test on your phone (iPhone or Android) with a Cloudflare quick tunnel
+
+1. Install cloudflared once: `winget install --id Cloudflare.cloudflared` (no Cloudflare account needed).
+2. In `frontend/.env.local` add `TRUST_CLOUDFLARE_TUNNEL=true`, so rate limits see each visitor's own IP instead of the tunnel's (D90).
+3. Start the API as usual, then the web app. A production build is faster on the phone:
+   ```bash
+   cd frontend && npm run build && npm run start
+   ```
+   (`npm run dev` also works through the tunnel; `*.trycloudflare.com` is allowed in `next.config.ts`.)
+4. In a third terminal: `cloudflared tunnel --url http://localhost:3000`
+5. Open the printed `https://<random-words>.trycloudflare.com/check` on the phone and allow the camera.
+
+**Warning:** while the tunnel runs, anyone who has that URL can reach your local FoodLens. Use demo data only and stop the tunnel (Ctrl+C) when you finish. The URL changes every time.
+
+Backup (no internet tunnel; not tested on an iPhone): create a local certificate with [mkcert](https://github.com/FiloSottile/mkcert) (`mkcert -install`, then `mkcert <computer-IP>`), put an HTTPS proxy in front of port 3000 (for example `npx local-ssl-proxy --source 3443 --target 3000 --cert <cert>.pem --key <key>.pem`), and install and fully trust mkcert's root certificate on the phone (iPhone: Settings > General > About > Certificate Trust Settings). Then open `https://<computer-IP>:3443/check`. Through this proxy all phones share one rate-limit bucket, so add the computer's IP to `RATE_LIMIT_EXEMPT_IPS` for the session.
+
+To measure accuracy on real packs, use `docs/OCR_ACCURACY.md`.
+
 ## Demo lookups
 
 Open `http://localhost:3000/check` (no account needed) after running the seed, or a link such as `/check?reg=DEMO-NAFDAC-0001&batch=DEMO-LOT-101`, which fills in and checks immediately. Each row is tested automatically (`backend/app/demo_data.py` `SEED_CASES`):

@@ -71,3 +71,18 @@ Problems met while building FoodLens, what caused them, and how they were resolv
 | 44 | Migrations | Autogenerate could not handle the switch: old scan results, a renamed column, and changed CHECK constraints. | Alembic does not compare CHECK constraints and treats renames as drop + add. | Migration `0004` hand-written (delete old scans, rename column, replace constraints) and tested with upgrade, downgrade, upgrade. | Resolved |
 | 45 | Frontend | ESLint refused setting form state from the URL inside an effect (`react-hooks/set-state-in-effect`). | Reading `window.location` after render causes an extra render. | The `/check` page reads `?reg=&batch=` on the server inside `Suspense` (Next 16 with `cacheComponents`) and passes initial values to the form. | Resolved |
 | 46 | Wording | Case-insensitive "SON approved" filter also blocks "my son approved...". | "SON" is also an everyday word. | Kept as requested and documented as a known limitation (D86). | Open |
+
+## 2026-10-12 — Camera scanning
+
+| # | Area | Challenge | Cause | Resolution | Status |
+|---|---|---|---|---|---|
+| 47 | Requirements | Camera OCR requested, but CLAUDE.md said "never add OCR". | Rule written before scanning was wanted. | Student approved changing it to "OCR only in the browser; no image leaves the device" (D88). | Decision |
+| 48 | Phone testing | The student uses an iPhone, so USB port forwarding (Android only) cannot give the camera an HTTPS page. | Browsers only allow the camera on HTTPS or localhost. | Cloudflare quick tunnel is the default; mkcert documented as a backup (README). | Decision |
+| 49 | Rate limits | Through a tunnel every phone arrives from cloudflared's local address, so all visitors would share one rate-limit bucket. | The tunnel is a proxy on the same machine. | `server.mjs` trusts `CF-Connecting-IP` only when enabled and only from cloudflared's address (D90); 13 tests. | Resolved |
+| 50 | Tooling | `tesseract.js` 7.0.0 brings `tesseract.js-core` 7.0.0, and by default downloads its engine and English model from the jsDelivr CDN. | Library defaults. | A copy script serves the files from `/ocr/` (D89); a test checks no path starts with `http`. | Resolved |
+| 51 | OCR | The real engine read "NAFDAC REG. NO: A1-1234" as `NAFDACREGNOA1-1234`. | The character whitelist had no space, so Tesseract dropped word gaps. | Added the space to the whitelist and split labels glued to numbers; the real engine then read all three test images correctly. | Resolved |
+| 52 | OCR | Glued `NAFDACREGNOA1-1234` gave `OA1-1234`. | The pattern tried `REGN` before `REG`, taking the `N` of `NO`. | Reordered the alternatives; test added. | Resolved |
+| 53 | Frontend | `npm run typecheck` failed on the tunnel tests (`never[]` not assignable). | TypeScript inferred types from the plain-JS default parameter in `forwarded-for.mjs`. | Added JSDoc types. | Resolved |
+| 54 | Frontend | ESLint reported errors in `public/ocr/`. | It linted the copied, minified third-party files. | Ignored `public/ocr/**` in `eslint.config.mjs`. | Resolved |
+| 55 | Phone testing | `TRUST_CLOUDFLARE_TUNNEL=true` in `.env.local` would have been ignored. | `server.mjs` read the setting before Next.js loaded `.env.local`. | Read it after `app.prepare()`; checked the server log shows the trusted addresses. | Resolved |
+| 56 | OCR | Accuracy on real packs is unknown; only synthetic images were tried. | No real packs tested yet. | `docs/OCR_ACCURACY.md` sheet for about 20 packs. | Open |

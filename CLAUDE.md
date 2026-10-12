@@ -79,7 +79,8 @@ npm test
 ## Working rules
 
 - Work one phase at a time; never start the next phase unprompted.
-- Never add payments, regulator scraping, AI safety scores, OCR, ratings or maps.
+- Never add payments, regulator scraping, AI safety scores, ratings or maps.
+- OCR only in the browser; no image leaves the device (never uploaded, logged or stored) (D88).
 - Business rules live in backend service modules, not routers or React components.
 - Every protected route checks role and company ownership server-side.
 - Client input must never set is_admin, approval/review status, register records or status, or ownership fields.

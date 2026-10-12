@@ -248,3 +248,32 @@ Note: delivered together with the Phase 2 lookup (2026-10-08); expiry is compute
 - [ ] All backend and frontend tests pass
 - [ ] Study materials approved by supervisor before any participant session
 - [ ] Docs let a reader install, seed, run, and test from a clean clone
+
+## Addition — Camera scanning (2026-10-12, D88-D94)
+
+**Goal:** Consumers can fill the lookup by pointing the phone camera at the pack instead of typing.
+
+**Done when**
+- [x] "Scan pack" on `/check`: registration number, then optional batch number, then an editable confirm screen, then the normal lookup
+- [x] OCR in the browser only, files self-hosted under `/ocr/`; no image uploaded, logged, or stored
+- [x] Photo-picker fallback when the camera is unavailable; typing still works
+- [x] Tests: extraction, image clean-up, engine paths, scan flow with OCR mocked, no image in any request
+- [x] `server.mjs` trusts `CF-Connecting-IP` only from cloudflared when enabled (D90)
+- [ ] Accuracy measured on about 20 real packs (`docs/OCR_ACCURACY.md`)
+
+## Phase 10 — Deployment (planned, not built)
+
+**Goal:** A public demo reachable on the student's own domain without opening ports on the server.
+
+**Deliverables**
+- Cloud VM (small Linux instance) running Docker Compose: Postgres, the FastAPI API, and the Next.js web server (`npm run build && npm run start`)
+- A named Cloudflare Tunnel (`cloudflared` container or service) routing the student's own domain to the web container; the VM has no inbound ports open except SSH
+- `TRUST_CLOUDFLARE_TUNNEL=true` with `CLOUDFLARED_IPS` set to the cloudflared container's address (D90); the API trusts only the web container as proxy (`TRUSTED_PROXY_IPS`)
+- Secrets from environment files on the VM, never in git; production settings (secure cookies, `BCRYPT_ROUNDS` default, seed admin from env)
+- Database backups and a short runbook (deploy, migrate, seed, roll back)
+
+**Done when**
+- [ ] The demo opens over HTTPS on the domain and `/api/health` returns ok
+- [ ] Rate limits see each visitor's own IP through the tunnel
+- [ ] Camera scanning works on an iPhone and an Android phone over the domain
+- [ ] A fresh VM can be set up from the runbook

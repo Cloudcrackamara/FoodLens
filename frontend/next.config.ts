@@ -4,6 +4,8 @@ import type { NextConfig } from "next";
 const backendUrl = process.env.BACKEND_URL ?? "http://localhost:8000";
 
 const nextConfig: NextConfig = {
+  // Lets `npm run dev` work through a Cloudflare quick tunnel for phone testing (README).
+  allowedDevOrigins: ["*.trycloudflare.com"],
   cacheComponents: true,
   partialPrefetching: true,
   reactCompiler: true,
