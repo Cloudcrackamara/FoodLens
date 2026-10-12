@@ -28,6 +28,15 @@ class CompanyRegisterRequest(BaseModel):
     claimed_address: str | None = Field(default=None, max_length=300)
 
 
+class ContactUpdateRequest(BaseModel):
+    """Company contact details, edited directly by the owner and logged (rule 5, D103)."""
+
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
+
+    contact_email: EmailStr
+    contact_phone: str | None = Field(default=None, max_length=40)
+
+
 class LocationCreateRequest(BaseModel):
     model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
 

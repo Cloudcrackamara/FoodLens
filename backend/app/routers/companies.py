@@ -8,9 +8,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.core.auth import CurrentUser, require_company_member
 from app.core.db import DbSession
 from app.models import Company, CompanyMember, SupplierLocation
+from app.models.enums import MemberRole
 from app.schemas.company import (
     CompanyRead,
     CompanyRegisterRequest,
+    ContactUpdateRequest,
     LocationCreateRequest,
     LocationRead,
 )
@@ -19,6 +21,7 @@ from app.services import companies as company_service
 router = APIRouter(prefix="/api/companies", tags=["companies"])
 
 Member = Annotated[CompanyMember, Depends(require_company_member())]
+Owner = Annotated[CompanyMember, Depends(require_company_member(MemberRole.OWNER))]
 
 
 def location_read(location: SupplierLocation) -> LocationRead:
@@ -55,6 +58,14 @@ def register_company(body: CompanyRegisterRequest, user: CurrentUser, db: DbSess
 @router.get("/{company_id}")
 def get_my_company(company_id: uuid.UUID, member: Member, db: DbSession) -> CompanyRead:
     return company_read(db, company_service.get_company(db, member.company_id))
+
+
+@router.patch("/{company_id}/contact")
+def update_contact(
+    company_id: uuid.UUID, body: ContactUpdateRequest, owner: Owner, db: DbSession
+) -> CompanyRead:
+    """Owner edits the public contact email and phone directly; every change is audited."""
+    return company_read(db, company_service.update_contact(db, owner, body))
 
 
 @router.post("/{company_id}/locations", status_code=status.HTTP_201_CREATED)

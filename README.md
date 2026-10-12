@@ -131,6 +131,10 @@ Running the seed again is safe. If an account with that email already exists it 
 
 Try the full flow: create an account at `/register`, register a company, sign in as the seed admin in another browser (or a private window) and approve it at `/admin`, add a location at `/company`, mark it demo-reviewed at `/admin`, then see it at `/suppliers`. A company's products only show as registered at `/check` if their printed number matches an active record in the simulated register. A FoodLens demo review is never a NAFDAC or SON approval.
 
+## Company contact details
+
+On `/company` the company owner can edit the public contact email and phone. Changes apply at once (no review) and are recorded in the audit log with who made them and when (D103). Product and batch details can only be changed through a change notice.
+
 ## Wholesale order requests
 
 Order requests are requests only: no prices or payments (D95-D101).

@@ -83,3 +83,50 @@ describe("CompanyView", () => {
     );
   });
 });
+
+describe("Company contact details", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("lets the owner edit the contact email and phone, sending only those fields", async () => {
+    const fetchMock = routeFetch({
+      [`PATCH /api/companies/${pendingCompany.company_id}/contact`]: {
+        body: { ...pendingCompany, contact_email: "sales@testfoods.example.com", contact_phone: "0800 000" },
+      },
+    });
+    renderWithQuery(<CompanyView company={pendingCompany} isOwner />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit contact details" }));
+    const form = screen.getByRole("form", { name: "Edit contact details" });
+    expect(form).toHaveTextContent("recorded with your name and the time");
+    fireEvent.change(screen.getByLabelText("Contact email"), { target: { value: "sales@testfoods.example.com" } });
+    fireEvent.change(screen.getByLabelText("Contact phone (optional)"), { target: { value: "0800 000" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save contact details" }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent("Contact details saved.");
+    const [, init] = fetchMock.mock.calls[0];
+    expect(JSON.parse(String(init?.body))).toEqual({
+      contact_email: "sales@testfoods.example.com",
+      contact_phone: "0800 000",
+    });
+  });
+
+  it("rejects an invalid email before sending", () => {
+    const fetchMock = routeFetch({});
+    renderWithQuery(<CompanyView company={pendingCompany} isOwner />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit contact details" }));
+    fireEvent.change(screen.getByLabelText("Contact email"), { target: { value: "nope" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save contact details" }));
+
+    expect(screen.getByText("Enter a valid email address")).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("shows no edit button to representatives", () => {
+    renderWithQuery(<CompanyView company={pendingCompany} />);
+
+    expect(screen.getByText(pendingCompany.contact_email)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Edit contact details" })).not.toBeInTheDocument();
+  });
+});
+

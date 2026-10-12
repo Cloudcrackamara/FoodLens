@@ -140,21 +140,21 @@ Note: delivered together with the Phase 2 lookup (2026-10-08); expiry is compute
 
 **Done when**
 - [x] Test: credential claim invisible to lookup until admin approves (new batches now go live directly, D61)
-- [ ] Test: contact detail edit writes an audit entry with actor and time
-- [ ] Test: published product fields cannot be edited directly (only via change notice, Phase 5)
-- [ ] Test: company user cannot approve own company, location, or credential
-- [ ] Test: client cannot set status, reviewer, or ownership fields on any create/update
-- [ ] Test: member cannot edit another company's products, batches, or locations
-- [ ] Test: unapproved company cannot publish products to lookups or the directory
+- [x] Test: contact detail edit writes an audit entry with actor and time (`test_company_contact.py`, D103)
+- [x] Test: published product fields cannot be edited directly (only via change notice, Phase 5): no PUT/PATCH/DELETE route on products or batches (`test_company_contact.py`)
+- [x] Test: company user cannot approve own company, location, or credential (`test_company_cannot_approve_itself`, `test_company_cannot_mark_own_location_reviewed`; credentials removed, D80)
+- [x] Test: client cannot set status, reviewer, or ownership fields on any create/update (company, location, product, contact, change notice, and order tests)
+- [x] Test: member cannot edit another company's products, batches, or locations (`test_catalogue.py`, `test_member_cannot_add_location_to_another_company`, contact test)
+- [x] Test: unapproved company cannot publish products to lookups or the directory (`test_pending_company_cannot_add_products`, `test_unapproved_companies_are_hidden_from_directory`)
 - [x] ~~Test: company cannot publish its own product~~ (superseded by D61: approved companies publish directly; pending companies cannot)
-- [ ] Test: admin decisions record reviewer and timestamp
+- [x] Test: admin decisions record reviewer and timestamp (`test_admin_decision_records_reviewer_time_note_and_audit`)
 
 **Progress (2026-10-08)**
 - Done: company registration (`PENDING_REVIEW` + owner), admin approve/reject/suspend with reviewer, time, note, and audit; supplier locations (pending until admin review, only for approved companies); company dashboard and admin review screens.
 - Tested so far: company cannot approve itself or its locations; admin cannot review a company they belong to; client cannot set review/ownership fields on company or location create; member cannot add locations to another company; decisions record reviewer and time.
 - Done (2026-10-09): products and batches published directly by approved companies (D61); credential claims reviewed by admins before they reach lookups (D63); owner shown as directory contact (D65).
 - Dropped as over-engineering (D64): extra representatives, product-approval flow, supplier detail page.
-- Remaining: contact-detail edits with audit (optional).
+- Done (2026-10-12): owner edits company contact email and phone directly on `/company`, logged with actor, time, and old/new values (D103). Phase 4 complete.
 
 ---
 

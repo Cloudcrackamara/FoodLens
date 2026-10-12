@@ -152,6 +152,12 @@ export const locationFormSchema = z.object({
 });
 export type LocationForm = z.infer<typeof locationFormSchema>;
 
+export const contactFormSchema = z.object({
+  contact_email: z.email("Enter a valid email address"),
+  contact_phone: z.string().trim().max(40),
+});
+export type ContactForm = z.infer<typeof contactFormSchema>;
+
 const companyKey = (id: string) => ["company", id] as const;
 const adminCompaniesKey = ["admin", "companies"] as const;
 const adminLocationsKey = ["admin", "locations"] as const;
@@ -181,6 +187,19 @@ export function useMyCompany(companyId: string | undefined) {
     queryKey: companyKey(companyId ?? ""),
     queryFn: () => apiFetch(`/api/companies/${companyId}`, companySchema),
     enabled: Boolean(companyId),
+  });
+}
+
+/** Owner edits the public contact details directly; the API logs every change (D103). */
+export function useUpdateContact(companyId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (form: ContactForm) =>
+      apiFetch(`/api/companies/${companyId}/contact`, companySchema, {
+        method: "PATCH",
+        body: { contact_email: form.contact_email, contact_phone: form.contact_phone || null },
+      }),
+    onSuccess: (company) => queryClient.setQueryData(companyKey(companyId), company),
   });
 }
 

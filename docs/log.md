@@ -98,3 +98,9 @@ Problems met while building FoodLens, what caused them, and how they were resolv
 | 61 | Tooling | The smoke-test commands failed with `python: command not found`. | No system Python on PATH; Python only runs through `uv`. | Ran the smoke test with `uv run python`. | Resolved |
 | 62 | Wording | The live smoke test showed "Sample Honey" as "Active" on the supplier page, though its number belongs to another product and company. | The first version only checked the register status, not the names (D83). | Added `REGISTERED_TO_ANOTHER_PRODUCT` ("Number belongs to a different product or company in the simulated register (demo data)"), same name check as lookups (D100). Reuses approved lookup wording; flagged for the student. | Decision |
 | 63 | Requirements | Seed orders need user accounts, but seeded companies have none, and a default password in the code would be a secret. | Orders reference `created_by_user_id`. | Demo accounts get a password only from `SEED_DEMO_PASSWORD`; otherwise login is impossible (D101). | Decision |
+
+## 2026-10-12 — Closing Phase 4
+
+| # | Area | Challenge | Cause | Resolution | Status |
+|---|---|---|---|---|---|
+| 64 | Scope | Seven Phase 4 checklist items were still unticked after Phase 7. | Most were covered by tests written in Phases 4-7 but never ticked; contact-detail editing was never built (marked "optional"). | Matched each item to its tests; built the owner contact edit with audit (D103); added a test that products and batches have no direct edit routes. | Resolved |

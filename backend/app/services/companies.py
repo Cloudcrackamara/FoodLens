@@ -22,6 +22,7 @@ from app.models.enums import (
 from app.schemas.company import (
     CompanyDecision,
     CompanyRegisterRequest,
+    ContactUpdateRequest,
     LocationCreateRequest,
     LocationDecision,
 )
@@ -102,6 +103,49 @@ def register_company(db: Session, user: AppUser, data: CompanyRegisterRequest) -
         entity_id=company.company_id,
         action="registered",
         new_values={"review_status": company.review_status, "display_name": company.display_name},
+    )
+    db.commit()
+    db.refresh(company)
+    return company
+
+
+def update_contact(db: Session, member: CompanyMember, data: ContactUpdateRequest) -> Company:
+    """Edit the company's public contact details directly (no review), logged with actor, time,
+    and old and new values (rule 5, D103). The owner's directory contact follows the company
+    details when it still showed the old ones (D65)."""
+    company = get_company(db, member.company_id)
+    old = {"contact_email": company.contact_email, "contact_phone": company.contact_phone}
+    new = {
+        "contact_email": str(data.contact_email).lower(),
+        "contact_phone": data.contact_phone or None,
+    }
+    if old == new:
+        return company
+
+    company.contact_email = new["contact_email"]
+    company.contact_phone = new["contact_phone"]
+    db.add(company)
+    owners = db.exec(
+        select(CompanyMember).where(
+            CompanyMember.company_id == company.company_id,
+            CompanyMember.role == MemberRole.OWNER,
+            CompanyMember.is_public_contact.is_(True),
+        )
+    ).all()
+    for owner in owners:
+        if owner.public_email == old["contact_email"]:
+            owner.public_email = new["contact_email"]
+        if owner.public_phone == old["contact_phone"]:
+            owner.public_phone = new["contact_phone"]
+        db.add(owner)
+    audit.record(
+        db,
+        actor_user_id=member.user_id,
+        entity_type="company",
+        entity_id=company.company_id,
+        action="contact_updated",
+        old_values=old,
+        new_values=new,
     )
     db.commit()
     db.refresh(company)

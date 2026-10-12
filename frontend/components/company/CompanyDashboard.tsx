@@ -12,11 +12,14 @@ import { fieldErrors, useCurrentUser } from "@/lib/auth";
 import {
   companyStatusLabels,
   companyTypes,
+  contactFormSchema,
   locationFormSchema,
   locationStatusLabels,
   useAddLocation,
   useMyCompany,
+  useUpdateContact,
   type Company,
+  type ContactForm,
   type LocationForm,
 } from "@/lib/companies";
 
@@ -75,7 +78,69 @@ function AddLocationForm({ companyId }: { companyId: string }) {
   );
 }
 
-export function CompanyView({ company }: { company: Company }) {
+function ContactDetails({ company, isOwner }: { company: Company; isOwner: boolean }) {
+  const update = useUpdateContact(company.company_id);
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState<ContactForm>({
+    contact_email: company.contact_email,
+    contact_phone: company.contact_phone ?? "",
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const parsed = contactFormSchema.safeParse(form);
+    if (!parsed.success) {
+      setErrors(fieldErrors(parsed.error));
+      return;
+    }
+    setErrors({});
+    update.mutate(parsed.data, { onSuccess: () => setEditing(false) });
+  }
+
+  return (
+    <section aria-labelledby="contact-heading" className="flex flex-col gap-2">
+      <h2 id="contact-heading" className="text-lg font-semibold">Contact details</h2>
+      {!editing ? (
+        <>
+          <p className="break-words">
+            {company.contact_email}
+            {company.contact_phone && ` · ${company.contact_phone}`}
+          </p>
+          {isOwner && (
+            <button type="button" onClick={() => setEditing(true)} className="self-start underline">
+              Edit contact details
+            </button>
+          )}
+          {update.isSuccess && <p role="status" className="text-sm">Contact details saved.</p>}
+        </>
+      ) : (
+        <form onSubmit={handleSubmit} noValidate aria-label="Edit contact details" className="flex flex-col gap-3">
+          <p className="text-sm text-zinc-700 dark:text-zinc-300">
+            Changes are saved straight away and recorded with your name and the time. They are shown in
+            the supplier directory.
+          </p>
+          <FormField id="contact_email" label="Contact email" type="email" value={form.contact_email}
+            error={errors.contact_email} onChange={(value) => setForm({ ...form, contact_email: value })} />
+          <FormField id="contact_phone" label="Contact phone (optional)" value={form.contact_phone}
+            error={errors.contact_phone} onChange={(value) => setForm({ ...form, contact_phone: value })} />
+          {update.isError && (
+            <p role="alert" className="text-red-700 dark:text-red-400">{describeError(update.error)}</p>
+          )}
+          <div className="flex gap-3">
+            <button type="submit" disabled={update.isPending}
+              className="rounded-md bg-zinc-900 px-4 py-2 font-semibold text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900">
+              Save contact details
+            </button>
+            <button type="button" onClick={() => setEditing(false)} className="underline">Cancel</button>
+          </div>
+        </form>
+      )}
+    </section>
+  );
+}
+
+export function CompanyView({ company, isOwner = false }: { company: Company; isOwner?: boolean }) {
   return (
     <div className="flex flex-col gap-6">
       <section aria-labelledby="company-status" className="rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
@@ -85,6 +150,8 @@ export function CompanyView({ company }: { company: Company }) {
         <p>{statusExplanations[company.review_status]}</p>
         {company.review_note && <p className="mt-1 text-sm">Reviewer note: {company.review_note}</p>}
       </section>
+
+      <ContactDetails company={company} isOwner={isOwner} />
 
       <section aria-labelledby="locations-heading" className="flex flex-col gap-3">
         <h2 id="locations-heading" className="text-lg font-semibold">Supplier locations</h2>
@@ -136,5 +203,5 @@ export function CompanyDashboard() {
     return <p role="alert">{describeError(company.error)}</p>;
   }
   if (!company.data) return <p>Loading…</p>;
-  return <CompanyView company={company.data} />;
+  return <CompanyView company={company.data} isOwner={user.membership.role === "OWNER"} />;
 }
