@@ -1,26 +1,207 @@
 @import "tailwindcss";
 
+/*
+ * FoodLens design tokens (D104). Use the token classes (bg-primary, text-muted-foreground,
+ * border-border, bg-notice-soft ...) instead of raw hex or zinc classes.
+ * - primary (ink): buttons, links, active result.
+ * - coral: decoration only (lens glow, accents). Never behind text: white on coral fails contrast.
+ * - notice (amber): result notices and the demo banner only.
+ * Dark mode follows the phone setting.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f7f7fb;
+  --foreground: #16172b;
+  --card: #ffffff;
+  --card-foreground: #16172b;
+  --primary: #2b2d6e;
+  --primary-foreground: #ffffff;
+  --secondary: #ececf6;
+  --secondary-foreground: #2b2d6e;
+  --muted: #eeeef5;
+  --muted-foreground: #55576f;
+  --coral: #f2685a;
+  --notice: #b45309;
+  --notice-soft: #fdf3e3;
+  --notice-strong: #7a3a06;
+  --destructive: #b42318;
+  --border: #dcdce8;
+  --input: #b9bad0;
+  --ring: #d9473a;
+  --radius: 0.75rem;
+  /* Illustration only (hero lens shopper). */
+  --skin: #7a4a32;
+  --ink-dark: #1b1209;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0f1024;
+    --foreground: #ececf7;
+    --card: #171833;
+    --card-foreground: #ececf7;
+    --primary: #a9abf5;
+    --primary-foreground: #14153a;
+    --secondary: #24254b;
+    --secondary-foreground: #d6d7fb;
+    --muted: #1e1f3d;
+    --muted-foreground: #a6a8c6;
+    --coral: #ff8a7d;
+    --notice: #f5a524;
+    --notice-soft: #2a1d0a;
+    --notice-strong: #f7c77a;
+    --destructive: #f97066;
+    --border: #2e3058;
+    --input: #45477a;
+    --ring: #ff8a7d;
+    --skin: #8a5638;
+  }
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-coral: var(--coral);
+  --color-notice: var(--notice);
+  --color-notice-soft: var(--notice-soft);
+  --color-notice-strong: var(--notice-strong);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 6px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: calc(var(--radius) - 4px);
+  --radius-xl: var(--radius);
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-heading: var(--font-fraunces), Georgia, serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+  }
+  h1,
+  h2 {
+    font-family: var(--font-heading);
+    letter-spacing: -0.01em;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* The breathing lens (D105). CSS only; stops when the phone asks for reduced motion. */
+@keyframes lens-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.03);
+  }
+}
+
+@keyframes lens-glow {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.75;
+  }
+}
+
+.lens-body {
+  transform-origin: 50% 50%;
+  transform-box: fill-box;
+  animation: lens-breathe 4.5s ease-in-out infinite;
+}
+
+.lens-glow {
+  animation: lens-glow 4.5s ease-in-out infinite;
+}
+
+/* Breathe faster while a lookup on the same page is running. */
+main:has([aria-busy="true"]) .lens-body,
+main:has([aria-busy="true"]) .lens-glow {
+  animation-duration: 1.4s;
+}
+
+/* Hero shopper: the small magnifier sweeps across the pack; the eye blinks now and then. */
+@keyframes lens-scan {
+  0%,
+  100% {
+    transform: translate(-2px, 1px);
+  }
+  50% {
+    transform: translate(3px, -1px);
+  }
+}
+
+@keyframes lens-blink {
+  0%,
+  92%,
+  100% {
+    transform: scaleY(1);
+  }
+  95% {
+    transform: scaleY(0.1);
+  }
+}
+
+.lens-scan {
+  animation: lens-scan 3.2s ease-in-out infinite;
+}
+
+.lens-blink {
+  transform-origin: 50% 50%;
+  transform-box: fill-box;
+  animation: lens-blink 5s ease-in-out infinite;
+}
+
+/* Landing hero: the rim and pattern stay faint behind the text. The shopper is faint on small
+   screens (she sits behind the text), half-strength from 1024px and clear from 1280px, where
+   she sits beside it. */
+.hero-lens .lens-faint {
+  opacity: 0.2;
+}
+.hero-lens .lens-person {
+  opacity: 0.22;
+}
+@media (min-width: 64rem) {
+  .hero-lens .lens-faint {
+    opacity: 0.26;
+  }
+  .hero-lens .lens-person {
+    opacity: 0.5;
+  }
+}
+@media (min-width: 80rem) {
+  .hero-lens .lens-person {
+    opacity: 0.85;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lens-body,
+  .lens-glow,
+  .lens-scan,
+  .lens-blink {
+    animation: none;
+  }
 }

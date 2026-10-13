@@ -112,3 +112,11 @@ Problems met while building FoodLens, what caused them, and how they were resolv
 | 65 | Seed | `uv run python -m app.seed` crashed with `DetachedInstanceError` after seeding. | Once `SEED_ADMIN_*` was set, `main()` printed `admin.email` after the session had closed and later commits had expired the object. It had never run before because no admin was configured. | Read the email inside the session block. The data had already been committed. | Resolved |
 | 66 | Local env | Appending `SEED_DEMO_PASSWORD` to `backend/.env` glued a comment onto the end of the `SEED_ADMIN_PASSWORD` line. | The file had no final newline. | Removed the glued text straight away and checked the line. Lesson: check for a final newline before appending to `.env`. | Resolved |
 | 67 | Running the app | Port 3000 was still in use after stopping the earlier dev server. | Stopping the background shell left the `node server.mjs --dev` child process running. | Checked the process command line, then stopped its process tree. `scripts/dev.mjs` stops its servers with `taskkill /T` on Windows. | Resolved |
+
+## 2026-10-12 — Frontend redesign foundation and /check
+
+| # | Area | Challenge | Cause | Resolution | Status |
+|---|---|---|---|---|---|
+| 68 | Tooling | `npx shadcn add button ...` failed with `EALLOWSCRIPTS: --allow-scripts is not allowed in project-scoped installs`, and the install it attempted included an unrelated npm package named `cn`. | npm 12 blocks the CLI's install flags; the CLI's dependency list is not checked by us. | Installed only the known packages (`clsx`, `tailwind-merge`, `class-variance-authority`, `lucide-react`, `radix-ui`) and wrote the six shadcn components by hand from the shadcn source. Never installed `cn`. | Resolved |
+| 69 | Build | `next build` failed: "Next.js encountered URL data `usePathname()` in a Client Component outside of `<Suspense>`" on `/suppliers/[companyId]`. | With `cacheComponents`, reading the path in the header blocks prerendering of dynamic routes. | Wrapped `SiteHeader` in `<Suspense>` in the root layout with a static logo-only fallback. | Resolved |
+| 70 | Tests | The header test mocked `next/navigation` without `usePathname`. | The new header highlights the current page. | Added `usePathname` to the mock and a test for the phone menu button. | Resolved |

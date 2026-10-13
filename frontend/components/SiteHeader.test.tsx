@@ -1,10 +1,13 @@
-import { screen } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { demoUser, mockFetch, renderWithQuery } from "@/test/utils";
 import { manufacturerUser, wholesalerUser } from "@/test/orderFixtures";
 import { SiteHeader } from "./SiteHeader";
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
+  usePathname: () => "/check",
+}));
 
 describe("SiteHeader", () => {
   afterEach(() => vi.unstubAllGlobals());
@@ -75,5 +78,24 @@ describe("SiteHeader orders link", () => {
     renderWithQuery(<SiteHeader />);
     await screen.findByRole("link", { name: "My company" });
     expect(screen.queryByRole("link", { name: "My orders" })).not.toBeInTheDocument();
+  });
+});
+
+describe("SiteHeader phone menu", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("toggles the menu button and marks the current page", async () => {
+    mockFetch({ status: 401, body: { detail: "Not signed in" } });
+    renderWithQuery(<SiteHeader />);
+
+    const button = screen.getByRole("button", { name: "Menu" });
+    expect(button).toHaveAttribute("aria-expanded", "false");
+    expect(button).toHaveAttribute("aria-controls", "site-menu");
+    fireEvent.click(button);
+    expect(button).toHaveAttribute("aria-expanded", "true");
+
+    expect(await screen.findByRole("link", { name: "Sign in" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Check a number" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "Suppliers" })).not.toHaveAttribute("aria-current");
   });
 });

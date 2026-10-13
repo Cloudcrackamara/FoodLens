@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Suspense } from "react";
+import { Fraunces, Geist, Geist_Mono } from "next/font/google";
 import { DemoDataBanner } from "@/components/DemoDataBanner";
-import { SiteHeader } from "@/components/SiteHeader";
+import { SiteHeader, SiteHeaderFallback } from "@/components/SiteHeader";
 import { Providers } from "./providers";
 import "./globals.css";
 
+// next/font downloads these at build time and serves them from this site: no runtime request
+// to Google, so nothing about the visitor leaves FoodLens (D106).
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -13,6 +16,12 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  subsets: ["latin"],
+  weight: ["600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -25,12 +34,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <DemoDataBanner />
         <Providers>
-          <SiteHeader />
+          <Suspense fallback={<SiteHeaderFallback />}>
+            <SiteHeader />
+          </Suspense>
           {children}
         </Providers>
       </body>

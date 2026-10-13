@@ -1,3 +1,6 @@
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
 type FormFieldProps = {
   id: string;
   label: string;
@@ -25,11 +28,9 @@ export function FormField({
 }: FormFieldProps) {
   const describedBy = [hint && `${id}-hint`, error && `${id}-error`].filter(Boolean).join(" ");
   return (
-    <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="font-medium">
-        {label}
-      </label>
-      <input
+    <div className="flex flex-col gap-1.5">
+      <Label htmlFor={id}>{label}</Label>
+      <Input
         id={id}
         name={id}
         type={type}
@@ -40,15 +41,14 @@ export function FormField({
         onChange={(event) => onChange(event.target.value)}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy || undefined}
-        className="rounded-md border border-zinc-400 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-900"
       />
       {hint && (
-        <p id={`${id}-hint`} className="text-sm text-zinc-600 dark:text-zinc-400">
+        <p id={`${id}-hint`} className="text-sm text-muted-foreground">
           {hint}
         </p>
       )}
       {error && (
-        <p id={`${id}-error`} className="text-sm text-red-700 dark:text-red-400">
+        <p id={`${id}-error`} className="text-sm text-destructive">
           {error}
         </p>
       )}

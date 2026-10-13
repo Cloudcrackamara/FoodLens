@@ -46,7 +46,7 @@ Product brief: `docs/HANDOFF.md`. Schema: `docs/SCHEMA.md` (tables and rules) an
   tests/
 /frontend
   app/               Next.js App Router pages
-  components/
+  components/        app components; components/ui holds the shadcn/ui parts
   lib/               typed API client, Zod schemas, query hooks
   server.mjs         custom server: replaces X-Forwarded-For with the real client IP (D45)
 /docs                handoff, PLAN.md, DECISIONS.md, schema docs
@@ -81,6 +81,24 @@ npm run lint
 npm run typecheck
 npm test
 ```
+
+## Design rules
+
+- Use the design tokens in `frontend/app/globals.css` (`primary`, `coral`, `notice`, `muted`, `border`, `radius`); no raw hex or zinc classes in new code (D104).
+- Lookup and registration results use neutral (ink or grey) or amber only, always with an icon and text; never green or red, never colour alone.
+- Coral is decoration only (lens glow, accents, markers); never a background behind text.
+- The lens animation is CSS/SVG only and stops under `prefers-reduced-motion` (D105).
+- Mobile first: design at 375px wide; touch targets at least 44px; no horizontal scroll.
+- Keep pages light: build from the shadcn/ui parts in `components/ui`; no other UI library; no external fonts, images or scripts at runtime (D106).
+- The demo banner and "simulated register (demo data)" labels keep their current text and placement.
+
+## Definition of done (frontend)
+
+- `npm run lint`, `npm run typecheck`, `npm test` and `npm run build` pass.
+- Checked at 375px and desktop width, in light and dark mode, with reduced motion on.
+- Text contrast at least 4.5:1; every interactive element reachable by keyboard with a visible focus ring.
+- No wording rule broken (no "safe", "genuine" or "verified by NAFDAC").
+- Any changed test named in the commit body.
 
 ## Working rules
 
