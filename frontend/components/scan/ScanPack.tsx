@@ -5,6 +5,7 @@ import { extractNumber, type Extraction, type ScanKind } from "@/lib/ocr/extract
 import type { LookupQuery } from "@/lib/lookup";
 import type { Rect } from "@/lib/ocr/preprocess";
 import { ConfirmScan } from "./ConfirmScan";
+import { Button } from "@/components/ui/button";
 
 /** How images become text. The real one runs Tesseract.js on the phone; tests pass a fake. */
 export type ScanReader = {
@@ -174,23 +175,23 @@ export function ScanPack({ onConfirm, onCancel, reader: injectedReader }: Props)
   return (
     <Overlay>
       <div className="flex flex-col gap-3">
-        <h2 className="text-xl font-bold">{text.title}</h2>
+        <h2 className="text-2xl font-bold">{text.title}</h2>
         <p className="text-sm">{text.hint}</p>
-        <p className="text-xs text-zinc-600 dark:text-zinc-400">
+        <p className="text-xs text-muted-foreground">
           Photos are read on your phone and never uploaded or saved.
         </p>
 
         {cameraState !== "unavailable" ? (
-          <div className="relative aspect-[3/4] w-full overflow-hidden rounded-md bg-black">
+          <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl bg-black">
             <video ref={videoRef} playsInline muted aria-label="Camera view" className="h-full w-full object-cover" />
             <div
               ref={guideRef}
               aria-hidden="true"
-              className="absolute left-[7.5%] top-[39%] h-[22%] w-[85%] rounded-md border-4 border-white shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]"
+              className="absolute left-[7.5%] top-[39%] h-[22%] w-[85%] rounded-lg border-4 border-white shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]"
             />
           </div>
         ) : (
-          <label className="flex flex-col gap-2 rounded-md border border-zinc-400 p-4">
+          <label className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4">
             <span className="font-medium">The camera is not available. Take or choose a photo instead:</span>
             <input type="file" accept="image/*" capture="environment" disabled={busy}
               onChange={(event) => choosePhoto(step, event)} aria-label="Photo of the number" />
@@ -198,21 +199,20 @@ export function ScanPack({ onConfirm, onCancel, reader: injectedReader }: Props)
         )}
 
         {status && <p role="status" className="text-sm">{status}</p>}
-        {problem && <p role="alert" className="text-red-700 dark:text-red-400">{problem}</p>}
+        {problem && <p role="alert" className="text-destructive">{problem}</p>}
 
         <div className="flex flex-wrap gap-3">
           {cameraState !== "unavailable" && (
-            <button type="button" disabled={busy || cameraState !== "ready"} onClick={() => capture(step)}
-              className="rounded-md bg-zinc-900 px-5 py-3 text-lg font-semibold text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900">
+            <Button type="button" size="lg" disabled={busy || cameraState !== "ready"} onClick={() => capture(step)}>
               {busy ? "Reading…" : "Capture"}
-            </button>
+            </Button>
           )}
           {step === "batch" && (
-            <button type="button" disabled={busy} onClick={() => setStep("confirm")} className="rounded-md border border-zinc-600 px-4 py-3">
+            <Button type="button" variant="outline" size="lg" disabled={busy} onClick={() => setStep("confirm")}>
               Skip batch number
-            </button>
+            </Button>
           )}
-          <button type="button" onClick={onCancel} className="px-2 py-3 underline">Type instead</button>
+          <Button type="button" variant="link" onClick={onCancel}>Type instead</Button>
         </div>
       </div>
     </Overlay>
@@ -221,7 +221,7 @@ export function ScanPack({ onConfirm, onCancel, reader: injectedReader }: Props)
 
 function Overlay({ children }: { children: React.ReactNode }) {
   return (
-    <div role="dialog" aria-modal="true" aria-label="Scan pack" className="fixed inset-0 z-50 overflow-y-auto bg-white p-4 dark:bg-zinc-950">
+    <div role="dialog" aria-modal="true" aria-label="Scan pack" className="fixed inset-0 z-50 overflow-y-auto bg-background p-4">
       <div className="mx-auto w-full max-w-md">{children}</div>
     </div>
   );

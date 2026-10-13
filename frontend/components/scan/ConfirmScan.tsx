@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { FormField } from "@/components/auth/FormField";
+import { Button } from "@/components/ui/button";
 import type { Extraction } from "@/lib/ocr/extract";
 import type { LookupQuery } from "@/lib/lookup";
 
@@ -25,7 +26,7 @@ function Suggestions({ items, current, label, onPick }: {
     <div className="flex flex-wrap items-center gap-2 text-sm" aria-label={label}>
       <span>Other readings:</span>
       {others.map((item) => (
-        <button key={item} type="button" onClick={() => onPick(item)} className="rounded-full border border-zinc-500 px-3 py-1 font-mono">
+        <button key={item} type="button" onClick={() => onPick(item)} className="min-h-9 rounded-full border border-input bg-card px-3 py-1 font-mono hover:bg-secondary">
           {item}
         </button>
       ))}
@@ -45,8 +46,8 @@ export function ConfirmScan({ registration, batch, onConfirm, onRescan, onCancel
 
   return (
     <form onSubmit={handleSubmit} noValidate aria-label="Check what was read" className="flex flex-col gap-4">
-      <h2 className="text-xl font-bold">Check what was read</h2>
-      <p className="text-sm text-zinc-700 dark:text-zinc-300">
+      <h2 className="text-2xl font-bold">Check what was read</h2>
+      <p className="text-sm text-muted-foreground">
         Scanning can misread characters. Compare with the pack and correct anything that is wrong.
       </p>
       {!registration.value && (
@@ -60,12 +61,12 @@ export function ConfirmScan({ registration, batch, onConfirm, onRescan, onCancel
       <FormField id="scan-batch" label="Batch number (optional)" value={batchNumber}
         autoComplete="off" autoCapitalize="characters" spellCheck={false} onChange={setBatchNumber} />
       {batch && <Suggestions items={batch.candidates} current={batchNumber} label="Other batch readings" onPick={setBatchNumber} />}
-      <button type="submit" disabled={!registrationNumber.trim()} className="rounded-md bg-zinc-900 px-4 py-3 text-lg font-semibold text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900">
+      <Button type="submit" size="lg" disabled={!registrationNumber.trim()}>
         Check the register
-      </button>
+      </Button>
       <div className="flex flex-wrap gap-4 text-sm">
-        <button type="button" onClick={onRescan} className="underline">Scan again</button>
-        <button type="button" onClick={onCancel} className="underline">Type instead</button>
+        <Button type="button" variant="link" onClick={onRescan}>Scan again</Button>
+        <Button type="button" variant="link" onClick={onCancel}>Type instead</Button>
       </div>
     </form>
   );

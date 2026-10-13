@@ -2,7 +2,11 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { FormField } from "@/components/auth/FormField";
+import { Camera } from "lucide-react";
 import { ScanPack, type ScanReader } from "@/components/scan/ScanPack";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { describeError } from "@/lib/api";
 import { useRegistrationLookup, type LookupQuery } from "@/lib/lookup";
 import { LookupResultView } from "./LookupResultView";
@@ -49,53 +53,54 @@ export function LookupForm({
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <button
-        type="button"
-        onClick={() => setScanning(true)}
-        className="rounded-md border-2 border-zinc-900 px-4 py-3 text-lg font-semibold dark:border-zinc-100"
-      >
-        Scan pack
-      </button>
-      <p className="-mt-4 text-center text-sm text-zinc-600 dark:text-zinc-400">or type the numbers</p>
-      {scanning && (
-        <ScanPack reader={scanReader} onConfirm={confirmScan} onCancel={() => setScanning(false)} />
-      )}
-      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
-        <FormField
-          id="registrationNumber"
-          label="NAFDAC or SON number on the pack"
-          value={registrationNumber}
-          hint='Type it as printed, for example "DEMO-NAFDAC-0001". Words like "NAFDAC Reg No:" are ignored.'
-          autoComplete="off"
-          autoCapitalize="characters"
-          spellCheck={false}
-          onChange={setRegistrationNumber}
-        />
-        <FormField
-          id="batchNumber"
-          label="Batch number (optional)"
-          value={batchNumber}
-          hint="Often labelled LOT, Batch, or B/N. Helps spot a number copied onto another product."
-          autoComplete="off"
-          autoCapitalize="characters"
-          spellCheck={false}
-          onChange={setBatchNumber}
-        />
-        <button
-          type="submit"
-          disabled={lookup.isPending}
-          className="rounded-md bg-zinc-900 px-4 py-3 text-lg font-semibold text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
-        >
-          {lookup.isPending ? "Checking…" : "Check the register"}
-        </button>
-      </form>
+    <div className="flex flex-col gap-6" aria-busy={lookup.isPending}>
+      <Card className="gap-0">
+        <CardContent className="flex flex-col gap-5 pt-4 sm:pt-5">
+          <Button type="button" variant="outline" size="lg" onClick={() => setScanning(true)} className="w-full">
+            <Camera aria-hidden="true" />
+            Scan pack
+          </Button>
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+            <span aria-hidden="true" className="h-px flex-1 bg-border" />
+            <span>or type the numbers</span>
+            <span aria-hidden="true" className="h-px flex-1 bg-border" />
+          </div>
+          {scanning && (
+            <ScanPack reader={scanReader} onConfirm={confirmScan} onCancel={() => setScanning(false)} />
+          )}
+          <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+            <FormField
+              id="registrationNumber"
+              label="NAFDAC or SON number on the pack"
+              value={registrationNumber}
+              hint='Type it as printed, for example "DEMO-NAFDAC-0001". Words like "NAFDAC Reg No:" are ignored.'
+              autoComplete="off"
+              autoCapitalize="characters"
+              spellCheck={false}
+              onChange={setRegistrationNumber}
+            />
+            <FormField
+              id="batchNumber"
+              label="Batch number (optional)"
+              value={batchNumber}
+              hint="Often labelled LOT, Batch, or B/N. Helps spot a number copied onto another product."
+              autoComplete="off"
+              autoCapitalize="characters"
+              spellCheck={false}
+              onChange={setBatchNumber}
+            />
+            <Button type="submit" size="lg" disabled={lookup.isPending} className="w-full">
+              {lookup.isPending ? "Checking…" : "Check the register"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
       <div aria-live="polite">
         {lookup.isError && (
-          <p role="alert" className="text-red-700 dark:text-red-400">
-            {describeError(lookup.error)}
-          </p>
+          <Alert variant="destructive" role="alert">
+            <AlertDescription>{describeError(lookup.error)}</AlertDescription>
+          </Alert>
         )}
         {lookup.isSuccess && <LookupResultView response={lookup.data} />}
       </div>
