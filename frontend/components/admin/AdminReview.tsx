@@ -32,6 +32,7 @@ import {
   type AdminAnnouncement,
 } from "@/lib/announcements";
 import { formatDate } from "@/lib/lookup";
+import { buttonVariants } from "@/components/ui/button";
 
 const companyActions: Record<CompanyStatus, CompanyDecision[]> = {
   PENDING_REVIEW: ["APPROVE", "REJECT"],
@@ -58,7 +59,7 @@ function CompanyRow({ company }: { company: AdminCompany }) {
   const actions = companyActions[company.review_status];
 
   return (
-    <li aria-label={company.display_name} className="flex flex-col gap-2 rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
+    <li aria-label={company.display_name} className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4">
       <div>
         <h3 className="font-semibold">{company.display_name}</h3>
         <p className="text-sm">{companyTypes[company.company_type]} · {companyStatusLabels[company.review_status]}</p>
@@ -76,7 +77,7 @@ function CompanyRow({ company }: { company: AdminCompany }) {
         <div className="flex flex-col gap-2">
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium">Review note (optional)</span>
-            <input value={note} onChange={(event) => setNote(event.target.value)} className="rounded-md border border-zinc-400 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-900" />
+            <input value={note} onChange={(event) => setNote(event.target.value)} className="min-h-11 w-full rounded-lg border border-input bg-card px-3 py-2 text-base text-foreground outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/40" />
           </label>
           <div className="flex flex-wrap gap-2">
             {actions.map((action) => (
@@ -85,7 +86,7 @@ function CompanyRow({ company }: { company: AdminCompany }) {
                 type="button"
                 disabled={decide.isPending}
                 onClick={() => decide.mutate({ companyId: company.company_id, decision: action, note })}
-                className="rounded-md border border-zinc-600 px-3 py-1 font-medium disabled:opacity-60"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
               >
                 {actionLabels[action]}
               </button>
@@ -93,7 +94,7 @@ function CompanyRow({ company }: { company: AdminCompany }) {
           </div>
         </div>
       )}
-      {decide.isError && <p role="alert" className="text-red-700 dark:text-red-400">{describeError(decide.error)}</p>}
+      {decide.isError && <p role="alert" className="text-destructive">{describeError(decide.error)}</p>}
     </li>
   );
 }
@@ -104,7 +105,7 @@ function LocationRow({ location }: { location: AdminLocation }) {
   const pending = location.review_status === "PENDING_REVIEW";
 
   return (
-    <li aria-label={location.name} className="flex flex-col gap-2 rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
+    <li aria-label={location.name} className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4">
       <div>
         <h3 className="font-semibold">{location.name}</h3>
         <p className="text-sm">{location.company_display_name} ({companyStatusLabels[location.company_review_status]}) · {locationStatusLabels[location.review_status]}</p>
@@ -115,19 +116,19 @@ function LocationRow({ location }: { location: AdminLocation }) {
         <div className="flex flex-col gap-2">
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium">Review note (optional)</span>
-            <input value={note} onChange={(event) => setNote(event.target.value)} className="rounded-md border border-zinc-400 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-900" />
+            <input value={note} onChange={(event) => setNote(event.target.value)} className="min-h-11 w-full rounded-lg border border-input bg-card px-3 py-2 text-base text-foreground outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/40" />
           </label>
           <div className="flex flex-wrap gap-2">
-            <button type="button" disabled={decide.isPending} onClick={() => decide.mutate({ locationId: location.location_id, decision: "APPROVE", note })} className="rounded-md border border-zinc-600 px-3 py-1 font-medium disabled:opacity-60">
+            <button type="button" disabled={decide.isPending} onClick={() => decide.mutate({ locationId: location.location_id, decision: "APPROVE", note })} className={buttonVariants({ variant: "outline", size: "sm" })}>
               Mark demo-reviewed
             </button>
-            <button type="button" disabled={decide.isPending} onClick={() => decide.mutate({ locationId: location.location_id, decision: "REJECT", note })} className="rounded-md border border-zinc-600 px-3 py-1 font-medium disabled:opacity-60">
+            <button type="button" disabled={decide.isPending} onClick={() => decide.mutate({ locationId: location.location_id, decision: "REJECT", note })} className={buttonVariants({ variant: "outline", size: "sm" })}>
               Reject
             </button>
           </div>
         </div>
       )}
-      {decide.isError && <p role="alert" className="text-red-700 dark:text-red-400">{describeError(decide.error)}</p>}
+      {decide.isError && <p role="alert" className="text-destructive">{describeError(decide.error)}</p>}
     </li>
   );
 }
@@ -146,7 +147,7 @@ function NoticeRow({ notice }: { notice: AdminNotice }) {
   const actions = noticeActions[notice.review_status];
 
   return (
-    <li aria-label={`Notice for ${target}`} className="flex flex-col gap-2 rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
+    <li aria-label={`Notice for ${target}`} className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4">
       <div>
         <h3 className="font-semibold">{target} ({notice.product_code})</h3>
         <p className="text-sm">
@@ -160,7 +161,7 @@ function NoticeRow({ notice }: { notice: AdminNotice }) {
       {notice.attachments.length > 0 && (
         <ul className="text-sm">
           {notice.attachments.map((a) => (
-            <li key={a.attachment_id}><a className="underline" href={`/api/admin/attachments/${a.attachment_id}`}>{a.original_filename}</a></li>
+            <li key={a.attachment_id}><a className="font-medium text-primary underline underline-offset-4 hover:no-underline" href={`/api/admin/attachments/${a.attachment_id}`}>{a.original_filename}</a></li>
           ))}
         </ul>
       )}
@@ -169,18 +170,18 @@ function NoticeRow({ notice }: { notice: AdminNotice }) {
         <div className="flex flex-col gap-2">
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium">Review note (required to request clarification)</span>
-            <input value={note} onChange={(event) => setNote(event.target.value)} className="rounded-md border border-zinc-400 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-900" />
+            <input value={note} onChange={(event) => setNote(event.target.value)} className="min-h-11 w-full rounded-lg border border-input bg-card px-3 py-2 text-base text-foreground outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/40" />
           </label>
           <div className="flex flex-wrap gap-2">
             {actions.map(([decision, label]) => (
-              <button key={decision} type="button" disabled={decide.isPending} onClick={() => decide.mutate({ noticeId: notice.notice_id, decision, note })} className="rounded-md border border-zinc-600 px-3 py-1 font-medium disabled:opacity-60">
+              <button key={decision} type="button" disabled={decide.isPending} onClick={() => decide.mutate({ noticeId: notice.notice_id, decision, note })} className={buttonVariants({ variant: "outline", size: "sm" })}>
                 {label}
               </button>
             ))}
           </div>
         </div>
       )}
-      {decide.isError && <p role="alert" className="text-red-700 dark:text-red-400">{describeError(decide.error)}</p>}
+      {decide.isError && <p role="alert" className="text-destructive">{describeError(decide.error)}</p>}
     </li>
   );
 }
@@ -189,7 +190,7 @@ function AnnouncementRow({ item }: { item: AdminAnnouncement }) {
   const hide = useHideAnnouncement();
   const [reason, setReason] = useState("");
   return (
-    <li aria-label={item.title} className="flex flex-col gap-2 rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
+    <li aria-label={item.title} className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4">
       <div>
         <h3 className="font-semibold">{item.title}</h3>
         <p>{item.message}</p>
@@ -200,12 +201,12 @@ function AnnouncementRow({ item }: { item: AdminAnnouncement }) {
       </div>
       <label className="flex flex-col gap-1 text-sm">
         <span className="font-medium">Reason (optional)</span>
-        <input value={reason} onChange={(event) => setReason(event.target.value)} className="rounded-md border border-zinc-400 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-900" />
+        <input value={reason} onChange={(event) => setReason(event.target.value)} className="min-h-11 w-full rounded-lg border border-input bg-card px-3 py-2 text-base text-foreground outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/40" />
       </label>
-      <button type="button" disabled={hide.isPending} onClick={() => hide.mutate({ announcementId: item.announcement_id, reason })} className="self-start rounded-md border border-zinc-600 px-3 py-1 font-medium disabled:opacity-60">
+      <button type="button" disabled={hide.isPending} onClick={() => hide.mutate({ announcementId: item.announcement_id, reason })} className={buttonVariants({ variant: "outline", size: "sm", className: "self-start" })}>
         Hide announcement
       </button>
-      {hide.isError && <p role="alert" className="text-red-700 dark:text-red-400">{describeError(hide.error)}</p>}
+      {hide.isError && <p role="alert" className="text-destructive">{describeError(hide.error)}</p>}
     </li>
   );
 }
@@ -230,7 +231,7 @@ export function AdminReview() {
         <h2 id="companies-heading" className="text-xl font-bold">Companies</h2>
         <label className="flex flex-col gap-1 text-sm sm:w-64">
           <span className="font-medium">Show</span>
-          <select value={companyFilter} onChange={(event) => setCompanyFilter(event.target.value as CompanyStatus | "ALL")} className="rounded-md border border-zinc-400 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-900">
+          <select value={companyFilter} onChange={(event) => setCompanyFilter(event.target.value as CompanyStatus | "ALL")} className="min-h-11 w-full rounded-lg border border-input bg-card px-3 py-2 text-base text-foreground outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/40">
             {companyFilters.map((value) => (
               <option key={value} value={value}>{value === "ALL" ? "All companies" : companyStatusLabels[value]}</option>
             ))}
@@ -255,7 +256,7 @@ export function AdminReview() {
 
       <section aria-labelledby="notices-heading" className="flex flex-col gap-3">
         <h2 id="notices-heading" className="text-xl font-bold">Change notices</h2>
-        <p className="text-sm text-zinc-700 dark:text-zinc-300">Approving applies every change at once and keeps the previous values for audit.</p>
+        <p className="text-sm text-muted-foreground">Approving applies every change at once and keeps the previous values for audit.</p>
         {notices.isError && <p role="alert">{describeError(notices.error)}</p>}
         {openNotices?.length === 0 && <p>No open change notices.</p>}
         <ul className="flex flex-col gap-3">
@@ -265,7 +266,7 @@ export function AdminReview() {
 
       <section aria-labelledby="announcements-heading" className="flex flex-col gap-3">
         <h2 id="announcements-heading" className="text-xl font-bold">Live announcements</h2>
-        <p className="text-sm text-zinc-700 dark:text-zinc-300">Company messages go live without review. Hide any that are misleading.</p>
+        <p className="text-sm text-muted-foreground">Company messages go live without review. Hide any that are misleading.</p>
         {announcements.isError && <p role="alert">{describeError(announcements.error)}</p>}
         {announcements.data?.length === 0 && <p>No live announcements.</p>}
         <ul className="flex flex-col gap-3">
