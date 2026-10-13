@@ -22,6 +22,7 @@ import {
   type ContactForm,
   type LocationForm,
 } from "@/lib/companies";
+import { buttonVariants } from "@/components/ui/button";
 
 const statusExplanations: Record<Company["review_status"], string> = {
   PENDING_REVIEW:
@@ -63,14 +64,14 @@ function AddLocationForm({ companyId }: { companyId: string }) {
       <FormField id="location_area" label="Area or city" value={form.area}
         error={errors.area} onChange={set("area")} />
       {addLocation.isError && (
-        <p role="alert" className="text-red-700 dark:text-red-400">
+        <p role="alert" className="text-destructive">
           {describeError(addLocation.error)}
         </p>
       )}
       <button
         type="submit"
         disabled={addLocation.isPending}
-        className="self-start rounded-md bg-zinc-900 px-4 py-2 font-semibold text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
+        className={buttonVariants({ className: "self-start" })}
       >
         Submit location for review
       </button>
@@ -100,7 +101,7 @@ function ContactDetails({ company, isOwner }: { company: Company; isOwner: boole
 
   return (
     <section aria-labelledby="contact-heading" className="flex flex-col gap-2">
-      <h2 id="contact-heading" className="text-lg font-semibold">Contact details</h2>
+      <h2 id="contact-heading" className="text-xl font-bold">Contact details</h2>
       {!editing ? (
         <>
           <p className="break-words">
@@ -108,7 +109,7 @@ function ContactDetails({ company, isOwner }: { company: Company; isOwner: boole
             {company.contact_phone && ` · ${company.contact_phone}`}
           </p>
           {isOwner && (
-            <button type="button" onClick={() => setEditing(true)} className="self-start underline">
+            <button type="button" onClick={() => setEditing(true)} className="self-start font-medium text-primary underline underline-offset-4 hover:no-underline">
               Edit contact details
             </button>
           )}
@@ -116,7 +117,7 @@ function ContactDetails({ company, isOwner }: { company: Company; isOwner: boole
         </>
       ) : (
         <form onSubmit={handleSubmit} noValidate aria-label="Edit contact details" className="flex flex-col gap-3">
-          <p className="text-sm text-zinc-700 dark:text-zinc-300">
+          <p className="text-sm text-muted-foreground">
             Changes are saved straight away and recorded with your name and the time. They are shown in
             the supplier directory.
           </p>
@@ -125,14 +126,14 @@ function ContactDetails({ company, isOwner }: { company: Company; isOwner: boole
           <FormField id="contact_phone" label="Contact phone (optional)" value={form.contact_phone}
             error={errors.contact_phone} onChange={(value) => setForm({ ...form, contact_phone: value })} />
           {update.isError && (
-            <p role="alert" className="text-red-700 dark:text-red-400">{describeError(update.error)}</p>
+            <p role="alert" className="text-destructive">{describeError(update.error)}</p>
           )}
           <div className="flex gap-3">
             <button type="submit" disabled={update.isPending}
-              className="rounded-md bg-zinc-900 px-4 py-2 font-semibold text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900">
+              className={buttonVariants()}>
               Save contact details
             </button>
-            <button type="button" onClick={() => setEditing(false)} className="underline">Cancel</button>
+            <button type="button" onClick={() => setEditing(false)} className="font-medium text-primary underline underline-offset-4 hover:no-underline">Cancel</button>
           </div>
         </form>
       )}
@@ -143,9 +144,9 @@ function ContactDetails({ company, isOwner }: { company: Company; isOwner: boole
 export function CompanyView({ company, isOwner = false }: { company: Company; isOwner?: boolean }) {
   return (
     <div className="flex flex-col gap-6">
-      <section aria-labelledby="company-status" className="rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
+      <section aria-labelledby="company-status" className="rounded-xl border border-border bg-card p-4">
         <h2 id="company-status" className="text-xl font-bold">{company.display_name}</h2>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">{companyTypes[company.company_type]}</p>
+        <p className="text-sm text-muted-foreground">{companyTypes[company.company_type]}</p>
         <p className="mt-2 font-medium">Status: {companyStatusLabels[company.review_status]}</p>
         <p>{statusExplanations[company.review_status]}</p>
         {company.review_note && <p className="mt-1 text-sm">Reviewer note: {company.review_note}</p>}
@@ -154,13 +155,13 @@ export function CompanyView({ company, isOwner = false }: { company: Company; is
       <ContactDetails company={company} isOwner={isOwner} />
 
       <section aria-labelledby="locations-heading" className="flex flex-col gap-3">
-        <h2 id="locations-heading" className="text-lg font-semibold">Supplier locations</h2>
+        <h2 id="locations-heading" className="text-xl font-bold">Supplier locations</h2>
         {company.locations.length === 0 ? (
           <p>No locations yet.</p>
         ) : (
           <ul className="flex flex-col gap-2">
             {company.locations.map((location) => (
-              <li key={location.location_id} className="rounded-md border border-zinc-200 p-3 dark:border-zinc-800">
+              <li key={location.location_id} className="rounded-lg border border-border bg-muted p-3">
                 <p className="font-medium">{location.name}</p>
                 <p>{location.address}, {location.area}</p>
                 <p className="text-sm">{locationStatusLabels[location.review_status]}</p>
@@ -187,7 +188,7 @@ export function CompanyDashboard() {
   if (!user) {
     return (
       <p>
-        <Link href="/login" className="underline">Sign in</Link> to manage your company.
+        <Link href="/login" className="font-medium text-primary underline underline-offset-4 hover:no-underline">Sign in</Link> to manage your company.
       </p>
     );
   }
@@ -195,7 +196,7 @@ export function CompanyDashboard() {
     return (
       <p>
         Your account is not linked to a company yet.{" "}
-        <Link href="/company/register" className="underline">Register your company</Link>.
+        <Link href="/company/register" className="font-medium text-primary underline underline-offset-4 hover:no-underline">Register your company</Link>.
       </p>
     );
   }

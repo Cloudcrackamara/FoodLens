@@ -5,6 +5,7 @@ import { describeError } from "@/lib/api";
 import { canOrder, useCurrentUser } from "@/lib/auth";
 import { useOrderAction, useOrders } from "@/lib/orders";
 import { OrderCard } from "./OrderCard";
+import { buttonVariants } from "@/components/ui/button";
 
 function BuyerOrders({ companyId }: { companyId: string }) {
   const orders = useOrders(companyId, "buying");
@@ -16,20 +17,20 @@ function BuyerOrders({ companyId }: { companyId: string }) {
     return (
       <p>
         No order requests yet. Find a supplier in the{" "}
-        <Link href="/suppliers" className="underline">supplier directory</Link>.
+        <Link href="/suppliers" className="font-medium text-primary underline underline-offset-4 hover:no-underline">supplier directory</Link>.
       </p>
     );
   }
   return (
     <div className="flex flex-col gap-3">
-      {action.isError && <p role="alert" className="text-red-700 dark:text-red-400">{describeError(action.error)}</p>}
+      {action.isError && <p role="alert" className="text-destructive">{describeError(action.error)}</p>}
       <ul className="flex flex-col gap-3">
         {orders.data.map((order) => (
           <OrderCard key={order.order_id} order={order} perspective="buyer">
             {order.status === "REQUESTED" && (
               <button type="button" disabled={action.isPending}
                 onClick={() => action.mutate({ orderId: order.order_id, action: "cancel" })}
-                className="self-start rounded-md border border-zinc-600 px-3 py-1 text-sm">
+                className={buttonVariants({ variant: "outline", size: "sm", className: "self-start" })}>
                 Cancel request
               </button>
             )}
@@ -47,7 +48,7 @@ export function MyOrders() {
   if (!user) {
     return (
       <p>
-        <Link href="/login" className="underline">Sign in</Link> to see your order requests.
+        <Link href="/login" className="font-medium text-primary underline underline-offset-4 hover:no-underline">Sign in</Link> to see your order requests.
       </p>
     );
   }

@@ -5,6 +5,7 @@ import { OrderCard } from "@/components/orders/OrderCard";
 import { describeError } from "@/lib/api";
 import { useProducts } from "@/lib/catalogue";
 import { useOrderAction, useOrders, type Order } from "@/lib/orders";
+import { buttonVariants } from "@/components/ui/button";
 
 type Mode = "idle" | "decline" | "reply" | "fulfil";
 
@@ -36,14 +37,14 @@ function SellerActions({ order, companyId }: { order: Order; companyId: string }
         {order.status === "REQUESTED" && (
           <>
             <button type="button" disabled={action.isPending} onClick={() => run({ orderId: id, action: "accept" })}
-              className="rounded-md bg-zinc-900 px-3 py-1 font-semibold text-white dark:bg-zinc-100 dark:text-zinc-900">Accept</button>
-            <button type="button" onClick={() => setMode("decline")} className="rounded-md border border-zinc-600 px-3 py-1">Decline</button>
+              className={buttonVariants({ size: "sm" })}>Accept</button>
+            <button type="button" onClick={() => setMode("decline")} className={buttonVariants({ variant: "outline", size: "sm" })}>Decline</button>
           </>
         )}
         {order.status === "ACCEPTED" && (
-          <button type="button" onClick={() => setMode("fulfil")} className="rounded-md bg-zinc-900 px-3 py-1 font-semibold text-white dark:bg-zinc-100 dark:text-zinc-900">Mark fulfilled</button>
+          <button type="button" onClick={() => setMode("fulfil")} className={buttonVariants({ size: "sm" })}>Mark fulfilled</button>
         )}
-        {canReply && <button type="button" onClick={() => setMode("reply")} className="rounded-md border border-zinc-600 px-3 py-1">Reply</button>}
+        {canReply && <button type="button" onClick={() => setMode("reply")} className={buttonVariants({ variant: "outline", size: "sm" })}>Reply</button>}
       </div>
 
       {(mode === "decline" || mode === "reply") && (
@@ -51,17 +52,17 @@ function SellerActions({ order, companyId }: { order: Order; companyId: string }
           <label className="flex flex-col gap-1 text-sm">
             {mode === "decline" ? "Reason (optional)" : "Message to the buyer"}
             <textarea value={text} maxLength={500} onChange={(e) => setText(e.target.value)}
-              className="rounded-md border border-zinc-400 px-2 py-1 dark:border-zinc-600 dark:bg-zinc-900" />
+              className="min-h-11 w-full rounded-lg border border-input bg-card px-3 py-2 text-base text-foreground outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/40" />
           </label>
           <div className="flex gap-2 text-sm">
             <button type="button" disabled={action.isPending || (mode === "reply" && !text.trim())}
               onClick={() => run(mode === "decline"
                 ? { orderId: id, action: "decline", reason: text.trim() || null }
                 : { orderId: id, action: "reply", message: text.trim() })}
-              className="rounded-md bg-zinc-900 px-3 py-1 font-semibold text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900">
+              className={buttonVariants({ size: "sm" })}>
               {mode === "decline" ? "Confirm decline" : "Send reply"}
             </button>
-            <button type="button" onClick={() => setMode("idle")} className="underline">Back</button>
+            <button type="button" onClick={() => setMode("idle")} className="font-medium text-primary underline underline-offset-4 hover:no-underline">Back</button>
           </div>
         </div>
       )}
@@ -75,7 +76,7 @@ function SellerActions({ order, companyId }: { order: Order; companyId: string }
               <div key={line.line_id}>
                 <p>{line.product_name}</p>
                 {batches.length === 0 ? (
-                  <p className="text-zinc-600 dark:text-zinc-400">No batches recorded for this product.</p>
+                  <p className="text-muted-foreground">No batches recorded for this product.</p>
                 ) : (
                   batches.map((batch) => (
                     <label key={batch.batch_id} className="mr-3 inline-flex items-center gap-1">
@@ -97,14 +98,14 @@ function SellerActions({ order, companyId }: { order: Order; companyId: string }
                   .filter(([, ids]) => ids.length > 0)
                   .map(([line_id, batch_ids]) => ({ line_id, batch_ids })),
               })}
-              className="rounded-md bg-zinc-900 px-3 py-1 font-semibold text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900">
+              className={buttonVariants({ size: "sm" })}>
               Confirm fulfilled
             </button>
-            <button type="button" onClick={() => setMode("idle")} className="underline">Back</button>
+            <button type="button" onClick={() => setMode("idle")} className="font-medium text-primary underline underline-offset-4 hover:no-underline">Back</button>
           </div>
         </fieldset>
       )}
-      {action.isError && <p role="alert" className="text-red-700 dark:text-red-400">{describeError(action.error)}</p>}
+      {action.isError && <p role="alert" className="text-destructive">{describeError(action.error)}</p>}
     </div>
   );
 }
@@ -115,8 +116,8 @@ export function IncomingOrders({ companyId }: { companyId: string }) {
 
   return (
     <section aria-labelledby="incoming-orders-heading" className="flex flex-col gap-3">
-      <h2 id="incoming-orders-heading" className="text-lg font-semibold">Incoming orders</h2>
-      <p className="text-sm text-zinc-700 dark:text-zinc-300">
+      <h2 id="incoming-orders-heading" className="text-xl font-bold">Incoming orders</h2>
+      <p className="text-sm text-muted-foreground">
         Order requests from wholesalers. FoodLens takes no payment; arrange that with the buyer.
       </p>
       {orders.isError && <p role="alert">{describeError(orders.error)}</p>}

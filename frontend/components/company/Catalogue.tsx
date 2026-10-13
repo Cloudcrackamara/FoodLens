@@ -14,9 +14,10 @@ import {
   type Product,
 } from "@/lib/catalogue";
 import { formatDate } from "@/lib/lookup";
+import { buttonVariants } from "@/components/ui/button";
 
 const buttonClass =
-  "self-start rounded-md bg-zinc-900 px-4 py-2 font-semibold text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900";
+  buttonVariants({ className: "self-start" });
 
 /** Small form helper: holds values, validates with zod, submits, clears on success. */
 function useForm<S extends z.ZodObject>(
@@ -42,7 +43,7 @@ function useForm<S extends z.ZodObject>(
 
 function ErrorText({ error }: { error: Error | null }) {
   return error ? (
-    <p role="alert" className="text-red-700 dark:text-red-400">
+    <p role="alert" className="text-destructive">
       {describeError(error)}
     </p>
   ) : null;
@@ -58,7 +59,7 @@ function AddProductForm({ companyId }: { companyId: string }) {
   return (
     <form onSubmit={form.onSubmit} noValidate className="flex flex-col gap-3">
       <h3 className="font-semibold">Add a product</h3>
-      <p className="text-sm text-zinc-700 dark:text-zinc-300">
+      <p className="text-sm text-muted-foreground">
         Products and batches appear in consumer lookups straight away. Later changes to a published
         product go through a change notice.
       </p>
@@ -97,7 +98,7 @@ function AddBatchForm({ companyId, product }: { companyId: string; product: Prod
 
 function ProductCard({ companyId, product }: { companyId: string; product: Product }) {
   return (
-    <li aria-label={product.name} className="flex flex-col gap-3 rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
+    <li aria-label={product.name} className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 sm:p-5">
       <div>
         <h3 className="font-semibold">{product.name}</h3>
         <p className="text-sm">{product.product_code} · {product.brand} · {product.category}{product.package_size && ` · ${product.package_size}`}</p>
@@ -122,7 +123,7 @@ export function Catalogue({ companyId }: { companyId: string }) {
   const products = useProducts(companyId);
   return (
     <section aria-labelledby="catalogue-heading" className="flex flex-col gap-4">
-      <h2 id="catalogue-heading" className="text-lg font-semibold">Products</h2>
+      <h2 id="catalogue-heading" className="text-xl font-bold">Products</h2>
       {products.isError && <ErrorText error={products.error} />}
       {products.data?.length === 0 && <p>No products yet.</p>}
       <ul className="flex flex-col gap-4">

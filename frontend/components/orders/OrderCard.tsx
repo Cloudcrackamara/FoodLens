@@ -1,7 +1,17 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { formatQuantity, orderStatusLabels, type Order } from "@/lib/orders";
+import { formatQuantity, orderStatusLabels, type Order, type OrderStatus } from "@/lib/orders";
+import { badgeVariants } from "@/components/ui/badge";
+
+/** Status badge tones: ink once accepted or fulfilled, amber when declined, grey otherwise. */
+const statusTones: Record<OrderStatus, "default" | "secondary" | "notice" | "outline"> = {
+  REQUESTED: "secondary",
+  ACCEPTED: "default",
+  FULFILLED: "default",
+  DECLINED: "notice",
+  CANCELLED: "outline",
+};
 
 /** One order, as seen by the buyer or the seller. No prices: order requests only. */
 export function OrderCard({
@@ -16,17 +26,17 @@ export function OrderCard({
   const other = perspective === "buyer" ? order.seller : order.buyer;
   return (
     <li aria-label={`Order from ${order.buyer.display_name} to ${order.seller.display_name}`}
-      className="flex flex-col gap-2 rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
+      className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <p className="font-semibold">
             {perspective === "buyer" ? "To" : "From"} {other.display_name}
           </p>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="text-sm text-muted-foreground">
             Sent {new Date(order.created_at).toLocaleDateString("en-GB")}
           </p>
         </div>
-        <span className="rounded-full border border-zinc-500 px-3 py-1 text-xs font-semibold">
+        <span className={badgeVariants({ variant: statusTones[order.status] })}>
           {orderStatusLabels[order.status]}
         </span>
       </div>
@@ -35,7 +45,7 @@ export function OrderCard({
           <li key={line.line_id}>
             {line.product_name}: {formatQuantity(line.quantity)} {line.unit}
             {line.batches.length > 0 && (
-              <span className="text-zinc-600 dark:text-zinc-400">
+              <span className="text-muted-foreground">
                 {" "}· batches {line.batches.map((b) => b.batch_number).join(", ")}
               </span>
             )}

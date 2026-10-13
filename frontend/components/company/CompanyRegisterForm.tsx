@@ -11,6 +11,7 @@ import {
   useRegisterCompany,
   type CompanyRegisterForm as Form,
 } from "@/lib/companies";
+import { buttonVariants } from "@/components/ui/button";
 
 const emptyForm: Form = {
   company_type: "MANUFACTURER",
@@ -42,13 +43,17 @@ export function CompanyRegisterForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+    <form
+      onSubmit={handleSubmit}
+      noValidate
+      className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 sm:p-6"
+    >
       <label className="flex flex-col gap-1">
         <span className="font-medium">Company type</span>
         <select
           value={form.company_type}
           onChange={(event) => set("company_type")(event.target.value)}
-          className="rounded-md border border-zinc-400 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-900"
+          className="min-h-11 w-full rounded-lg border border-input bg-card px-3 py-2 text-base text-foreground outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/40"
         >
           {Object.entries(companyTypes).map(([value, label]) => (
             <option key={value} value={value}>
@@ -80,9 +85,9 @@ export function CompanyRegisterForm() {
         error={errors.contact_phone}
         onChange={set("contact_phone")}
       />
-      <fieldset className="flex flex-col gap-4 rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
+      <fieldset className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 sm:p-5">
         <legend className="px-1 font-semibold">Business details you claim</legend>
-        <p className="text-sm text-zinc-700 dark:text-zinc-300">
+        <p className="text-sm text-muted-foreground">
           FoodLens records these as claims. They are not verified and are not shown in the public
           directory.
         </p>
@@ -109,14 +114,14 @@ export function CompanyRegisterForm() {
         />
       </fieldset>
       {registerCompany.isError && (
-        <p role="alert" className="text-red-700 dark:text-red-400">
+        <p role="alert" className="text-destructive">
           {describeError(registerCompany.error)}
         </p>
       )}
       <button
         type="submit"
         disabled={registerCompany.isPending}
-        className="rounded-md bg-zinc-900 px-4 py-2 font-semibold text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
+        className={buttonVariants()}
       >
         {registerCompany.isPending ? "Submitting…" : "Submit for FoodLens review"}
       </button>

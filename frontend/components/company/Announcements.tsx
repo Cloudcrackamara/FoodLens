@@ -9,8 +9,10 @@ import {
 } from "@/lib/announcements";
 import { useProducts } from "@/lib/catalogue";
 import { formatDate } from "@/lib/lookup";
+import { buttonVariants } from "@/components/ui/button";
 
-const inputClass = "rounded-md border border-zinc-400 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-900";
+const inputClass =
+  "min-h-11 w-full rounded-lg border border-input bg-card px-3 py-2 text-base text-foreground outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/40";
 
 export function Announcements({ companyId }: { companyId: string }) {
   const products = useProducts(companyId);
@@ -42,8 +44,8 @@ export function Announcements({ companyId }: { companyId: string }) {
 
   return (
     <section aria-labelledby="announcements-heading" className="flex flex-col gap-4">
-      <h2 id="announcements-heading" className="text-lg font-semibold">Announcements</h2>
-      <p className="text-sm text-zinc-700 dark:text-zinc-300">
+      <h2 id="announcements-heading" className="text-xl font-bold">Announcements</h2>
+      <p className="text-sm text-muted-foreground">
         Short messages shown to consumers when they check your product, for example about new
         packaging. They go live straight away, are labelled &quot;Message from the company — not
         reviewed by FoodLens&quot;, and never change product details. You can warn about fake or
@@ -53,14 +55,14 @@ export function Announcements({ companyId }: { companyId: string }) {
       {announcements.isError && <p role="alert">{describeError(announcements.error)}</p>}
       <ul className="flex flex-col gap-2">
         {announcements.data?.map((item) => (
-          <li key={item.announcement_id} aria-label={item.title} className="flex flex-col gap-1 rounded-md border border-zinc-300 p-3 dark:border-zinc-700">
+          <li key={item.announcement_id} aria-label={item.title} className="flex flex-col gap-1 rounded-lg border border-border bg-card p-3">
             <p className="font-semibold">{item.title}</p>
             <p>{item.message}</p>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="text-sm text-muted-foreground">
               {item.product_name} · posted {formatDate(item.created_at.slice(0, 10))} · {item.status === "LIVE" ? "Live" : "Hidden"}
             </p>
             {item.status === "LIVE" && (
-              <button type="button" disabled={withdraw.isPending} onClick={() => withdraw.mutate(item.announcement_id)} className="self-start text-sm underline disabled:opacity-60">
+              <button type="button" disabled={withdraw.isPending} onClick={() => withdraw.mutate(item.announcement_id)} className="self-start text-sm font-medium text-primary underline underline-offset-4 hover:no-underline disabled:opacity-60">
                 Withdraw
               </button>
             )}
@@ -86,9 +88,9 @@ export function Announcements({ companyId }: { companyId: string }) {
           <span className="font-medium">Message</span>
           <textarea value={message} maxLength={500} onChange={(event) => setMessage(event.target.value)} className={inputClass} />
         </label>
-        {problem && <p role="alert" className="text-red-700 dark:text-red-400">{problem}</p>}
-        {postAnnouncement.isError && <p role="alert" className="text-red-700 dark:text-red-400">{describeError(postAnnouncement.error)}</p>}
-        <button type="submit" disabled={postAnnouncement.isPending} className="self-start rounded-md bg-zinc-900 px-4 py-2 font-semibold text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900">
+        {problem && <p role="alert" className="text-destructive">{problem}</p>}
+        {postAnnouncement.isError && <p role="alert" className="text-destructive">{describeError(postAnnouncement.error)}</p>}
+        <button type="submit" disabled={postAnnouncement.isPending} className={buttonVariants({ className: "self-start" })}>
           Post announcement
         </button>
       </form>
