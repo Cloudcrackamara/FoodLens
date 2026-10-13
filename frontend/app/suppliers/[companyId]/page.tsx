@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { SupplierPage } from "@/components/suppliers/SupplierPage";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { SupplierPage, SupplierPageSkeleton } from "@/components/suppliers/SupplierPage";
 
 export const metadata: Metadata = { title: "Supplier · FoodLens (demo)" };
 
@@ -14,11 +16,14 @@ async function Supplier({ params }: { params: Params }) {
 
 export default function SupplierRoute({ params }: { params: Params }) {
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-8">
-      <Link href="/suppliers" className="text-sm underline">
-        Back to the supplier directory
-      </Link>
-      <Suspense fallback={<p>Loading…</p>}>
+    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-8 sm:py-10">
+      <Button asChild variant="ghost" size="sm" className="-ml-2 self-start">
+        <Link href="/suppliers">
+          <ArrowLeft aria-hidden="true" className="size-4" />
+          Back to the supplier directory
+        </Link>
+      </Button>
+      <Suspense fallback={<SupplierPageSkeleton />}>
         <Supplier params={params} />
       </Suspense>
     </main>
