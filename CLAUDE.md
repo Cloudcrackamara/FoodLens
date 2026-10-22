@@ -4,10 +4,7 @@
 
 FoodLens is a startup product at the demonstration-prototype stage. Its first milestone is the founder's capstone. Build a responsive FoodLens prototype: a unit-level product integrity platform.
 
-- **Manufacturers** get a unique, unpredictable identity for every product unit:
-  - a visible QR token;
-  - a hidden scratch-panel code.
-  They print both on packs.
+- **Manufacturers** get a unique, unpredictable QR identity for every product unit and every carton. They print the QR, with the code underneath as a typing fallback, on packs.
 - **Distributors and retailers** record what happens to units. They use either:
   - a mobile merchant page;
   - a signed POS integration, which records a sale only after payment is confirmed.
@@ -20,17 +17,18 @@ Wholesale order requests remain in the code but are hidden and treated as future
 
 Where to find things:
 - **Product concept** (source of truth for scope): `docs/PRODUCT_INTEGRITY.md`.
-- **Phase plan** (phases 1-11, one session and one commit each): `docs/PLAN.md`.
+- **Phase plan** (phases 1-10, one session and one commit each, then future work): `docs/PLAN.md`.
 - **Schema:** the tables and rules are in `docs/SCHEMA.md`; the diagram is `docs/ERD.mmd`.
-- **Decisions:** `docs/DECISIONS.md`. D104 onwards covers the unit-identity design, geo-batching and returns. Read the relevant entries before implementing identity, checks, lifecycle events, allocations, returns, POS, or risk rules.
+- **Decisions:** `docs/DECISIONS.md`. D104 onwards covers the unit-identity design, geo-batching and returns; D137 onwards is the final design and wins where earlier entries differ. Read the relevant entries before implementing identity, checks, lifecycle events, allocations, returns, POS, or risk rules.
 - **Challenge log:** `docs/log.md`.
 - **History only:** `docs/HANDOFF.md` and `docs/archive/` describe the earlier registration-lookup design.
 
 ## Non-negotiable rules
 
 1. **Wording.**
-   - **Words FoodLens never uses:** in its own wording, FoodLens never uses "original", "genuine", "authentic", "safe", "unsafe" or "fake", and never gives a safety score.
+   - **Words FoodLens never uses:** in its own wording, FoodLens never uses "original", "genuine", "authentic", "safe", "unsafe", "fake", "adulteration" or "verified by NAFDAC", and never gives a safety score.
    - **A recognised code:** it is described as issued by the manufacturer and recorded as in circulation, sold, and so on. Results state that no QR system catches every copied code.
+   - **What a check proves:** help text says plainly that a copied QR carries the same code, and that FoodLens spots copies through sale status, places, scan volume and allocation, not by the QR alone.
    - **Recorded facts and possible patterns:** results label recorded facts as recorded facts and possible patterns as possible patterns.
    - **Company announcements and recalls:**
      - They may not contain the whole words "safe" or "unsafe".
@@ -41,23 +39,20 @@ Where to find things:
    - The frontend shows the banner **DEMO DATA — NOT AN OFFICIAL REGULATOR SERVICE** on every result.
    - Both layers enforce this. Neither relies on the other.
 3. **Identities are random and stored only as hashes.**
-   - QR tokens come from `secrets.token_urlsafe(16)`.
-   - Hidden codes are 16 Crockford Base32 characters plus a Luhn mod-32 check character.
-   - Neither is ever derived from IDs, sequences or timestamps.
-   - Only hashes are stored: SHA-256 for QR tokens, and HMAC-SHA256 with `CODE_HASH_PEPPER` for hidden codes.
+   - QR tokens come from `secrets.token_bytes(16)`, encoded as 26 uppercase Crockford Base32 characters with no padding.
+   - They are never derived from IDs, sequences or timestamps.
+   - Typed codes are normalised before hashing: uppercase, spaces and hyphens removed, `O` read as `0`, `I` and `L` read as `1`.
+   - Only the SHA-256 hash of the normalised token is stored.
    - Raw codes exist only in the one-time label download.
+   - Public pages and responses never show internal identifiers (`unit_id` or other UUIDs). A result page shows only the last 4 characters of the code.
    - `product.registration_number` is product information only. It is never checked against a register.
 4. **Only authorised commercial workflows change lifecycle status.** These are the manufacturer, the merchant page, and signed POS calls.
    - A consumer check never changes `lifecycle_status` or sale status.
-   - The first check of a hidden code records `CLAIMED`, which sets only the claim fields.
    - `SALE_CORRECTED` keeps the original sale.
    - **RETURNED:**
      - Accepted only from the company that recorded the sale, or from that retailer's linked POS partner.
-     - Always carries a disposition:
-       - `RESTOCK` puts the unit back in stock and clears the sold state.
-       - `NOT_FOR_RESALE` makes the unit `WITHDRAWN` for good.
-     - A unit whose hidden code was `CLAIMED` can only be returned `NOT_FOR_RESALE`.
-     - The original SOLD event always stays, and risk rules ignore a sale that a valid return followed (D134).
+     - Puts the unit back `IN_STOCK` and clears the sold state, so the next check shows "In circulation, not yet sold".
+     - The original SOLD event always stays, and risk rules ignore a sale that a valid return followed (D140).
    - `VOIDED` is allowed only before release.
 5. **No self-approval.**
    - Company users never approve their own company profile, supplier locations, or change notices. (Exception, D61: approved manufacturers publish their own new products and batches directly.)
@@ -85,7 +80,7 @@ Where to find things:
    - A scan stores a coarse city/state derived from the IP, then the IP is discarded.
    - No GPS, cookies, device IDs or accounts.
    - Scan logs are deleted after 12 months.
-   - OCR and QR decoding run only in the browser. Images never leave the phone.
+   - QR decoding runs only in the browser. Images never leave the phone.
 10. **Fictional seed data.**
     - All companies, products, POS partners and contacts are obviously fictional.
     - Reference numbers are prefixed `DEMO-`.
@@ -120,7 +115,7 @@ Where to find things:
 /frontend
   app/               Next.js App Router pages (/check, /p/[token], /merchant, /company, /admin, /demo/pos)
   components/
-  lib/               typed API client, Zod schemas, query hooks, OCR and QR readers
+  lib/               typed API client, Zod schemas, query hooks, QR reader
   server.mjs         custom server: replaces X-Forwarded-For with the real client IP (D45, D90)
 /docs                product concept, PLAN, DECISIONS, SCHEMA, ERD, POS_INTEGRATION, log
 /scripts             dev.mjs: start DB, migrate, seed, API and web app in one command
@@ -173,7 +168,7 @@ npm test
   - Read the generated file before applying it.
   - Keep `docs/SCHEMA.md` and `docs/ERD.mmd` in step.
   - `uv run alembic check` must pass.
-- Never commit secrets. Use environment variables and keep each `.env.example` up to date. The secrets include `CODE_HASH_PEPPER` and `POS_SECRET_KEY`.
+- Never commit secrets. Use environment variables and keep each `.env.example` up to date. The secrets include `POS_SECRET_KEY`.
 - Log every real challenge in `docs/log.md` as it happens: an error, a blocker, a conflicting requirement, or surprising tool behaviour.
   - Each entry has a date section, area, challenge, cause, resolution and status.
   - Add it in the same task, not later.

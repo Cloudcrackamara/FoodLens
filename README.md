@@ -1,10 +1,12 @@
 # FoodLens
 
-Software engineering capstone prototype. Consumers look up **simulated** product and batch records; companies manage demo-reviewed catalogue data; wholesalers find demo-reviewed suppliers and send order requests.
+FoodLens is a startup product at the demonstration-prototype stage; the founder's capstone is its first milestone. It is being rebuilt as a unit-level product integrity platform: every pack gets its own QR identity, shops record what happens to it, and consumers check it for free (`docs/PLAN.md`, final design in `docs/DECISIONS.md` D137–D147).
+
+**Until Phase 1 lands, the sections below describe the code as it runs today:** consumers look up **simulated** product and batch records; companies manage demo-reviewed catalogue data; wholesalers find demo-reviewed suppliers and send order requests. Each phase updates the README for what it changes.
 
 > **DEMO DATA — NOT AN OFFICIAL REGULATOR SERVICE.** All companies, products, and register records are fictional. A lookup is not a laboratory test, not a safety guarantee, and not a NAFDAC or SON decision.
 
-Project docs: [`docs/HANDOFF.md`](docs/HANDOFF.md) (brief), [`docs/PLAN.md`](docs/PLAN.md) (phases), [`docs/DECISIONS.md`](docs/DECISIONS.md), [`docs/ERD.mmd`](docs/ERD.mmd) (draft data model).
+Project docs: [`docs/PRODUCT_INTEGRITY.md`](docs/PRODUCT_INTEGRITY.md) (product concept), [`docs/PLAN.md`](docs/PLAN.md) (phases), [`docs/DECISIONS.md`](docs/DECISIONS.md), [`docs/SCHEMA.md`](docs/SCHEMA.md) and [`docs/ERD.mmd`](docs/ERD.mmd) (target data model), [`docs/log.md`](docs/log.md) (challenge log). [`docs/HANDOFF.md`](docs/HANDOFF.md) is history only.
 
 ## Layout
 

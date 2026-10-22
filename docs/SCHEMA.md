@@ -1,12 +1,12 @@
 # FoodLens database schema
 
-> **Status (2026-10-21):** this file describes the **target schema** for the unit-identity rework, which Phase 1 migrations `0006_unit_identity` and `0007_drop_register` will create.
+> **Status (2026-10-22):** this file describes the **target schema** for the unit-identity rework (final design: QR only, advisory geo-batching), which Phase 1 migrations `0006_unit_identity` and `0007_drop_register` will create.
 >
 > Until Phase 1 is merged, the database is at `0005_order_requests`. The previous version of this file is in git (`git show 28d4fb6:docs/SCHEMA.md`).
 >
 > **Related docs:**
 > - Diagram: [`ERD.mmd`](ERD.mmd).
-> - Reasons: [`DECISIONS.md`](DECISIONS.md) D17–D30 (conventions) and D104–D136 (unit identity, geo-batching, returns).
+> - Reasons: [`DECISIONS.md`](DECISIONS.md) D17–D30 (conventions) and D104–D147 (unit identity, geo-batching, returns; D137–D147 win where they differ).
 
 Migrations are the source of truth. Once Phase 1 lands, if this file and the database disagree, the database wins and this file must be updated.
 
@@ -18,8 +18,8 @@ Migrations are the source of truth. Once Phase 1 lands, if this file and the dat
 | Enums | Stored as `VARCHAR` with a `CHECK` constraint listing the allowed values (`ck_<table>_<enum>`). The Python enums live in `app/models/enums.py`. Adding a value needs a migration that replaces the check constraint. |
 | Timestamps | `created_at` on every table. `updated_at` only on tables whose rows are edited. All are `TIMESTAMP WITH TIME ZONE`, default `now()`. Append-only tables have no `updated_at`. |
 | Review columns | Reviewable tables share `reviewed_by_user_id`, `reviewed_at` and `review_note`, plus their own status enum. **Only admin services set these.** |
-| Derived columns | `product_unit.lifecycle_status`, `current_holder_company_id`, `last_sold_*` and `secret_claimed_*` are written **only** by `services/lifecycle.py`, in the same transaction as the event that changes them (D112). They never come from client input. |
-| Secrets | Raw QR tokens, hidden codes, API keys and signing secrets are never stored. Only hashes are kept, except the POS signing secret, which is stored encrypted (D121). |
+| Derived columns | `product_unit.lifecycle_status`, `current_holder_company_id` and `last_sold_*` are written **only** by `services/lifecycle.py`, in the same transaction as the event that changes them (D112). They never come from client input. |
+| Secrets | Raw QR tokens, API keys and signing secrets are never stored. Only hashes are kept, except the POS signing secret, which is stored encrypted (D121). |
 | Claimed data | Facts asserted by a company that FoodLens has not verified are prefixed `claimed_`. |
 | Payments | No amount, price, card, customer or checkout columns. `payment_reference` is an opaque string only (D122). A test enforces this. |
 | Constraint names | `pk_`, `fk_`, `uq_`, `ix_`, `ck_` prefixes, from the naming convention in `app/models/base.py`. |
@@ -106,7 +106,8 @@ One packaging level: a carton holds units (D112).
 | Column | Notes |
 |---|---|
 | `batch_id`, `manufacturer_id` | Owner. |
-| `qr_token_hash` | `sha256(token)` hex, char 64, unique **(DB)**. Never the raw token (D108). |
+| `carton_ref` | Short printed reference, e.g. `C001`. Unique per batch **(DB)**. Used on labels and in the printer CSV only; never in public responses (D139). |
+| `qr_token_hash` | `sha256(normalised token)` hex, char 64, unique **(DB)**. Never the raw token (D138). |
 | `lifecycle_status`, `current_holder_company_id` | Derived **(service)**. |
 
 ### `product_unit`
@@ -115,15 +116,15 @@ One packaging level: a carton holds units (D112).
 |---|---|
 | `batch_id`, `product_id`, `manufacturer_id` | Denormalised for fast checks. Must agree with each other **(service)**. |
 | `parent_carton_id` | Nullable. The carton must be in the same batch **(service)**. |
-| `qr_token_hash` | `sha256(token)` hex, unique **(DB)** (D108). |
-| `secret_code_hash` | `HMAC-SHA256(CODE_HASH_PEPPER, normalised code)` hex, unique **(DB)** (D109). |
-| `lifecycle_status` | `ISSUED`, `RELEASED`, `IN_TRANSIT`, `IN_STOCK`, `SOLD`, `WITHDRAWN`, `RECALLED`, `VOIDED`. Derived by replaying events **(service)**. A consumer check never changes it. `WITHDRAWN` comes from a NOT_FOR_RESALE return and is final: no later sale, receipt or transfer (D134). |
+| `qr_token_hash` | `sha256(normalised token)` hex, unique **(DB)** (D138). The token is 26 Crockford Base32 characters from `secrets.token_bytes(16)`. |
+| `lifecycle_status` | `ISSUED`, `RELEASED`, `IN_TRANSIT`, `IN_STOCK`, `SOLD`, `RECALLED`, `VOIDED`. Derived by replaying events **(service)**. A consumer check never changes it. |
 | `current_holder_company_id` | Derived custody (D113). |
-| `last_sold_at`, `last_sold_area_id`, `last_sold_company_id` | Derived from the latest SOLD event that has not been corrected or returned. Cleared by a SALE_CORRECTED or a RESTOCK return (D134). Used for just-sold checks. |
-| `secret_claimed_at`, `secret_claimed_area_id` | Set once by the first hidden-code check (CLAIMED, D114). |
+| `last_sold_at`, `last_sold_area_id`, `last_sold_company_id` | Derived from the latest SOLD event that has not been corrected or returned. Cleared by a SALE_CORRECTED or any valid return (D140). Used for just-sold checks. |
 | `created_at`, `updated_at` | |
 
-Raw tokens and codes exist only in the one-time label zip (D110). A test scans every table after generation for raw values.
+There is no hidden code, no claim column and no `WITHDRAWN` status (D138, D140). `unit_id` never appears in a public response (D138).
+
+Raw tokens exist only in the one-time label zip (D139). A test scans every table after generation for raw values.
 
 ### `lifecycle_event`
 Append-only (D112). One row per unit per event. A carton event adds one carton row plus one row per unit, all sharing a `group_id`.
@@ -132,7 +133,7 @@ Append-only (D112). One row per unit per event. A carton event adds one carton r
 |---|---|
 | `unit_id`, `carton_id` | Exactly one is set **(DB)**. |
 | `group_id` | Links the rows of a carton or bulk action. |
-| `event_type` | `ISSUED, RELEASED, TRANSFERRED, RECEIVED, SOLD, RETURNED, SALE_CORRECTED, CLAIMED, RECALLED, VOIDED`. |
+| `event_type` | `ISSUED, RELEASED, TRANSFERRED, RECEIVED, SOLD, RETURNED, SALE_CORRECTED, RECALLED, VOIDED`. |
 | `source` | `MANUFACTURER, MERCHANT_APP, POS_API, CONSUMER_CHECK, SYSTEM`. |
 | `actor_user_id`, `actor_company_id` | Null for `CONSUMER_CHECK` and POS (the POS actor is the partner plus the retailer). |
 | `retailer_company_id` | For SOLD, RETURNED and SALE_CORRECTED. |
@@ -144,9 +145,8 @@ Append-only (D112). One row per unit per event. A carton event adds one carton r
 | `reason` | Required for SALE_CORRECTED and VOIDED **(DB check)**. |
 | `corrects_event_id` | SALE_CORRECTED points to the SOLD event it corrects. The original is never changed. |
 | `received_without_transfer` | Boolean. Set on RECEIVED or SOLD when no transfer to this company exists (D113). |
-| `outside_allocation` | Boolean. Set on RECEIVED when the receiving company or area differs from the unit's allocation (D132). |
-| `return_disposition` | `RESTOCK` or `NOT_FOR_RESALE`. Required on RETURNED and null on every other event **(DB check)**. RETURNED must come from the company that recorded the SOLD event, or a POS partner linked to it. RESTOCK is refused when the hidden code was CLAIMED **(service)** (D134). |
-| `returns_event_id` | RETURNED points to the SOLD event it reverses. The SOLD event stays in the timeline. |
+| `outside_allocation` | Boolean. Set on RECEIVED when the receipt matches no allocation of the unit's batch. It drives a neutral timeline note and never an alert (D142). |
+| `returns_event_id` | RETURNED points to the SOLD event it reverses. The SOLD event stays in the timeline. RETURNED must come from the company that recorded the SOLD event, or a POS partner linked to it, and always puts the unit back `IN_STOCK` **(service)** (D140). |
 | Unique | `(pos_partner_id, transaction_ref, unit_id, event_type)` where `pos_partner_id` is not null **(DB)**. This is POS idempotency. |
 
 ### `scan_event`
@@ -154,7 +154,7 @@ Append-only consumer check log. Anonymous by design (D118).
 
 | Column | Notes |
 |---|---|
-| `identifier_type` | `QR`, `SECRET_SCANNED`, `SECRET_TYPED`. |
+| `identifier_type` | `QR` (scanned or opened from `/p/{token}`) or `TYPED` (D138). |
 | `unit_id`, `carton_id` | Nullable. Null for invalid identifiers. |
 | `area_id` | Coarse area. Nullable when unknown. |
 | `result` | One of the D115 results. |
@@ -166,33 +166,35 @@ There is deliberately **no** IP, user agent, cookie, device ID, GPS, user or ses
 
 | Column | Notes |
 |---|---|
-| `rule` | `R1_SCAN_AFTER_SALE_ELSEWHERE` … `R9_VOIDED_CODE_IN_USE` (D124), `R10_RECEIVED_OUTSIDE_ALLOCATION` (D132), `R11_OUTSIDE_ALLOCATED_AREA` (D133). A sale followed by a valid return is ignored by every rule. |
+| `rule` | `R1_SCAN_AFTER_SALE_ELSEWHERE`, `R2_IMPOSSIBLE_TRAVEL`, `R3_SCAN_VOLUME`, `R4_INVALID_BURST`, `R5_POS_UNAVAILABLE_UNIT`, `R6_UNRELEASED_SCANNED`, `R7_CUSTODY_CONFLICT`, `R8_VOIDED_CODE_IN_USE`, `R9_MORE_OBSERVED_THAN_ALLOCATED` (D143). A sale followed by a valid return is ignored by every rule. |
 | `level` | `LOW`, `MEDIUM`, `HIGH`. |
 | `manufacturer_id` | Nullable. Null means admin only (rule 4, invalid-code burst). |
-| `unit_id`, `carton_id`, `area_id` | Nullable subjects. |
+| `unit_id`, `carton_id`, `batch_id`, `area_id` | Nullable subjects. Rule 9 uses `batch_id` and `area_id`; it never changes a consumer result **(service)**. |
 | `evidence` | JSONB: `{event_ids, scan_ids, snapshot, explanation}`. The snapshot survives the scan purge. |
 | `status` | `OPEN`, `INVESTIGATING`, `RESOLVED_LEGITIMATE`, `RESOLVED_SUSPECTED_COPY` (D125). |
 | `notes` | Investigation notes. |
 | `resolved_by_user_id`, `resolved_at` | Set on resolution **(service)**. |
-| Unique | At most one `OPEN`/`INVESTIGATING` alert per `(rule, unit_id)` **(DB, partial unique index)**. |
+| Unique | At most one `OPEN`/`INVESTIGATING` alert per `(rule, unit_id)` where `unit_id` is set, and per `(rule, batch_id, area_id)` for rule 9 **(DB, partial unique indexes)**. |
 
 ### `batch_allocation`
-Where the manufacturer plans to send part of a batch (D131). Created by owners and staff of the batch's manufacturer after the units are generated.
+Where the manufacturer plans to send part of a batch (D131, D142). Created by owners and staff of the batch's manufacturer after the units are generated. Allocation is advisory: it feeds a timeline note and rule 9, never a per-unit alert.
 
 | Column | Notes |
 |---|---|
 | `batch_id` | Must belong to the manufacturer **(service)**. |
 | `destination_company_id` | Nullable. When set, it must be an approved distributor or retailer **(service)**. |
 | `destination_area_id` | Required. The area the stock is meant for. |
-| `quantity` | Number of units, > 0 **(DB)**. The total across a batch's allocations never exceeds its issued units **(service)**. When cartons are listed, it equals the units in those cartons **(service)**. |
+| `quantity` | Number of units, > 0 **(DB)**. The total across a batch's allocations never exceeds its issued units **(service)**. When cartons or units are listed, it equals the units listed, directly or through cartons **(service)**. |
 | `planned_date` | Nullable planned dispatch date. |
 | `created_by_user_id`, `created_at`, `updated_at` | |
 
-How a unit matches its allocation:
-- A unit in a listed carton belongs to that carton's allocation.
-- Otherwise, a receipt matches when the batch has an allocation to that company or area with quantity not yet used up. Each matched receipt uses up one unit of that allocation.
-- If no allocation matches, the receipt is outside its allocation.
-- A batch with no allocations at all is never outside its allocation.
+How a unit matches its allocation, in this order (D142):
+1. A listed unit belongs to its allocation.
+2. Otherwise, a unit in a listed carton belongs to that carton's allocation.
+3. Otherwise, a receipt matches a quantity allocation of the batch to that company or area with quantity not yet used up. Each matched receipt uses up one unit of that allocation.
+- If no allocation matches, the RECEIVED event gets `outside_allocation` and a neutral timeline note. No alert.
+- A batch with no allocations at all gets no allocation checks.
+- Rule 9 compares distinct units observed per batch and area with the allocated quantity there. For a batch that has allocations, an area without one counts as 0.
 
 ### `allocation_carton`
 | Column | Notes |
@@ -200,12 +202,31 @@ How a unit matches its allocation:
 | `allocation_id`, `carton_id` | A carton sits in at most one allocation: `carton_id` is unique **(DB)**. The carton must be in the allocation's batch **(service)**. |
 | `created_at` | |
 
-The inventory view (Phase 7) is computed from allocations and events, and nothing is stored for it. Per destination and area it shows:
+### `allocation_unit`
+| Column | Notes |
+|---|---|
+| `allocation_id`, `unit_id` | A unit sits in at most one allocation: `unit_id` is unique **(DB)**. The unit must be in the allocation's batch, and its carton must not be listed in another allocation **(service)**. |
+| `created_at` | |
+
+The inventory view (Phase 7) is computed from allocations and events, and nothing is stored for it. Per destination it shows:
 - **Allocated:** the quantity.
 - **Received:** RECEIVED events by that company or in that area.
 - **In stock:** units currently IN_STOCK there.
 - **Sold:** sales that are still standing.
-- **Returned:** RETURNED events, split by disposition.
+- **Returned:** RETURNED events.
+
+### `rate_limit_daily`
+Counts of rate-limit hits for the admin automated-scanning panel (D144). The limiter's own counters stay in memory.
+
+| Column | Notes |
+|---|---|
+| `area_id` | Coarse area, nullable when unknown. |
+| `day` | Date. |
+| `bucket` | `CHECK`, `REPORT`, `LOGIN`, `REGISTER`, `POS`. |
+| `count` | Hits that day. |
+| Unique | `(area_id, day, bucket)` **(DB)**. |
+
+There is deliberately **no** IP, user agent or device column; a test enforces the exact column list. Rows are deleted after 12 months with the scan logs **(service)**.
 
 ### `consumer_report`
 Anonymous concern report (D120). Private to the unit's manufacturer and admins **(service)**.
@@ -218,7 +239,7 @@ Anonymous concern report (D120). Private to the unit's manufacturer and admins *
 | `area_id` | Coarse area. |
 | `status` | `NEW`, `REVIEWED`, `CLOSED`. |
 
-There is no contact field. An opt-in phone number is a stretch item (Phase 11).
+There is no contact field. An opt-in phone number is future work (D146).
 
 ---
 
