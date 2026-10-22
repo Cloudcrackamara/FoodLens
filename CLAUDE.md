@@ -1,33 +1,98 @@
-# FoodLens — Claude Code instructions
+# FoodLens: Claude Code instructions
 
 ## Build target
 
-Build a responsive FoodLens prototype whose core purpose is letting consumers check the NAFDAC/SON registration number printed on a food pack against a simulated regulator register (demo data); secondarily, companies manage their catalogue and change notices, and wholesalers discover demo-reviewed suppliers and place order requests—without making official certification or product-safety claims.
+FoodLens is a startup product at the demonstration-prototype stage. Its first milestone is the founder's capstone. Build a responsive FoodLens prototype: a unit-level product integrity platform.
 
-Remaining phases (D102): 7 wholesale order requests, 8 deployment (cloud VM + Docker Compose + named Cloudflare Tunnel), 9 polish and evaluation.
+- **Manufacturers** get a unique, unpredictable identity for every product unit:
+  - a visible QR token;
+  - a hidden scratch-panel code.
+  They print both on packs.
+- **Distributors and retailers** record what happens to units. They use either:
+  - a mobile merchant page;
+  - a signed POS integration, which records a sale only after payment is confirmed.
+- **Consumers** check any pack for free, with no login, at `/check` or `/p/{token}`.
+- **Intelligence:** FoodLens combines identities, lifecycle events and consumer scan patterns into explainable risk alerts. Manufacturers see these on their dashboard.
 
-Product brief: `docs/HANDOFF.md`. Schema: `docs/SCHEMA.md` (tables and rules) and `docs/ERD.mmd` (diagram). Phase plan: `docs/PLAN.md`. Challenge log: `docs/log.md`. Decisions (answered 2026-10-07): `docs/DECISIONS.md` — read it before implementing lookup, change notices, or announcements.
-`docs/archive/ERD_v1_consumer_only.mmd` is superseded history; do not build from it.
+Consumer checks are the core asset. They must be fast, useful and possible only through FoodLens. FoodLens never claims that a physical item is the real product, and never makes regulator or product-safety claims.
+
+Wholesale order requests remain in the code but are hidden and treated as future work (`ORDERS_ENABLED=false`).
+
+Where to find things:
+- **Product concept** (source of truth for scope): `docs/PRODUCT_INTEGRITY.md`.
+- **Phase plan** (phases 1-11, one session and one commit each): `docs/PLAN.md`.
+- **Schema:** the tables and rules are in `docs/SCHEMA.md`; the diagram is `docs/ERD.mmd`.
+- **Decisions:** `docs/DECISIONS.md`. D104 onwards covers the unit-identity design. Read the relevant entries before implementing identity, checks, lifecycle events, POS, or risk rules.
+- **Challenge log:** `docs/log.md`.
+- **History only:** `docs/HANDOFF.md` and `docs/archive/` describe the earlier registration-lookup design.
 
 ## Non-negotiable rules
 
-1. **No "safe" wording.** FoodLens's own wording never returns or displays "safe", "unsafe", "fake", "verified safe", or any safety/adulteration score. Company announcements may not use the whole words "safe" or "unsafe" but may warn about fake or counterfeit products (D77). Lookup wording never says "genuine" or "verified by NAFDAC"; a match is "matches a record in the simulated NAFDAC/SON register (demo data)". Lookups return one primary result — `INSUFFICIENT_OR_AMBIGUOUS`, `REGISTRATION_NOT_FOUND`, `REGISTRATION_EXPIRED_OR_INACTIVE`, `REGISTRATION_MISMATCH`, or `REGISTERED_ACTIVE`, checked in that order — plus a `warnings` list (D82).
-2. **DEMO data_mode on every lookup.** Every lookup response includes `"data_mode": "DEMO"` and a disclaimer message from the backend. The frontend shows the banner **DEMO DATA — NOT AN OFFICIAL REGULATOR SERVICE** on every lookup result. Both layers enforce this; neither relies on the other.
-3. **The register is the only source of registration status.** `REGULATOR_REGISTER` (seeded, `DEMO-` numbers, read-only through the API) decides whether a number is registered. Companies only enter the number printed on their pack (`product.registration_number`); they cannot create or edit register records, and admins do not approve registrations (D80-D81). A register match is never a batch test or proof that a pack is the original.
-4. **No self-approval.** Company users can never approve or activate their own company profile, supplier locations, or change notices. (Exception, D61: approved companies publish their own new products and batches directly.) Only platform admins review. Approval means "reviewed for the FoodLens demonstration database" only — never NAFDAC or SON approval.
-5. **Change notices need admin approval.** Changes to published product details (including the registration number), batches, or reviewed locations go through a change notice with structured current/proposed values. While `PENDING_REVIEW` or `CLARIFICATION_REQUESTED`, published data is unchanged. Only approval applies it, recording old value, new value, approver, and time. New products and batches from approved companies go live immediately (D61).
-   - **Exception — product announcements ("POPs"):** approved companies may post pop-up announcements that go live without review. They are labelled "Message from the company — not reviewed by FoodLens", never change product data, and admins can hide them. They may not claim "safe"/"unsafe" or NAFDAC/SON approval, registration, or certification (D77, D86).
-   - Company contact details and private account settings are edited directly but logged with actor and time.
-6. **No payments.** Orders are requests only. No payment fields, providers, or checkout. Only members of approved wholesaler/both companies send orders, to one listed supplier at a time; only the buyer and seller companies can see an order (D95-D99).
-7. **Server-side authorization.** Every protected route checks the user's role and company ownership on the server. The frontend hiding a button is never the control.
-8. **Fictional seed data.** All companies, products, register records, and contacts are obviously fictional, reference numbers are prefixed `DEMO-`, agencies are labelled "(simulated)", and no real regulator logos are used.
+1. **Wording.**
+   - **Words FoodLens never uses:** in its own wording, FoodLens never uses "original", "genuine", "authentic", "safe", "unsafe" or "fake", and never gives a safety score.
+   - **A recognised code:** it is described as issued by the manufacturer and recorded as in circulation, sold, and so on. Results state that no QR system catches every copied code.
+   - **Recorded facts and possible patterns:** results label recorded facts as recorded facts and possible patterns as possible patterns.
+   - **Company announcements and recalls:**
+     - They may not contain the whole words "safe" or "unsafe".
+     - They may not claim NAFDAC/SON approval, registration or certification.
+     - They may warn about counterfeit products (D77, D86).
+2. **The demo label is on every check.**
+   - Every consumer check response includes `"data_mode": "DEMO"` and a disclaimer from the backend.
+   - The frontend shows the banner **DEMO DATA — NOT AN OFFICIAL REGULATOR SERVICE** on every result.
+   - Both layers enforce this. Neither relies on the other.
+3. **Identities are random and stored only as hashes.**
+   - QR tokens come from `secrets.token_urlsafe(16)`.
+   - Hidden codes are 16 Crockford Base32 characters plus a Luhn mod-32 check character.
+   - Neither is ever derived from IDs, sequences or timestamps.
+   - Only hashes are stored: SHA-256 for QR tokens, and HMAC-SHA256 with `CODE_HASH_PEPPER` for hidden codes.
+   - Raw codes exist only in the one-time label download.
+   - `product.registration_number` is product information only. It is never checked against a register.
+4. **Only authorised commercial workflows change lifecycle status.** These are the manufacturer, the merchant page, and signed POS calls.
+   - A consumer check never changes `lifecycle_status` or sale status.
+   - The first check of a hidden code records `CLAIMED`, which sets only the claim fields.
+   - `SALE_CORRECTED` keeps the original sale.
+   - `VOIDED` is allowed only before release.
+5. **No self-approval.**
+   - Company users never approve their own company profile, supplier locations, or change notices. (Exception, D61: approved manufacturers publish their own new products and batches directly.)
+   - Only platform admins review.
+   - Approval means "reviewed for the FoodLens demonstration database" only. It is never NAFDAC or SON approval.
+6. **Change notices need admin approval.**
+   - Changes to published product details (including size, attributes, GTIN and registration number), to batches, or to reviewed locations go through a change notice with structured current and proposed values.
+   - While a notice is `PENDING_REVIEW` or `CLARIFICATION_REQUESTED`, published data stays unchanged.
+   - Only approval applies the change. It records the old value, new value, approver and time.
+   - **Exception: announcements and recalls.** Approved companies post them live without review.
+     - They are labelled "Message from the company — not reviewed by FoodLens".
+     - They never edit product data.
+     - Admins can hide them; hiding a recall needs a reason.
+   - Company contact details and private account settings are edited directly, and each edit is logged with actor and time.
+7. **No payment data.**
+   - POS calls carry an opaque `payment_reference` and a transaction ID only.
+   - FoodLens stores no amounts, card details, customer data or checkout.
+   - Orders, while hidden, remain requests only.
+8. **Server-side authorization.**
+   - Every protected route checks role and company ownership on the server.
+   - Every POS route checks the API key, the HMAC signature, the timestamp, and the partner-retailer link.
+   - Hiding a button in the frontend is never the control.
+9. **Consumer privacy.**
+   - Consumers stay anonymous.
+   - A scan stores a coarse city/state derived from the IP, then the IP is discarded.
+   - No GPS, cookies, device IDs or accounts.
+   - Scan logs are deleted after 12 months.
+   - OCR and QR decoding run only in the browser. Images never leave the phone.
+10. **Fictional seed data.**
+    - All companies, products, POS partners and contacts are obviously fictional.
+    - Reference numbers are prefixed `DEMO-`.
+    - No real regulator logos are used.
 
 ## Stack
 
-- **Backend:** Python 3.12, FastAPI, SQLModel (sync sessions), Alembic, PostgreSQL, pytest, managed with `uv`. Ruff for lint/format.
-- **Frontend:** Next.js (App Router) + TypeScript + Tailwind + TanStack Query + Zod. Vitest + Testing Library for tests.
-- **Infra:** Docker Compose for Postgres (later the API too).
-- **Auth:** FastAPI-issued httpOnly cookie session; password hashing with bcrypt. Next.js `rewrites` proxy `/api/*` to FastAPI so cookies are same-origin.
+- **Backend:** Python 3.12, FastAPI, SQLModel (sync sessions), Alembic, PostgreSQL, and pytest, managed with `uv`. Ruff for lint and format.
+- **Frontend:** Next.js (App Router), TypeScript, Tailwind, TanStack Query and Zod. Vitest and Testing Library for tests.
+- **Infra:** Docker Compose for Postgres (later the API and web too). A named Cloudflare Tunnel serves the domain set in `PUBLIC_BASE_URL` (planned: `foodlens.online`).
+- **Auth:**
+  - FastAPI-issued httpOnly cookie session, with bcrypt password hashing.
+  - Next.js `rewrites` proxy `/api/*` to FastAPI so cookies are same-origin.
+  - POS partners use an API key plus an HMAC-SHA256 signature instead.
 - Tests run against a Postgres test database, not SQLite.
 
 ## Folder layout
@@ -36,27 +101,26 @@ Product brief: `docs/HANDOFF.md`. Schema: `docs/SCHEMA.md` (tables and rules) an
 /backend
   app/
     main.py          FastAPI app factory
-    core/            settings, db session, security, auth dependencies
+    core/            settings, db session, security, auth dependencies, rate limits
     models/          SQLModel table models
     schemas/         request/response models (no status/ownership fields on inputs)
-    services/        business rules: lookup, approval, ownership, order status
+    services/        business rules: identity, check, lifecycle, risk, POS, approval, ownership
     routers/         thin HTTP layer; calls services
-    seed.py          fictional demo data
+    jobs/            scheduled commands (scan-log purge)
+    seed.py          fictional demo scenario
   alembic/           migrations
   tests/
 /frontend
-  app/               Next.js App Router pages
+  app/               Next.js App Router pages (/check, /p/[token], /merchant, /company, /admin, /demo/pos)
   components/
-  lib/               typed API client, Zod schemas, query hooks
-  server.mjs         custom server: replaces X-Forwarded-For with the real client IP (D45)
-/docs                handoff, PLAN.md, DECISIONS.md, schema docs
+  lib/               typed API client, Zod schemas, query hooks, OCR and QR readers
+  server.mjs         custom server: replaces X-Forwarded-For with the real client IP (D45, D90)
+/docs                product concept, PLAN, DECISIONS, SCHEMA, ERD, POS_INTEGRATION, log
 /scripts             dev.mjs: start DB, migrate, seed, API and web app in one command
 docker-compose.yml
 ```
 
 ## Commands
-
-These exist after Phase 0.
 
 ```bash
 # Everything at once (from the repo root): DB, migrations, seed, API, web app
@@ -84,15 +148,25 @@ npm test
 
 ## Working rules
 
-- Work one phase at a time; never start the next phase unprompted.
-- Never add payments, regulator scraping, AI safety scores, ratings or maps.
-- OCR only in the browser; no image leaves the device (never uploaded, logged or stored) (D88).
-- Business rules live in backend service modules, not routers or React components.
-- Every protected route checks role and company ownership server-side.
-- Client input must never set is_admin, approval/review status, register records or status, or ownership fields.
+- Work one phase at a time. Start the next phase only when I ask.
+- These are out of scope: payments, regulator scraping, AI safety scores, ratings and maps. Risk rules stay deterministic and explainable.
+- Business rules live in backend service modules, not in routers or React components.
+- Client input never sets any of the following:
+  - `is_admin`, approval or review status, or lifecycle status;
+  - alert status, except through the alert workflow;
+  - hashes or ownership fields.
 - Write tests for each rule you implement, and run them before saying a phase is done.
-- Ask me before changing business rules, privacy behaviour, or any user-facing wording about regulators or safety.
-- Keep `README.md` install/run/test/seed/migrate instructions current.
-- Schema changes go through an Alembic migration; read the generated file before applying, and keep `docs/SCHEMA.md` and `docs/ERD.mmd` in step. `uv run alembic check` must pass.
-- Never commit secrets; use environment variables and keep `.env.example` up to date.
-- Log every real challenge (error, blocker, conflicting requirement, surprising tool behaviour) in `docs/log.md` as it happens: date section, area, challenge, cause, resolution, status. Add to it in the same task, not later.
+- Ask me before changing any of these:
+  - business rules;
+  - privacy behaviour;
+  - risk thresholds' defaults;
+  - user-facing wording about regulators, safety, or what a check proves.
+- Keep the `README.md` install/run/test/seed/migrate instructions and the demo codes and logins current.
+- Schema changes go through an Alembic migration:
+  - Read the generated file before applying it.
+  - Keep `docs/SCHEMA.md` and `docs/ERD.mmd` in step.
+  - `uv run alembic check` must pass.
+- Never commit secrets. Use environment variables and keep each `.env.example` up to date. The secrets include `CODE_HASH_PEPPER` and `POS_SECRET_KEY`.
+- Log every real challenge in `docs/log.md` as it happens: an error, a blocker, a conflicting requirement, or surprising tool behaviour.
+  - Each entry has a date section, area, challenge, cause, resolution and status.
+  - Add it in the same task, not later.

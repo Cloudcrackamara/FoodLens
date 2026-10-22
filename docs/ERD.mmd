@@ -14,7 +14,7 @@ erDiagram
     USER_SESSION {
         uuid session_id PK
         uuid user_id FK
-        string token_hash UK "hash only, never the token"
+        string token_hash UK "hash only"
         datetime expires_at
         datetime revoked_at "nullable"
         datetime created_at
@@ -22,13 +22,15 @@ erDiagram
 
     COMPANY {
         uuid company_id PK
-        enum company_type "MANUFACTURER, WHOLESALER, BOTH"
+        boolean is_manufacturer "at least one flag true"
+        boolean is_distributor
+        boolean is_retailer
         string display_name
         string contact_email
         string contact_phone "nullable"
         string claimed_legal_name "claimed, unverified"
-        string claimed_business_identifier "claimed, nullable"
-        string claimed_address "claimed, nullable"
+        string claimed_business_identifier "nullable"
+        string claimed_address "nullable"
         enum review_status "PENDING_REVIEW, APPROVED, REJECTED, SUSPENDED"
         uuid reviewed_by_user_id FK "nullable"
         datetime reviewed_at "nullable"
@@ -41,7 +43,7 @@ erDiagram
         uuid member_id PK
         uuid user_id FK,UK "one company per user"
         uuid company_id FK
-        enum role "OWNER, REPRESENTATIVE"
+        enum role "OWNER, STAFF"
         enum membership_status "ACTIVE, INACTIVE"
         boolean is_public_contact
         string public_title "nullable"
@@ -56,7 +58,8 @@ erDiagram
         uuid company_id FK
         string name
         string address
-        string area
+        string area "display text"
+        uuid area_id FK "coarse area for events"
         uuid contact_member_id FK "nullable"
         enum review_status "PENDING_REVIEW, APPROVED, REJECTED"
         uuid reviewed_by_user_id FK "nullable"
@@ -66,17 +69,28 @@ erDiagram
         datetime updated_at
     }
 
+    AREA {
+        uuid area_id PK
+        string city "UK with state"
+        string state
+        decimal latitude "city centre, not a person"
+        decimal longitude
+        datetime created_at
+    }
+
     PRODUCT {
         uuid product_id PK
-        uuid company_id FK
+        uuid company_id FK "approved manufacturer"
         string name
         string brand
         string category
         string product_code UK
-        string package_size "nullable"
+        string size "nullable"
+        jsonb attributes "max 20 keys"
+        string gtin "nullable, GS1 check digit, UK per company"
         string manufacturer_name
         text label_information "nullable"
-        string registration_number "printed on pack, nullable, not unique"
+        string registration_number "as printed, information only"
         enum status "DRAFT, PENDING_REVIEW, PUBLISHED, REJECTED, WITHDRAWN"
         uuid reviewed_by_user_id FK "nullable"
         datetime reviewed_at "nullable"
@@ -91,7 +105,7 @@ erDiagram
         string batch_number
         date production_date "nullable"
         date expiry_date "nullable, >= production_date"
-        string qr_token UK "nullable, opaque"
+        datetime released_at "nullable, cache"
         enum review_status "PENDING_REVIEW, APPROVED, REJECTED"
         uuid reviewed_by_user_id FK "nullable"
         datetime reviewed_at "nullable"
@@ -100,28 +114,134 @@ erDiagram
         datetime updated_at
     }
 
-    REGULATORY_AGENCY {
-        uuid agency_id PK
-        string name "e.g. NAFDAC (simulated); UK with scheme"
-        string scheme
-        enum data_mode "DEMO"
+    CARTON {
+        uuid carton_id PK
+        uuid batch_id FK
+        uuid manufacturer_id FK
+        string qr_token_hash UK "sha256, never raw"
+        enum lifecycle_status "derived"
+        uuid current_holder_company_id FK "derived"
         datetime created_at
         datetime updated_at
     }
 
-    REGULATOR_REGISTER {
-        uuid register_id PK
-        uuid agency_id FK
-        string registration_number UK "DEMO- prefix, normalised"
-        string registered_product_name
-        string registered_company_name
-        enum status "ACTIVE, INACTIVE"
-        date expires_on "nullable"
-        enum data_mode "DEMO"
-        text provenance
-        date last_checked_on
+    PRODUCT_UNIT {
+        uuid unit_id PK
+        uuid batch_id FK
+        uuid product_id FK
+        uuid manufacturer_id FK
+        uuid parent_carton_id FK "nullable"
+        string qr_token_hash UK "sha256, never raw"
+        string secret_code_hash UK "HMAC with pepper"
+        enum lifecycle_status "ISSUED, RELEASED, IN_TRANSIT, IN_STOCK, SOLD, RECALLED, VOIDED"
+        uuid current_holder_company_id FK "derived"
+        datetime last_sold_at "derived, nullable"
+        uuid last_sold_area_id FK "derived, nullable"
+        uuid last_sold_company_id FK "derived, nullable"
+        datetime secret_claimed_at "nullable"
+        uuid secret_claimed_area_id FK "nullable"
         datetime created_at
         datetime updated_at
+    }
+
+    LIFECYCLE_EVENT {
+        uuid event_id PK "append-only"
+        uuid unit_id FK "exactly one of unit/carton"
+        uuid carton_id FK "exactly one of unit/carton"
+        uuid group_id "carton or bulk action"
+        enum event_type "ISSUED, RELEASED, TRANSFERRED, RECEIVED, SOLD, RETURNED, SALE_CORRECTED, CLAIMED, RECALLED, VOIDED"
+        enum source "MANUFACTURER, MERCHANT_APP, POS_API, CONSUMER_CHECK, SYSTEM"
+        uuid actor_user_id FK "nullable"
+        uuid actor_company_id FK "nullable"
+        uuid retailer_company_id FK "nullable"
+        uuid to_company_id FK "TRANSFERRED only"
+        uuid pos_partner_id FK "nullable"
+        string till_ref "nullable"
+        uuid area_id FK "nullable"
+        datetime occurred_at
+        datetime recorded_at
+        string transaction_ref "nullable, UK with partner+unit+type"
+        string payment_reference "nullable, opaque"
+        text reason "SALE_CORRECTED, VOIDED"
+        uuid corrects_event_id FK "nullable"
+        boolean received_without_transfer
+    }
+
+    SCAN_EVENT {
+        uuid scan_id PK "no IP, UA, cookie, device, GPS"
+        enum identifier_type "QR, SECRET_SCANNED, SECRET_TYPED"
+        uuid unit_id FK "nullable"
+        uuid carton_id FK "nullable"
+        uuid area_id FK "coarse, nullable"
+        enum result "D115 results"
+        datetime created_at "purged after 12 months"
+    }
+
+    RISK_ALERT {
+        uuid alert_id PK
+        enum rule "R1..R9"
+        enum level "LOW, MEDIUM, HIGH"
+        uuid manufacturer_id FK "null = admin only"
+        uuid unit_id FK "nullable"
+        uuid carton_id FK "nullable"
+        uuid area_id FK "nullable"
+        jsonb evidence "ids, snapshot, explanation"
+        enum status "OPEN, INVESTIGATING, RESOLVED_LEGITIMATE, RESOLVED_SUSPECTED_COPY"
+        text notes "nullable"
+        uuid resolved_by_user_id FK "nullable"
+        datetime resolved_at "nullable"
+        datetime created_at
+        datetime updated_at
+    }
+
+    CONSUMER_REPORT {
+        uuid report_id PK "anonymous"
+        uuid unit_id FK "nullable"
+        uuid manufacturer_id FK "nullable"
+        enum concern_type
+        text description "max 1000"
+        uuid area_id FK "nullable"
+        enum status "NEW, REVIEWED, CLOSED"
+        datetime created_at
+        datetime updated_at
+    }
+
+    POS_PARTNER {
+        uuid partner_id PK
+        string name
+        enum status "ACTIVE, SUSPENDED"
+        string signing_secret_encrypted "Fernet, POS_SECRET_KEY"
+        uuid created_by_user_id FK "admin"
+        datetime created_at
+        datetime updated_at
+    }
+
+    POS_PARTNER_KEY {
+        uuid key_id PK
+        uuid partner_id FK
+        string key_prefix "display only"
+        string key_hash UK "sha256"
+        datetime revoked_at "nullable"
+        datetime created_at
+    }
+
+    POS_PARTNER_RETAILER {
+        uuid link_id PK
+        uuid partner_id FK "UK with retailer"
+        uuid retailer_company_id FK
+        enum status "ACTIVE, REVOKED"
+        uuid created_by_user_id FK "admin"
+        datetime created_at
+        datetime updated_at
+    }
+
+    POS_TILL {
+        uuid till_id PK
+        uuid partner_id FK "UK with retailer+till_ref"
+        uuid retailer_company_id FK
+        string till_ref
+        uuid location_id FK "reviewed location"
+        datetime created_at
     }
 
     CHANGE_NOTICE {
@@ -146,7 +266,7 @@ erDiagram
         uuid field_change_id PK
         uuid notice_id FK "UK with field_name"
         string field_name
-        text current_value "snapshot at submission"
+        text current_value "snapshot"
         text proposed_value
         text applied_old_value "set on approval"
         datetime created_at
@@ -165,12 +285,15 @@ erDiagram
     PRODUCT_ANNOUNCEMENT {
         uuid announcement_id PK
         uuid product_id FK
+        uuid batch_id FK "nullable, recall target"
+        enum kind "NOTICE, RECALL"
         string title
         text message
-        string image_storage_key "nullable"
+        text recall_reason "required for RECALL"
+        string image_storage_key "nullable, unused"
         enum status "LIVE, HIDDEN"
         uuid created_by_user_id FK
-        uuid hidden_by_user_id FK "nullable, admin"
+        uuid hidden_by_user_id FK "nullable"
         datetime hidden_at "nullable"
         datetime created_at
         datetime updated_at
@@ -188,8 +311,8 @@ erDiagram
     }
 
     WHOLESALE_ORDER {
-        uuid order_id PK
-        uuid buyer_company_id FK "differs from seller"
+        uuid order_id PK "HIDDEN, future work"
+        uuid buyer_company_id FK
         uuid seller_company_id FK
         uuid created_by_user_id FK
         uuid pickup_location_id FK "nullable"
@@ -203,7 +326,7 @@ erDiagram
     }
 
     ORDER_LINE {
-        uuid line_id PK
+        uuid line_id PK "HIDDEN"
         uuid order_id FK
         uuid product_id FK
         decimal quantity "> 0"
@@ -212,65 +335,57 @@ erDiagram
     }
 
     ORDER_BATCH_ALLOCATION {
-        uuid allocation_id PK
+        uuid allocation_id PK "HIDDEN"
         uuid line_id FK
-        uuid batch_id FK "seller's batch of the line product (service); unique per line"
-        datetime created_at
-    }
-
-    BATCH_SCAN {
-        uuid scan_id PK "anonymised: no user, IP, or device"
-        string input_registration_number "normalised, nullable"
-        string input_batch_number "normalised, nullable"
-        uuid matched_batch_id FK "nullable"
-        enum result "five lookup results"
-        datetime created_at
-    }
-
-    CONCERN_REPORT {
-        uuid report_id PK "PHASE 8 - not yet migrated"
-        uuid product_id FK "nullable"
-        uuid batch_id FK "nullable"
-        string product_code_entered "snapshot"
-        string batch_number_entered "snapshot"
-        string concern_type
-        text description
-        string purchase_area "nullable"
-        string contact_email "nullable, optional PII"
-        string photo_storage_key "nullable, private"
-        string status
+        uuid batch_id FK
         datetime created_at
     }
 
     APP_USER ||--o{ USER_SESSION : "signs in with"
     APP_USER ||--o| COMPANY_MEMBER : "belongs via"
     COMPANY ||--o{ COMPANY_MEMBER : "has"
-    COMPANY ||--o{ PRODUCT : "owns"
     COMPANY ||--o{ SUPPLIER_LOCATION : "operates"
-    COMPANY_MEMBER o|--o{ SUPPLIER_LOCATION : "is contact for"
-    COMPANY ||--o{ CHANGE_NOTICE : "submits"
-    COMPANY ||--o{ WHOLESALE_ORDER : "buys in"
-    COMPANY ||--o{ WHOLESALE_ORDER : "sells in"
+    AREA ||--o{ SUPPLIER_LOCATION : "located in"
+    COMPANY ||--o{ PRODUCT : "manufactures"
     PRODUCT ||--o{ PRODUCT_BATCH : "has"
-    PRODUCT ||--o{ PRODUCT_ANNOUNCEMENT : "announced in"
-    REGULATORY_AGENCY ||--o{ REGULATOR_REGISTER : "keeps (simulated)"
+    PRODUCT_BATCH ||--o{ CARTON : "packed in"
+    PRODUCT_BATCH ||--o{ PRODUCT_UNIT : "issues"
+    CARTON o|--o{ PRODUCT_UNIT : "contains"
+    COMPANY o|--o{ PRODUCT_UNIT : "currently holds"
+    PRODUCT_UNIT o|--o{ LIFECYCLE_EVENT : "history"
+    CARTON o|--o{ LIFECYCLE_EVENT : "history"
+    LIFECYCLE_EVENT o|--o| LIFECYCLE_EVENT : "corrects"
+    AREA o|--o{ LIFECYCLE_EVENT : "where"
+    PRODUCT_UNIT o|--o{ SCAN_EVENT : "checked as"
+    AREA o|--o{ SCAN_EVENT : "coarse area"
+    PRODUCT_UNIT o|--o{ RISK_ALERT : "subject of"
+    COMPANY o|--o{ RISK_ALERT : "manufacturer sees"
+    PRODUCT_UNIT o|--o{ CONSUMER_REPORT : "reported"
+    POS_PARTNER ||--o{ POS_PARTNER_KEY : "authenticates with"
+    POS_PARTNER ||--o{ POS_PARTNER_RETAILER : "linked to"
+    COMPANY ||--o{ POS_PARTNER_RETAILER : "retailer in"
+    POS_PARTNER ||--o{ POS_TILL : "registers"
+    SUPPLIER_LOCATION ||--o{ POS_TILL : "till at"
+    POS_PARTNER o|--o{ LIFECYCLE_EVENT : "recorded via"
+    COMPANY ||--o{ CHANGE_NOTICE : "submits"
     PRODUCT o|--o{ CHANGE_NOTICE : "target"
     PRODUCT_BATCH o|--o{ CHANGE_NOTICE : "target"
     SUPPLIER_LOCATION o|--o{ CHANGE_NOTICE : "target"
     CHANGE_NOTICE ||--|{ CHANGE_NOTICE_FIELD : "proposes"
     CHANGE_NOTICE ||--o{ NOTICE_ATTACHMENT : "supported by"
+    PRODUCT ||--o{ PRODUCT_ANNOUNCEMENT : "announced in"
+    PRODUCT_BATCH o|--o{ PRODUCT_ANNOUNCEMENT : "recall target"
+    APP_USER o|--o{ AUDIT_LOG : "acts in"
+    COMPANY ||--o{ WHOLESALE_ORDER : "buys in (hidden)"
+    COMPANY ||--o{ WHOLESALE_ORDER : "sells in (hidden)"
     WHOLESALE_ORDER ||--|{ ORDER_LINE : "contains"
     PRODUCT ||--o{ ORDER_LINE : "ordered as"
     ORDER_LINE ||--o{ ORDER_BATCH_ALLOCATION : "fulfilled by"
     PRODUCT_BATCH ||--o{ ORDER_BATCH_ALLOCATION : "allocated in"
     SUPPLIER_LOCATION o|--o{ WHOLESALE_ORDER : "pickup at"
-    APP_USER o|--o{ AUDIT_LOG : "acts in"
-    PRODUCT_BATCH o|--o{ BATCH_SCAN : "optional match"
-    PRODUCT o|--o{ CONCERN_REPORT : "optional match (Phase 8)"
-    PRODUCT_BATCH o|--o{ CONCERN_REPORT : "optional match (Phase 8)"
 
-%% Matches backend/app/models and migrations 0002-0004 (2026-10-09). PRODUCT.registration_number is compared with
-%% REGULATOR_REGISTER.registration_number at lookup time; there is deliberately no foreign key (copied numbers must be storable).
-%% Migrations are the source of truth; see docs/SCHEMA.md for rules per table.
-%% Every reviewer FK (reviewed_by_user_id, hidden_by_user_id) references APP_USER; omitted above for readability.
-%% CONCERN_REPORT is planned for Phase 8 and does not exist in the database yet.
+%% Target schema for migrations 0006_unit_identity and 0007_drop_register (Phase 1, 2026-10-21; D104-D130).
+%% REGULATOR_REGISTER, REGULATORY_AGENCY and BATCH_SCAN are dropped; earlier ERD in git history (28d4fb6).
+%% Raw QR tokens, hidden codes, POS keys and secrets are never stored; only hashes (POS signing secret encrypted).
+%% Every reviewer FK (reviewed_by_user_id, hidden_by_user_id, resolved_by_user_id) references APP_USER; omitted above for readability.
+%% Derived PRODUCT_UNIT columns are written only by services/lifecycle.py. See docs/SCHEMA.md for rules per table.

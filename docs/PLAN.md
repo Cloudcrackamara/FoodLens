@@ -1,283 +1,297 @@
-# FoodLens build plan
+# FoodLens build plan: unit-level product integrity
 
-Follows Section 12 of the handoff. Section 12 step 1 ("confirm scope") is a gate before Phase 0, not a build phase. Section 12 step 8 is split into Phase 6 (supplier discovery) and Phase 7 (order requests). Re-ordered 2026-10-12 (D102): after Phase 7 come 8 Deployment and 9 Polish and evaluation; concern reports are deferred.
+Rewritten on 2026-10-21 for the scope change: D104–D130 in `docs/DECISIONS.md`, and the product concept in `docs/PRODUCT_INTEGRITY.md`.
 
-Every phase is done only when all tests listed under "Done when" exist and pass, existing tests still pass, docs are updated, and the student signs off. Do not start the next phase without being asked.
+The earlier plan (Gate and Phases 0–7: foundation, auth, registration lookup, companies, change notices, supplier discovery, camera scanning, and order requests) was completed before this rewrite and is kept in git history (`git show 28d4fb6:docs/PLAN.md`). Its auth, company review, change notices, announcements, rate limits, OCR stack and Docker/test setup carry forward.
 
----
-
-## Gate — Confirm scope
-
-**Goal:** Supervisor approval of the simulated-data approach, roles, privacy defaults, and no-payment order requests.
-
-**Deliverables:** Answers to the open questions in `docs/DECISIONS.md` recorded there.
-
-**Done when**
-- [x] Supervisor approved simulation, user roles, and no-payment scope
-- [x] Pre-Phase-0 questions in `docs/DECISIONS.md` answered (2026-10-07)
-- [ ] Remaining "Proposed" defaults in `docs/DECISIONS.md` accepted or amended
+**Rules for every phase:**
+- One session and one commit per phase.
+- A phase is done only when all of these hold:
+  - every test listed under "Done when" exists and passes;
+  - the existing tests still pass;
+  - lint and typecheck pass;
+  - the docs are updated (SCHEMA, ERD, README, DECISIONS and log as relevant);
+  - the founder signs off.
+- Do not start the next phase unless asked.
 
 ---
 
-## Phase 0 — Foundation
+## Phase 1: Data model and migrations
 
-**Goal:** A runnable empty monorepo with database, migrations, tests, and lint wired up.
+**Goal:** The new schema exists in PostgreSQL, the obsolete register and lookup are gone, and the database-level rules are tested.
 
 **Deliverables**
-- `/backend` uv project: FastAPI app factory, `GET /api/health`, env-based settings, sync SQLModel session, Alembic baseline migration, empty seed script, pytest config using a Postgres test DB, Ruff
-- `/frontend` Next.js App Router + TS + Tailwind + TanStack Query + Zod; layout with the persistent demo-data banner; `/api` rewrite to FastAPI; ESLint, typecheck, Vitest
-- `docker-compose.yml` with Postgres (dev + test databases)
-- `.gitignore`, `.env.example`, `README.md` with install/run/test/seed/migrate steps
+- Migration `0006_unit_identity`:
+  - company type flags, with data mapping (D105);
+  - the `OWNER`/`STAFF` role (D106);
+  - product `size`, `attributes` and `gtin` (D107);
+  - `area` (seeded reference data), `carton`, `product_unit`, `lifecycle_event`, `scan_event`, `risk_alert`;
+  - `pos_partner`, `pos_partner_key`, `pos_partner_retailer`, `pos_till`;
+  - `consumer_report`;
+  - announcement `kind`, `batch_id` and `recall_reason`.
+- Migration `0007_drop_register`:
+  - drop `regulator_register`, `regulatory_agency`, `batch_scan` and `product_batch.qr_token`;
+  - add `product_batch.released_at`.
+- Remove (D104):
+  - backend `services/lookup.py`, `services/register.py`, `routers/lookups.py` and `SEED_CASES`;
+  - the register part of `services/suppliers.py`;
+  - the `LookupResult` and `RegisterStatus` enums;
+  - frontend `components/lookup/*` and `lib/lookup.ts`;
+  - the NAFDAC/batch parsing in `lib/ocr/extract.ts` (a Crockford extractor replaces it in Phase 3);
+  - tests `test_lookup.py`, `LookupForm.test.tsx`, `LookupResultView.test.tsx` and `extract.test.ts`, plus the register parts of `test_catalogue.py`, `test_schema.py`, `test_announcements.py` and `test_orders.py`;
+  - the empty root file `new`.
+- Retarget `test_rate_limit.py` to a stub check route.
+- Hide orders behind `ORDERS_ENABLED` and rename the directory "Partner directory" (D127).
+- Rework the company registration form for the type flags.
+- The minimal seed (admin plus one approved manufacturer) still runs.
+- `docs/SCHEMA.md` and `docs/ERD.mmd` match the models.
 
 **Done when**
-- [x] `docker compose up -d db` starts Postgres (host port 5433)
-- [x] `uv run alembic upgrade head` succeeds on a fresh DB
-- [x] `uv run pytest` passes (health route test)
-- [x] `npm run lint`, `npm run typecheck`, `npm test` pass (banner renders test)
-- [ ] No secrets committed; README steps work from a clean clone (verify after first commit)
-
-Note: the pytest DB fixture was added in Phase 1 with the first models.
+- [ ] `alembic upgrade head`, `downgrade` to 0005 and `upgrade` again all work, and `alembic check` reports no drift.
+- [ ] Test: `qr_token_hash` and `secret_code_hash` are unique on units, and `qr_token_hash` is unique on cartons.
+- [ ] Test: the `scan_event` column list is exact (no IP, user agent, cookie, device or GPS column).
+- [ ] Test: a lifecycle event has exactly one of unit or carton; enums reject unknown values (e.g. `'GENUINE'`).
+- [ ] Test: a company with no type flag set is rejected.
+- [ ] Test: the POS idempotency key is unique on (partner, transaction, unit, event type).
+- [ ] Test: no amount, price, card or customer columns exist anywhere.
+- [ ] Test: with `ORDERS_ENABLED=false`, the order routes return 404. The order tests pass with the flag on.
+- [ ] Removed tests are deleted and the remaining backend and frontend suites are green.
 
 ---
 
-## Phase 1 — Data model
+## Phase 2: Unit and code generation, label export
 
-**Goal:** The full MVP schema exists in PostgreSQL, matches `docs/ERD.mmd`, and its database-level rules are tested.
+**Goal:** An approved manufacturer's owner generates units and cartons for a batch, downloads the label file once, releases units, and can void unreleased ones.
 
 **Deliverables**
-- SQLModel tables for every MVP entity in `docs/ERD.mmd` (Phase 8 tables excluded): UUID keys, enum status fields, timestamps, shared review columns, `claimed_` company fields
-- Migration `0002_initial_schema`, applied and reversible
-- pytest fixtures that rebuild `foodlens_test` from migrations and roll back each test
-- `docs/SCHEMA.md` describing each table
+- `services/identity.py`:
+  - QR tokens (D108);
+  - hidden codes with Luhn mod-32 (D109);
+  - hashing with `CODE_HASH_PEPPER`;
+  - retry on collision.
+- `POST /api/companies/{id}/batches/{batch_id}/units`:
+  - one transaction, at most 2,000 units, optional cartons;
+  - streams a zip with the label PDF (segno + fpdf2) and the printer CSV (D110).
+- `ISSUED` events.
+- Release per batch or per carton (`RELEASED` events).
+- Void unreleased units with a reason (D110).
+- Company page: generate, the warning about the one-time file, release, and void.
 
 **Done when**
-- [x] `uv run alembic upgrade head` and `downgrade` work; `alembic check` reports no drift
-- [x] Test: `(product_id, batch_number)` unique; same batch number allowed on another product
-- [x] Test: enum columns reject unknown values (e.g. `'SAFE'`)
-- [x] Test: new records default to unreviewed states; `is_admin` defaults false; `data_mode` defaults `DEMO`
-- [x] Test: change notice has exactly one existing target
-- [x] Test: date-order, quantity, attachment-size, and buyer≠seller checks
-- [x] Test: no payment/price columns exist
-- [x] `docs/SCHEMA.md` written
+- [ ] Test: tokens and codes are unique, and a forced collision retries.
+- [ ] Test: raw codes never appear in the database (whole-table scan after generation) or in the logs.
+- [ ] Test: the check character accepts valid codes, rejects every single-character change, and handles the O/I/L/lowercase tolerance.
+- [ ] Test: the token does not depend on `unit_id` (no shared prefix or sequence across a batch).
+- [ ] Test: only the owner of an approved manufacturer can generate (staff and other companies get 403; a pending company gets 409).
+- [ ] Test: the zip contains the PDF and the CSV, and the PDF footer shows the `PUBLIC_BASE_URL`.
+- [ ] Test: void works only before release (409 after), needs a reason, and records the actor and time.
+- [ ] Test: release writes the events and sets the status.
 
 ---
 
-## Phase 2 — Identity, roles, catalogue, and lookup
+## Phase 3: Consumer check
 
-**Goal:** Users can sign in with roles enforced server-side, and consumers can look up a product code + batch number against seeded demo data and get a precise record state.
-
-**Deliverables — identity and roles**
-- Password hashing (bcrypt), `USER_SESSION` cookie sessions, `register` / `login` / `logout` / `me`
-- Reusable dependencies: `current_user`, `require_admin`, `require_company_member(*roles)`
-- Admin accounts created only by seed/CLI
-- Frontend login/register pages and auth-aware nav
-
-**Done when — identity and roles**
-- [x] Test: register payload with `is_admin` / status fields is rejected or ignored
-- [x] Test: unauthenticated request gets 401; wrong role gets 403
-- [x] Test: member of company A cannot access company B routes
-- [x] Test: passwords stored hashed, never returned
-- [x] Test: inactive user cannot log in; revoked or expired session rejected
-- [x] Test: wrong password rejected with a generic message; seed admin created from env, idempotent
-- [x] Frontend: `/login` and `/register` pages, signed-in header; Vitest tests for validation, server errors, and payload
-
-**Deliverables — catalogue and lookup**
-- Seed: fictional products/batches incl. mismatch and not-found cases
-- `services/lookup.py`: normalize input, find product, find approved batch, apply the precedence in `docs/DECISIONS.md` Q4, return primary state + `warnings`
-- `POST /api/lookups/batch` with `data_mode: "DEMO"` and disclaimer on every response
-- Attach the lookup rate limit (`Depends(limit_lookups)`, D40) and show the per-network 429 message on the result screen
-- Frontend check form with value confirmation/correction and result screen with banner
-
-**Done when — catalogue and lookup**
-- [x] Test: known product + batch returns `DEMO_RECORD_FOUND` (credential checks included; see Phase 3)
-- [x] Test: unknown batch returns `BATCH_NOT_FOUND` (no "fake"/"unsafe")
-- [x] Test: product that is not `PUBLISHED` returns `BATCH_NOT_FOUND`
-- [x] Test: batch belonging to a different product returns `DETAILS_MISMATCH` with differing field `product_code`
-- [x] Test: batch past expiry date returns `BATCH_EXPIRED`
-- [x] Test: pending or rejected batch returns `BATCH_NOT_FOUND`
-- [x] Test: unidentifiable input returns `INSUFFICIENT_OR_AMBIGUOUS`
-- [x] Test: every lookup response has `data_mode == "DEMO"`
-- [x] Test: banned-words guard (no "safe"/"unsafe"/"fake") over all lookup messages, backend and frontend
-- [x] Frontend test: banner shown on every result state
-- [x] Seed covers every lookup state; each seed case tested through the API (`app/demo_data.py` `SEED_CASES`)
-- [x] Anonymised `BATCH_SCAN` logged per lookup, no identifying columns (D46)
-
----
-
-## Phase 3 — Credential record display (replaced 2026-10-09 by the simulated regulator register, D80-D87)
-
-**Goal:** Lookup results show product-level credential provenance honestly.
+**Goal:** Anyone can check a pack via `/check` (QR, OCR of the hidden code, or typing) or `/p/{token}`, and gets the before/after-purchase message.
 
 **Deliverables**
-- Seeded simulated agencies (NAFDAC simulated, SON/MANCAP simulated) and `DEMO-` references
-- Status/expiry computation in a service; `CREDENTIAL_EXPIRED_OR_INACTIVE` state
-- Result UI: agency, scheme, reference, status, dates, provenance, scope label
+- `POST /api/check/qr` and `POST /api/check/secret`:
+  - rate-limited (D119);
+  - `data_mode` DEMO and a disclaimer on every response;
+  - the results and precedence in D115 and D116.
+- Hidden-code CLAIMED (D114).
+- Coarse area resolution, with the IP discarded straight after (D118).
+- `POST /api/check/report` for consumer reports (D120).
+- Frontend:
+  - `/check`: Scan QR (a self-hosted reader), Scan secret code (OCR retargeted to Crockford), and Type code. The check character is validated in the browser.
+  - `/p/[token]`: verifies by client POST only.
+  - Result views for every result; "I've bought this"; Report a concern; the demo banner.
+- Risk evaluation is left for Phase 6. Until then `SUSPICIOUS_ACTIVITY` comes only from existing alerts.
 
 **Done when**
-- [x] Test: expired/inactive credential returns `CREDENTIAL_EXPIRED_OR_INACTIVE`, worded as demo record status
-- [x] Test: product with no approved credential returns `DETAILS_MISMATCH` with differing field `credential`
-- [x] Test: pending company-entered credential is not shown in lookup
-- [x] Test: expired batch + expired credential returns `BATCH_EXPIRED` with a credential warning
-- [x] Test: expiry computed the same way in every response
-- [x] Test: product-level credential is never labelled batch-level
-- [x] Test: every credential carries `data_mode == "DEMO"`
-
-Note: delivered together with the Phase 2 lookup (2026-10-08); expiry is computed by one function, `credential_status` in `backend/app/services/lookup.py`.
+- [ ] Test: each result is reachable, and the precedence order holds.
+- [ ] Test: the just-sold window boundary (exactly at the window is just-sold; one second older is previously-sold).
+- [ ] Test: a consumer check never changes `lifecycle_status` or sale status; CLAIMED sets only the claim fields.
+- [ ] Test: CLAIMED is recorded on the first hidden-code check only.
+- [ ] Test: a voided code or one from an unapproved manufacturer gives `INVALID_IDENTITY`; a carton token gives the carton message.
+- [ ] Test: banned words (D128) appear in no response or frontend copy; `data_mode` is DEMO and the disclaimer is always present.
+- [ ] Test: no IP, cookie or device data is stored; `Set-Cookie` is absent on check responses.
+- [ ] Test: the rate limit gives 429 with `Retry-After`.
+- [ ] Frontend tests:
+  - [ ] the banner shows on every result;
+  - [ ] an invalid check character is stopped before the API;
+  - [ ] no image is sent in any request;
+  - [ ] `/p/[token]` makes no request until it mounts.
 
 ---
 
-## Phase 4 — Company workflow
+## Phase 4: Merchant page
 
-**Goal:** Companies register, get admin-reviewed, and manage their own catalogue and locations.
+**Goal:** Approved distributors and retailers record RECEIVED, TRANSFERRED, SOLD, RETURNED and SALE_CORRECTED from a phone, for a unit or a carton.
 
 **Deliverables**
-- Company registration → `PENDING_REVIEW`; admin approve/reject/suspend with reviewer + time
-- Representative management within a company
-- `SUPPLIER_LOCATION` with FoodLens review status and reviewer/time
-- Company product drafts, new batches, and credential entry. Submitting a draft for publication sets `PENDING_REVIEW`; admin publishes or rejects. New batches and credentials `PENDING_REVIEW` until admin approves
-- Direct edit of company contact details, logged in `AUDIT_LOG`
-- Company dashboard and admin review queue screens
+- `services/lifecycle.py`:
+  - custody rules (D113);
+  - status derivation by replay (D112);
+  - the area taken from the company's reviewed location.
+- Merchant routes under `/api/companies/{id}/merchant/*`.
+- `/merchant`:
+  - mobile first;
+  - QR scan (reusing the Phase 3 reader);
+  - an event picker;
+  - transfer target (approved companies);
+  - correction reason.
+- Staff management for the owner (D106).
 
 **Done when**
-- [x] Test: credential claim invisible to lookup until admin approves (new batches now go live directly, D61)
-- [x] Test: contact detail edit writes an audit entry with actor and time (`test_company_contact.py`, D103)
-- [x] Test: published product fields cannot be edited directly (only via change notice, Phase 5): no PUT/PATCH/DELETE route on products or batches (`test_company_contact.py`)
-- [x] Test: company user cannot approve own company, location, or credential (`test_company_cannot_approve_itself`, `test_company_cannot_mark_own_location_reviewed`; credentials removed, D80)
-- [x] Test: client cannot set status, reviewer, or ownership fields on any create/update (company, location, product, contact, change notice, and order tests)
-- [x] Test: member cannot edit another company's products, batches, or locations (`test_catalogue.py`, `test_member_cannot_add_location_to_another_company`, contact test)
-- [x] Test: unapproved company cannot publish products to lookups or the directory (`test_pending_company_cannot_add_products`, `test_unapproved_companies_are_hidden_from_directory`)
-- [x] ~~Test: company cannot publish its own product~~ (superseded by D61: approved companies publish directly; pending companies cannot)
-- [x] Test: admin decisions record reviewer and timestamp (`test_admin_decision_records_reviewer_time_note_and_audit`)
-
-**Progress (2026-10-08)**
-- Done: company registration (`PENDING_REVIEW` + owner), admin approve/reject/suspend with reviewer, time, note, and audit; supplier locations (pending until admin review, only for approved companies); company dashboard and admin review screens.
-- Tested so far: company cannot approve itself or its locations; admin cannot review a company they belong to; client cannot set review/ownership fields on company or location create; member cannot add locations to another company; decisions record reviewer and time.
-- Done (2026-10-09): products and batches published directly by approved companies (D61); credential claims reviewed by admins before they reach lookups (D63); owner shown as directory contact (D65).
-- Dropped as over-engineering (D64): extra representatives, product-approval flow, supplier detail page.
-- Done (2026-10-12): owner edits company contact email and phone directly on `/company`, logged with actor, time, and old/new values (D103). Phase 4 complete.
+- [ ] Test: a company can only record events for units it may hold (D113), and the label for a receipt without a transfer is set.
+- [ ] Test: a carton event applies to all of its units and shares a `group_id`.
+- [ ] Test: SALE_CORRECTED needs a reason, keeps the original SOLD event, and puts the unit back IN_STOCK.
+- [ ] Test: transfer only to approved companies; recalled and voided units are refused.
+- [ ] Test: cross-company access is blocked; unapproved companies are blocked; the client cannot set the status or holder.
+- [ ] Test: the owner adds and deactivates staff; staff cannot manage staff.
+- [ ] Frontend tests: event form payloads, and the carton confirmation.
 
 ---
 
-## Phase 5 — Change notices
+## Phase 5: POS integration and simulated POS
 
-**Goal:** Companies propose catalogue changes that only take effect after admin approval, with full history, and can post pop-up product announcements.
+**Goal:** POS partners record sales after payment through a signed API, and a simulated till demonstrates it.
 
 **Deliverables**
-- States: `PENDING_REVIEW`, `CLARIFICATION_REQUESTED`, `APPROVED`, `REJECTED`
-- Upload validation (type, extension, size), private storage, safe filenames
-- Admin field-by-field diff view and decision endpoint; approval validates and applies values, recording old/new value, approver, time
-- Announcements: approved companies post instantly; shown as pop-up on lookup labelled "Message from the company — not reviewed by FoodLens"; admin can hide
-- Company notice form and history; admin review screen
+- `/api/pos/v1/units/lookup`, `sales`, `refunds` and `voids` (D121).
+- Admin:
+  - partners (key and secret shown once; revoke keys);
+  - retailer links;
+  - tills.
+- Per-partner rate limit (D119).
+- `/demo/pos` behind `DEMO_POS_ENABLED` (D123).
+- `docs/POS_INTEGRATION.md` with Python and JavaScript signing examples.
 
 **Done when**
-- [x] Test: pending or clarification-requested notice leaves published data unchanged
-- [x] Test: approved notice updates the catalogue and records old value, new value, approver, time
-- [x] Test: rejected notice changes nothing
-- [x] Test: company response to clarification returns notice to `PENDING_REVIEW`
-- [x] Test: submitter cannot approve own notice
-- [x] Test: notice targeting another company's record is rejected
-- [x] Test: disallowed file type/size rejected; attachments not publicly accessible
-- [x] Test: announcement never changes product fields; hidden announcement not shown; only approved companies can post
-- [x] Frontend test: announcement pop-up shows the "not reviewed by FoodLens" label
+- [ ] Test: unsigned, badly signed, wrong-key and revoked-key requests are rejected; a timestamp more than 300 s off either way is rejected.
+- [ ] Test: replaying a sale is idempotent (the same response, no new events).
+- [ ] Test: a late offline sale (an earlier `occurred_at`) is accepted and the status replays correctly; events older than the maximum age are rejected.
+- [ ] Test: a refund creates RETURNED; a void creates SALE_CORRECTED with a reason.
+- [ ] Test: lookup never changes any row.
+- [ ] Test: an unlinked or unapproved retailer, and an unregistered till, are rejected.
+- [ ] Test: a sale returns a per-unit error list for sold, recalled, voided or unreleased units.
+- [ ] Test: no payment data is stored beyond `payment_reference`; the signing secret is stored encrypted, never in plain text.
+- [ ] Test: the per-partner rate limit.
+- [ ] The signing examples in `POS_INTEGRATION.md` are run against the test API.
 
 ---
 
-## Phase 6 — Supplier discovery
+## Phase 6: Risk rules and alerts
 
-**Goal:** Wholesalers find approved suppliers and reviewed locations.
+**Goal:** The nine deterministic rules (D124) raise explainable alerts, and consumer results reflect them (D116).
 
 **Deliverables**
-- `GET /api/suppliers` (public, with `q` search) showing only approved companies with reviewed locations; a separate detail endpoint was not needed, the list carries all public fields
-- Supplier detail with reps/contact and what FoodLens reviewed
-- Badge: "FoodLens demo-reviewed profile"
-- Wholesaler search and detail screens
+- `services/risk.py`, called from checks, merchant events and POS calls.
+- Env thresholds.
+- De-duplication.
+- Evidence snapshot and explanation.
+- The alert workflow (D125).
 
 **Done when**
-- [x] Test: pending/rejected/suspended companies and unreviewed locations never listed
-- [x] Test: badge wording exact and never implies official certification
-- [x] Test: only wholesaler-capable users reach buyer screens (directory itself is public, D58; order form and My orders only for approved wholesaler/both members, D95)
+- [ ] Test: each of the nine rules fires on its scenario, at its level, with evidence and a plain-words explanation.
+- [ ] Test: no alert for a buyer rescan (same area, within the window), a return, a void correction, or a carton move.
+- [ ] Test: only MEDIUM and HIGH open alerts (and RESOLVED_SUSPECTED_COPY) switch the consumer result to SUSPICIOUS_ACTIVITY.
+- [ ] Test: a second trigger appends to the open alert instead of duplicating it.
+- [ ] Test: the evidence snapshot survives the scan purge.
+- [ ] Test: alert status changes record the actor and time; another company cannot read or change them.
 
 ---
 
-## Addition — Camera scanning (2026-10-12, D88-D94)
+## Phase 7: Manufacturer and admin dashboards
 
-**Goal:** Consumers can fill the lookup by pointing the phone camera at the pack instead of typing.
-
-**Done when**
-- [x] "Scan pack" on `/check`: registration number, then optional batch number, then an editable confirm screen, then the normal lookup
-- [x] OCR in the browser only, files self-hosted under `/ocr/`; no image uploaded, logged, or stored
-- [x] Photo-picker fallback when the camera is unavailable; typing still works
-- [x] Tests: extraction, image clean-up, engine paths, scan flow with OCR mocked, no image in any request
-- [x] `server.mjs` trusts `CF-Connecting-IP` only from cloudflared when enabled (D90)
-- [ ] Accuracy measured on about 20 real packs (`docs/OCR_ACCURACY.md`)
-
----
-
-## Phase 7 — Wholesale order requests (2026-10-12, D95-D101)
-
-**Goal:** Wholesalers find approved suppliers and send order requests; suppliers respond. Secondary, business side: kept minimal.
+**Goal:** Manufacturers see and act on their identity, lifecycle and alert data, and admins run the platform.
 
 **Deliverables**
-- Supplier search (name, area, or product) and a public supplier page: reviewed locations, owner contact, published products with their result in the simulated register (demo data)
-- Order request from one supplier at a time: published products, positive quantity, unit; pickup from a reviewed location or delivery with details; no payment fields
-- Seller on `/company`: accept, decline (optional reason), reply, mark fulfilled with optional batch links
-- Status flow `REQUESTED -> ACCEPTED | DECLINED | CANCELLED`, `ACCEPTED -> FULFILLED`; buyer cancels only while requested
-- Buyer "My orders" at `/orders`
-- Seed: demo wholesaler, demo owner accounts (`SEED_DEMO_PASSWORD`), one order per status
-- Migration `0005_order_requests`
+- **Manufacturer:**
+  - products and batches; generating units and labels;
+  - the unit timeline in plain words;
+  - alerts with evidence, status and notes;
+  - recalls and notices;
+  - partners (derived from transfers and sales, plus POS links);
+  - consumer reports.
+- **Manufacturer stats:**
+  - units issued and released;
+  - sale coverage %;
+  - POS versus merchant-page share;
+  - checks by city and by week;
+  - hot spots;
+  - recall reach;
+  - alerts raised and resolved;
+  - time to resolve.
+- **Admin:**
+  - the approval queues (kept);
+  - POS partners;
+  - platform stats;
+  - invalid-burst alerts;
+  - consumer reports.
+- **Recalls** (D126).
 
 **Done when**
-- [x] Test: only the addressed seller can respond; buyer and outsiders cannot
-- [x] Test: invalid transitions rejected (409); cancel only by the buyer and only while requested
-- [x] Test: allocated batch must be the seller's own approved batch of the line's product
-- [x] Test: unpublished products, non-positive quantities, mixed suppliers, self-orders rejected
-- [x] Test: only approved wholesaler/both companies order; pending/suspended companies cannot place or receive orders
-- [x] Test: only buyer and seller see an order (403 for non-members of the path company, 404 for other companies)
-- [x] Test: client cannot set status, company IDs, user IDs, or seller notes
-- [x] Test: no payment fields in tables or the order/supplier API
-- [x] Test: supplier page shows each registration result with `data_mode` DEMO, never "safe"
-- [x] Frontend tests: supplier page badges and banner, order form payload, buyer cancel, seller actions and batch allocation
+- [ ] Test: each stat is correct on a fixed dataset.
+- [ ] Test: a manufacturer sees only its own units, alerts, reports and stats.
+- [ ] Test: a recall writes RECALLED events for every affected unit; hiding a recall needs a reason.
+- [ ] Frontend tests: the timeline wording, alert actions, and empty states.
 
 ---
 
-## Phase 8 — Deployment (planned, not built)
+## Phase 8: Seed scenario and full demo pass
 
-**Goal:** A public demo reachable on the student's own domain without opening ports on the server.
+**Goal:** One command produces the D111 scenario, and the whole story can be demonstrated on a phone.
+
+**Done when**
+- [ ] The seed is idempotent and built through the services; every batch is released except the labelled test carton.
+- [ ] Test: each scenario case gives its expected result and alert (and no alert where none is expected).
+- [ ] Test: no scenario except the unreleased test carton gives `SUSPICIOUS_ACTIVITY` because of an unreleased unit.
+- [ ] The README lists the demo codes, the logins (`SEED_DEMO_PASSWORD`) and a step-by-step demo script.
+- [ ] A manual demo pass on a phone, recorded in `docs/log.md`.
+
+---
+
+## Phase 9: Deployment
+
+**Goal:** A public demo on `foodlens.online`, with no inbound ports open on the server.
 
 **Deliverables**
-- Cloud VM (small Linux instance) running Docker Compose: Postgres, the FastAPI API, and the Next.js web server (`npm run build && npm run start`)
-- A named Cloudflare Tunnel (`cloudflared` container or service) routing the student's own domain to the web container; the VM has no inbound ports open except SSH
-- `TRUST_CLOUDFLARE_TUNNEL=true` with `CLOUDFLARED_IPS` set to the cloudflared container's address (D90); the API trusts only the web container as proxy (`TRUSTED_PROXY_IPS`)
-- Secrets from environment files on the VM, never in git; production settings (secure cookies, `BCRYPT_ROUNDS` default, seed admin and demo password from env)
-- Database backups and a short runbook (deploy, migrate, seed, roll back)
+- A cloud VM running Docker Compose (Postgres, API and web), plus a daily purge job.
+- A named Cloudflare Tunnel routing `foodlens.online` to the web container. The VM has no inbound ports except SSH.
+- The D90 settings (`TRUST_CLOUDFLARE_TUNNEL`, `CLOUDFLARED_IPS`) and `TRUSTED_PROXY_IPS`.
+- The Cloudflare "Add visitor location headers" managed transform switched on (D118).
+- Secrets on the VM only: `CODE_HASH_PEPPER`, `POS_SECRET_KEY`, the seed passwords and secure cookies. `PUBLIC_BASE_URL=https://foodlens.online`.
+- Backups and a runbook (deploy, migrate, seed, roll back, rotate secrets).
 
 **Done when**
-- [ ] The demo opens over HTTPS on the domain and `/api/health` returns ok
-- [ ] Rate limits see each visitor's own IP through the tunnel
-- [ ] Camera scanning works on an iPhone and an Android phone over the domain
-- [ ] A fresh VM can be set up from the runbook
+- [ ] The demo opens over HTTPS on the domain, and `/api/health` returns ok and reports that `cf-ipcity` is present.
+- [ ] The rate limits see each visitor's own IP.
+- [ ] A QR code printed with the production base URL opens `/p/{token}` from an iPhone and an Android camera.
+- [ ] A fresh VM can be set up from the runbook.
 
 ---
 
-## Phase 9 — Polish and evaluation
+## Phase 10: Evaluation and docs
 
-**Goal:** Evidence the prototype works and is understood; capstone-ready docs.
+**Goal:** Evidence that the prototype works and is understood; docs ready for the capstone.
 
 **Deliverables**
-- Close the open Phase 0 and Phase 4 checklist items (clean-clone check, audit and ownership tests)
-- Camera scanning accuracy on about 20 real packs (`docs/OCR_ACCURACY.md`)
-- End-to-end smoke tests for the main workflows (lookup, scan, supplier search, order request)
-- Usability study script, consent form, and task list (check a number, interpret the result, find a supplier, send an order request)
-- Measures: completion, errors, time, comprehension of the demo-data limitation
-- Demo script and final README
+- OCR accuracy on printed hidden codes (`docs/OCR_ACCURACY.md`, reworked).
+- End-to-end smoke tests: issue, release, receive, POS sale, buyer check, a cloned-code check in another city, and resolving the alert.
+- Detection and false-positive rates on the simulated clones, legitimate rescans and returns (concept doc §13).
+- A usability study: script, consent and tasks (check before and after purchase, interpret a suspicious result, report a concern). Measures: completion, errors, time, and understanding of what a check does and does not prove.
+- The final README and the demo script.
 
 **Done when**
-- [ ] All backend and frontend tests pass
-- [ ] Study materials approved by supervisor before any participant session
-- [ ] Docs let a reader install, seed, run, and test from a clean clone
+- [ ] All backend and frontend tests pass.
+- [ ] The supervisor approves the study materials before any participant session.
+- [ ] The docs let a reader install, seed, run and test from a clean clone.
 
 ---
 
-## Deferred (not planned)
+## Phase 11: Stretch
 
-Concern reports (private consumer reports with an admin queue) and scan analytics were optional Phase 8 items. They are deferred by the 2026-10-12 re-ordering (D102) and will only be built if the student asks. The anonymised `batch_scan` log from Phase 2 stays.
+Only after Phases 1–10:
+- Opt-in simulated rewards when a hidden code is claimed. A phone number is collected only if the consumer opts in.
+- Results in local languages.
