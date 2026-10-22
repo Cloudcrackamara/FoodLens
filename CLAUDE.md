@@ -12,7 +12,7 @@ FoodLens is a startup product at the demonstration-prototype stage. Its first mi
   - a mobile merchant page;
   - a signed POS integration, which records a sale only after payment is confirmed.
 - **Consumers** check any pack for free, with no login, at `/check` or `/p/{token}`.
-- **Intelligence:** FoodLens combines identities, lifecycle events and consumer scan patterns into explainable risk alerts. Manufacturers see these on their dashboard.
+- **Intelligence:** FoodLens combines identities, lifecycle events, consumer scan patterns and the manufacturer's batch allocations (geo-batching) into explainable risk alerts. Manufacturers see these on their dashboard.
 
 Consumer checks are the core asset. They must be fast, useful and possible only through FoodLens. FoodLens never claims that a physical item is the real product, and never makes regulator or product-safety claims.
 
@@ -22,7 +22,7 @@ Where to find things:
 - **Product concept** (source of truth for scope): `docs/PRODUCT_INTEGRITY.md`.
 - **Phase plan** (phases 1-11, one session and one commit each): `docs/PLAN.md`.
 - **Schema:** the tables and rules are in `docs/SCHEMA.md`; the diagram is `docs/ERD.mmd`.
-- **Decisions:** `docs/DECISIONS.md`. D104 onwards covers the unit-identity design. Read the relevant entries before implementing identity, checks, lifecycle events, POS, or risk rules.
+- **Decisions:** `docs/DECISIONS.md`. D104 onwards covers the unit-identity design, geo-batching and returns. Read the relevant entries before implementing identity, checks, lifecycle events, allocations, returns, POS, or risk rules.
 - **Challenge log:** `docs/log.md`.
 - **History only:** `docs/HANDOFF.md` and `docs/archive/` describe the earlier registration-lookup design.
 
@@ -51,6 +51,13 @@ Where to find things:
    - A consumer check never changes `lifecycle_status` or sale status.
    - The first check of a hidden code records `CLAIMED`, which sets only the claim fields.
    - `SALE_CORRECTED` keeps the original sale.
+   - **RETURNED:**
+     - Accepted only from the company that recorded the sale, or from that retailer's linked POS partner.
+     - Always carries a disposition:
+       - `RESTOCK` puts the unit back in stock and clears the sold state.
+       - `NOT_FOR_RESALE` makes the unit `WITHDRAWN` for good.
+     - A unit whose hidden code was `CLAIMED` can only be returned `NOT_FOR_RESALE`.
+     - The original SOLD event always stays, and risk rules ignore a sale that a valid return followed (D134).
    - `VOIDED` is allowed only before release.
 5. **No self-approval.**
    - Company users never approve their own company profile, supplier locations, or change notices. (Exception, D61: approved manufacturers publish their own new products and batches directly.)

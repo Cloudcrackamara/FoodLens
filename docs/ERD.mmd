@@ -133,7 +133,7 @@ erDiagram
         uuid parent_carton_id FK "nullable"
         string qr_token_hash UK "sha256, never raw"
         string secret_code_hash UK "HMAC with pepper"
-        enum lifecycle_status "ISSUED, RELEASED, IN_TRANSIT, IN_STOCK, SOLD, RECALLED, VOIDED"
+        enum lifecycle_status "ISSUED, RELEASED, IN_TRANSIT, IN_STOCK, SOLD, WITHDRAWN, RECALLED, VOIDED"
         uuid current_holder_company_id FK "derived"
         datetime last_sold_at "derived, nullable"
         uuid last_sold_area_id FK "derived, nullable"
@@ -165,6 +165,27 @@ erDiagram
         text reason "SALE_CORRECTED, VOIDED"
         uuid corrects_event_id FK "nullable"
         boolean received_without_transfer
+        boolean outside_allocation "RECEIVED only"
+        enum return_disposition "RESTOCK, NOT_FOR_RESALE; RETURNED only"
+        uuid returns_event_id FK "nullable, SOLD reversed"
+    }
+
+    BATCH_ALLOCATION {
+        uuid allocation_id PK
+        uuid batch_id FK
+        uuid destination_company_id FK "nullable"
+        uuid destination_area_id FK
+        int quantity "> 0"
+        date planned_date "nullable"
+        uuid created_by_user_id FK
+        datetime created_at
+        datetime updated_at
+    }
+
+    ALLOCATION_CARTON {
+        uuid allocation_id FK
+        uuid carton_id FK,UK "one allocation per carton"
+        datetime created_at
     }
 
     SCAN_EVENT {
@@ -179,7 +200,7 @@ erDiagram
 
     RISK_ALERT {
         uuid alert_id PK
-        enum rule "R1..R9"
+        enum rule "R1..R11"
         enum level "LOW, MEDIUM, HIGH"
         uuid manufacturer_id FK "null = admin only"
         uuid unit_id FK "nullable"
@@ -354,7 +375,12 @@ erDiagram
     COMPANY o|--o{ PRODUCT_UNIT : "currently holds"
     PRODUCT_UNIT o|--o{ LIFECYCLE_EVENT : "history"
     CARTON o|--o{ LIFECYCLE_EVENT : "history"
-    LIFECYCLE_EVENT o|--o| LIFECYCLE_EVENT : "corrects"
+    LIFECYCLE_EVENT o|--o| LIFECYCLE_EVENT : "corrects or returns"
+    PRODUCT_BATCH ||--o{ BATCH_ALLOCATION : "allocated by"
+    COMPANY o|--o{ BATCH_ALLOCATION : "destination"
+    AREA ||--o{ BATCH_ALLOCATION : "destination area"
+    BATCH_ALLOCATION ||--o{ ALLOCATION_CARTON : "lists"
+    CARTON ||--o| ALLOCATION_CARTON : "allocated in"
     AREA o|--o{ LIFECYCLE_EVENT : "where"
     PRODUCT_UNIT o|--o{ SCAN_EVENT : "checked as"
     AREA o|--o{ SCAN_EVENT : "coarse area"

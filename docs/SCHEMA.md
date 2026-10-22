@@ -6,7 +6,7 @@
 >
 > **Related docs:**
 > - Diagram: [`ERD.mmd`](ERD.mmd).
-> - Reasons: [`DECISIONS.md`](DECISIONS.md) D17–D30 (conventions) and D104–D130 (unit identity).
+> - Reasons: [`DECISIONS.md`](DECISIONS.md) D17–D30 (conventions) and D104–D136 (unit identity, geo-batching, returns).
 
 Migrations are the source of truth. Once Phase 1 lands, if this file and the database disagree, the database wins and this file must be updated.
 
@@ -117,9 +117,9 @@ One packaging level: a carton holds units (D112).
 | `parent_carton_id` | Nullable. The carton must be in the same batch **(service)**. |
 | `qr_token_hash` | `sha256(token)` hex, unique **(DB)** (D108). |
 | `secret_code_hash` | `HMAC-SHA256(CODE_HASH_PEPPER, normalised code)` hex, unique **(DB)** (D109). |
-| `lifecycle_status` | `ISSUED`, `RELEASED`, `IN_TRANSIT`, `IN_STOCK`, `SOLD`, `RECALLED`, `VOIDED`. Derived by replaying events **(service)**. A consumer check never changes it. |
+| `lifecycle_status` | `ISSUED`, `RELEASED`, `IN_TRANSIT`, `IN_STOCK`, `SOLD`, `WITHDRAWN`, `RECALLED`, `VOIDED`. Derived by replaying events **(service)**. A consumer check never changes it. `WITHDRAWN` comes from a NOT_FOR_RESALE return and is final: no later sale, receipt or transfer (D134). |
 | `current_holder_company_id` | Derived custody (D113). |
-| `last_sold_at`, `last_sold_area_id`, `last_sold_company_id` | Derived from the latest uncorrected SOLD event. Used for just-sold checks. |
+| `last_sold_at`, `last_sold_area_id`, `last_sold_company_id` | Derived from the latest SOLD event that has not been corrected or returned. Cleared by a SALE_CORRECTED or a RESTOCK return (D134). Used for just-sold checks. |
 | `secret_claimed_at`, `secret_claimed_area_id` | Set once by the first hidden-code check (CLAIMED, D114). |
 | `created_at`, `updated_at` | |
 
@@ -144,6 +144,9 @@ Append-only (D112). One row per unit per event. A carton event adds one carton r
 | `reason` | Required for SALE_CORRECTED and VOIDED **(DB check)**. |
 | `corrects_event_id` | SALE_CORRECTED points to the SOLD event it corrects. The original is never changed. |
 | `received_without_transfer` | Boolean. Set on RECEIVED or SOLD when no transfer to this company exists (D113). |
+| `outside_allocation` | Boolean. Set on RECEIVED when the receiving company or area differs from the unit's allocation (D132). |
+| `return_disposition` | `RESTOCK` or `NOT_FOR_RESALE`. Required on RETURNED and null on every other event **(DB check)**. RETURNED must come from the company that recorded the SOLD event, or a POS partner linked to it. RESTOCK is refused when the hidden code was CLAIMED **(service)** (D134). |
+| `returns_event_id` | RETURNED points to the SOLD event it reverses. The SOLD event stays in the timeline. |
 | Unique | `(pos_partner_id, transaction_ref, unit_id, event_type)` where `pos_partner_id` is not null **(DB)**. This is POS idempotency. |
 
 ### `scan_event`
@@ -163,7 +166,7 @@ There is deliberately **no** IP, user agent, cookie, device ID, GPS, user or ses
 
 | Column | Notes |
 |---|---|
-| `rule` | `R1_SCAN_AFTER_SALE_ELSEWHERE` … `R9_VOIDED_CODE_IN_USE` (D124). |
+| `rule` | `R1_SCAN_AFTER_SALE_ELSEWHERE` … `R9_VOIDED_CODE_IN_USE` (D124), `R10_RECEIVED_OUTSIDE_ALLOCATION` (D132), `R11_OUTSIDE_ALLOCATED_AREA` (D133). A sale followed by a valid return is ignored by every rule. |
 | `level` | `LOW`, `MEDIUM`, `HIGH`. |
 | `manufacturer_id` | Nullable. Null means admin only (rule 4, invalid-code burst). |
 | `unit_id`, `carton_id`, `area_id` | Nullable subjects. |
@@ -172,6 +175,37 @@ There is deliberately **no** IP, user agent, cookie, device ID, GPS, user or ses
 | `notes` | Investigation notes. |
 | `resolved_by_user_id`, `resolved_at` | Set on resolution **(service)**. |
 | Unique | At most one `OPEN`/`INVESTIGATING` alert per `(rule, unit_id)` **(DB, partial unique index)**. |
+
+### `batch_allocation`
+Where the manufacturer plans to send part of a batch (D131). Created by owners and staff of the batch's manufacturer after the units are generated.
+
+| Column | Notes |
+|---|---|
+| `batch_id` | Must belong to the manufacturer **(service)**. |
+| `destination_company_id` | Nullable. When set, it must be an approved distributor or retailer **(service)**. |
+| `destination_area_id` | Required. The area the stock is meant for. |
+| `quantity` | Number of units, > 0 **(DB)**. The total across a batch's allocations never exceeds its issued units **(service)**. When cartons are listed, it equals the units in those cartons **(service)**. |
+| `planned_date` | Nullable planned dispatch date. |
+| `created_by_user_id`, `created_at`, `updated_at` | |
+
+How a unit matches its allocation:
+- A unit in a listed carton belongs to that carton's allocation.
+- Otherwise, a receipt matches when the batch has an allocation to that company or area with quantity not yet used up. Each matched receipt uses up one unit of that allocation.
+- If no allocation matches, the receipt is outside its allocation.
+- A batch with no allocations at all is never outside its allocation.
+
+### `allocation_carton`
+| Column | Notes |
+|---|---|
+| `allocation_id`, `carton_id` | A carton sits in at most one allocation: `carton_id` is unique **(DB)**. The carton must be in the allocation's batch **(service)**. |
+| `created_at` | |
+
+The inventory view (Phase 7) is computed from allocations and events, and nothing is stored for it. Per destination and area it shows:
+- **Allocated:** the quantity.
+- **Received:** RECEIVED events by that company or in that area.
+- **In stock:** units currently IN_STOCK there.
+- **Sold:** sales that are still standing.
+- **Returned:** RETURNED events, split by disposition.
 
 ### `consumer_report`
 Anonymous concern report (D120). Private to the unit's manufacturer and admins **(service)**.

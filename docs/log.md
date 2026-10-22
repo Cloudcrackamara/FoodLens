@@ -129,3 +129,11 @@ Problems met while building FoodLens, what caused them, and how they were resolv
 | 77 | Requirements | The prompt put "foodlens.ng" on labels; the founder plans to buy `foodlens.online`. | Domain not yet chosen when the prompt was written. | The domain comes from `PUBLIC_BASE_URL` and `LABEL_CHECK_DOMAIN`, never hard-coded (D129). | Decision |
 | 78 | Risk rules | Rule 1 (scan after a sale in a different area) would alarm a buyer who scans at home in another city the next day. | Legitimate travel looks like a copied code. | Rule 1 is LOW and only shows on the dashboard; only MEDIUM/HIGH alerts change the consumer result (D116, Q4). | Decision |
 | 79 | Docs | The founder expected a "founder, not student" wording change to be in place already, but it had never reached this session. | The instruction was not in the conversation. | Applied before committing: "student" became "founder" across the docs, and CLAUDE.md describes FoodLens as a startup product at the demonstration-prototype stage, with the capstone as its first milestone. | Resolved |
+
+## 2026-10-22: Geo-batching and return dispositions (planning)
+
+| # | Area | Challenge | Cause | Resolution | Status |
+|---|---|---|---|---|---|
+| 80 | Requirements | Rule 11 needs a distance threshold "from env", but no default was given. | Request left the value open. | Default `RISK_OUTSIDE_ALLOCATION_KM=150`, recorded in D133. The founder can change it. | Decision |
+| 81 | Requirements | A withdrawn unit needs its own consumer message, but no result code was given for it. | The existing results (D115) cover only unsold, just sold and previously sold. | Added the recognised state `RECOGNISED_WITHDRAWN` with the founder's wording (D135). | Decision |
+| 82 | Data model | An allocation given as a quantity only, with no cartons, does not say which units belong to it, so "outside its allocation" was undefined. | Allocations can be quantity-based. | A receipt matches any allocation of the batch to that company or area with quantity left. A batch with no allocations is never outside (D131). | Decision |
