@@ -36,6 +36,10 @@ class Settings(BaseSettings):
     # Proxies whose X-Forwarded-For header is trusted (the Next.js server).
     trusted_proxy_ips: str = "127.0.0.1,::1"
 
+    # Base URL printed in every QR code and label: {PUBLIC_BASE_URL}/p/{token} (D129, D139).
+    # QR codes are permanent once printed, so set it before printing real labels.
+    public_base_url: str = "http://localhost:3000"
+
     # Wholesale order requests are future work: the routes exist only when true (D127).
     orders_enabled: bool = False
 
@@ -48,6 +52,14 @@ class Settings(BaseSettings):
     seed_admin_display_name: str = "FoodLens Demo Admin"
     # Password for the demo buyer/seller accounts; blank means they cannot sign in (D101).
     seed_demo_password: str | None = None
+
+    @field_validator("public_base_url")
+    @classmethod
+    def valid_base_url(cls, value: str) -> str:
+        value = value.strip().rstrip("/")
+        if not value.startswith(("http://", "https://")):
+            raise ValueError("PUBLIC_BASE_URL must start with http:// or https://")
+        return value
 
     @field_validator("rate_limit_exempt_ips", "trusted_proxy_ips")
     @classmethod

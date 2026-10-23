@@ -75,6 +75,29 @@ export async function apiFetch<T>(
   return schema ? schema.parse(payload) : (undefined as T);
 }
 
+export type Download = { blob: Blob; filename: string; headers: Headers };
+
+/** POST JSON and receive a file (e.g. the one-time label zip) instead of JSON. */
+export async function apiDownload(path: string, body: unknown): Promise<Download> {
+  const response = await fetch(path, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    const payload: unknown = await response.json().catch(() => null);
+    throw new ApiError(
+      response.status,
+      errorMessage(response.status, payload),
+      parseRetryAfter(response.headers.get("Retry-After")),
+    );
+  }
+  const disposition = response.headers.get("Content-Disposition") ?? "";
+  const filename = /filename="([^"]+)"/.exec(disposition)?.[1] ?? "download";
+  return { blob: await response.blob(), filename, headers: response.headers };
+}
+
 /** Upload one file as multipart/form-data (field name "file") through the same-origin proxy. */
 export async function apiUpload<T>(path: string, schema: z.ZodType<T>, file: File): Promise<T> {
   const form = new FormData();

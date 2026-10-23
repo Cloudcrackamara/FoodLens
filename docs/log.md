@@ -164,3 +164,16 @@ Problems met while building FoodLens, what caused them, and how they were resolv
 | 97 | Requirements | D107 says only approved manufacturers create products and batches, but the API let any approved company do it. | Before the type flags, every company that registered could add products. | The catalogue service refuses companies without `is_manufacturer` (403), with tests. | Resolved |
 | 98 | Tests | The test that hid a suspended company's announcements went through the lookup. | The rule lived in the lookup service. | Removed with the lookup. Phase 3 covers it: a code from an unapproved manufacturer gives `INVALID_IDENTITY` (D115). | Decision |
 | 99 | Orders | The API flag `ORDERS_ENABLED` cannot reach the browser bundle. | Next.js only exposes `NEXT_PUBLIC_*` variables to the client. | The web app reads `NEXT_PUBLIC_ORDERS_ENABLED`; both default to false and must match. The server flag is the control; the client flag only hides links. | Decision |
+
+## 2026-10-23: Phase 2, unit and code generation, label export
+
+| # | Area | Challenge | Cause | Resolution | Status |
+|---|---|---|---|---|---|
+| 100 | Labels | D139 asks for "a printer CSV", but one CSV with both carton and pack rows cannot tell a printer which row is a carton label without a fifth column. | A carton row and its packs share the same `carton_ref`. | Two files with the same four columns: `units.csv` and `cartons.csv`. The PDF heads carton labels "CARTON C001". Approved by the founder on 2026-10-23. | Decision |
+| 101 | Labels | The first PDF printed the code on one line, which overflowed into the next label. | 32 characters of 8 pt Courier are about 54 mm wide; a label column is 48 mm. | The code prints on two lines: four groups, then the last three. Checked by rendering the page. | Resolved |
+| 102 | Labels | The QR images had no quiet zone, so a cut label could fail to scan. | The PNG was written with `border=0`. | A 4-module quiet zone is added outside the chosen size, so "15 mm" stays the size of the code itself. A rendered 15 mm page decoded 18 of 18 labels with OpenCV. | Resolved |
+| 103 | Performance | A 2,000-pack label file took 18 s to build. | segno scores all 8 QR masks per code in pure Python, and the PNGs were large. | Smaller PNGs (the PDF does not smooth pixels): about 15 s. Mask scoring was kept because it gives the most readable code. The page says it can take up to a minute. | Workaround |
+| 104 | Tooling | No PDF renderer was installed to check the layout. | poppler is not on this machine. | Rendered pages and decoded the QRs with pypdfium2 and OpenCV in a throwaway environment; neither is a project dependency. | Resolved |
+| 105 | Requirements | D106 lists generate, download and void as owner only, but says nothing about release and allocation. | Release and allocation were added later (D131, D139). | Owners and staff release and allocate; only owners generate and void. Approved by the founder on 2026-10-23. | Decision |
+| 106 | Data model | Units need a holder from the start for later custody checks (D113). | Custody begins with the manufacturer. | `ISSUED` sets `current_holder_company_id` to the manufacturer; release keeps it. | Decision |
+

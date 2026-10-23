@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import type { z } from "zod";
 import { FormField } from "@/components/auth/FormField";
@@ -108,7 +109,12 @@ function ProductCard({ companyId, product }: { companyId: string; product: Produ
         {product.batches.length === 0 ? <p className="text-sm">No batches yet.</p> : (
           <ul className="text-sm">
             {product.batches.map((batch) => (
-              <li key={batch.batch_id}>{batch.batch_number} · expires {formatDate(batch.expiry_date)}</li>
+              <li key={batch.batch_id}>
+                {batch.batch_number} · expires {formatDate(batch.expiry_date)} ·{" "}
+                <Link href={`/company/batches/${batch.batch_id}`} className="underline">
+                  Codes, labels and allocations
+                </Link>
+              </li>
             ))}
           </ul>
         )}

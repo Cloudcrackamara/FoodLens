@@ -90,16 +90,16 @@ The earlier plan (Gate and Phases 0–7: foundation, auth, registration lookup, 
 - Company page: generate, the warning about the one-time file ("keep it secure and delete it after printing"), release, and void.
 
 **Done when**
-- [ ] Test: tokens are 26 uppercase Crockford Base32 characters, unique, and a forced collision retries.
-- [ ] Test: normalisation maps lowercase, spaces, hyphens, `O`, `I` and `L` to the same hash as the clean token.
-- [ ] Test: raw tokens never appear in the database (whole-table scan after generation) or in the logs.
-- [ ] Test: the token does not depend on `unit_id` (no shared prefix or sequence across a batch).
-- [ ] Test: only the owner of an approved manufacturer can generate (staff and other companies get 403; a pending company gets 409).
-- [ ] Test: the zip contains the PDF and the CSV with the four columns; the PDF shows the token under each QR and the `PUBLIC_BASE_URL`; QR error correction is M.
-- [ ] Test: a QR size below 15 mm returns a warning.
-- [ ] Test: void works only before release (409 after), needs a reason, and records the actor and time.
-- [ ] Test: release writes the events and sets the status.
-- [ ] Test: allocations accept only the company's own batch, cartons and units; a carton or unit sits in at most one allocation; a unit whose carton is listed elsewhere is refused; the allocated total never exceeds the issued units; other companies get 403.
+- [x] Test: tokens are 26 uppercase Crockford Base32 characters, unique, and a forced collision retries.
+- [x] Test: normalisation maps lowercase, spaces, hyphens, `O`, `I` and `L` to the same hash as the clean token.
+- [x] Test: raw tokens never appear in the database (whole-table scan after generation) or in the logs.
+- [x] Test: the token does not depend on `unit_id` (no shared prefix or sequence across a batch).
+- [x] Test: only the owner of an approved manufacturer can generate (staff and other companies get 403; a pending company gets 409).
+- [x] Test: the zip contains the PDF and the CSV with the four columns; the PDF shows the token under each QR and the `PUBLIC_BASE_URL`; QR error correction is M.
+- [x] Test: a QR size below 15 mm returns a warning.
+- [x] Test: void works only before release (409 after), needs a reason, and records the actor and time.
+- [x] Test: release writes the events and sets the status.
+- [x] Test: allocations accept only the company's own batch, cartons and units; a carton or unit sits in at most one allocation; a unit whose carton is listed elsewhere is refused; the allocated total never exceeds the issued units; other companies get 403.
 
 ---
 

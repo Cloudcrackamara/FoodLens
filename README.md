@@ -2,7 +2,7 @@
 
 FoodLens is a startup product at the demonstration-prototype stage; the founder's capstone is its first milestone. It is being rebuilt as a unit-level product integrity platform: every pack gets its own QR identity, shops record what happens to it, and consumers check it for free (`docs/PLAN.md`, final design in `docs/DECISIONS.md` D137–D147).
 
-**Status: Phase 1 (data model and migrations) is done.** The unit-identity schema exists (units, cartons, lifecycle events, scans, alerts, allocations, POS partners), and the old registration lookup, simulated register and OCR are removed. Consumer checks (`/check`, `/p/{token}`) arrive in Phase 3; until then `/check` shows a placeholder. Companies register with type flags (manufacturer, distributor, retailer), manage demo-reviewed catalogue data and appear in the public partner directory. Each phase updates this README for what it changes.
+**Status: Phases 1 and 2 are done.** The unit-identity schema exists (units, cartons, lifecycle events, scans, alerts, allocations, POS partners), and the old registration lookup, simulated register and OCR are removed. Manufacturers generate a QR code for every pack and carton, download the one-time label file, release, void and allocate stock (see [Pack codes and labels](#pack-codes-and-labels)). Consumer checks (`/check`, `/p/{token}`) arrive in Phase 3; until then `/check` shows a placeholder. Companies register with type flags (manufacturer, distributor, retailer), manage demo-reviewed catalogue data and appear in the public partner directory. Each phase updates this README for what it changes.
 
 > **DEMO DATA — NOT AN OFFICIAL REGULATOR SERVICE.** All companies, products and codes are fictional. A check is not a laboratory test and not a NAFDAC or SON decision, and no QR system catches every copied code.
 
@@ -115,6 +115,21 @@ cd backend && uv run python -m app.seed
 ```
 
 Running the seed again is safe. If an account with that email already exists it is promoted to admin and its password is left unchanged.
+
+## Pack codes and labels
+
+On `/company`, each batch has a **Codes, labels and allocations** link (`/company/batches/<batch>`). The company must be an approved manufacturer.
+
+| Action | Who | What happens |
+|---|---|---|
+| Generate and download labels | Owner | Up to 2,000 packs per request, optionally in cartons of N. Each pack and carton gets a random 26-character code (128 bits, Crockford Base32). FoodLens stores only the SHA-256 hash of each code and records an `ISSUED` event. The browser downloads a zip once: `labels.pdf`, `units.csv`, `cartons.csv` (columns `batch, carton_ref, token, verification_url`) and `READ-ME-FIRST.txt`. |
+| Release | Owner or staff | The whole batch or one carton moves from "Not released" to "Released" (`RELEASED` events). |
+| Void | Owner | Only before release, with a reason: the whole batch's unreleased packs, listed cartons, or single codes pasted from the CSV. Voided codes stop working; generate new ones to replace them. Released packs need a recall instead. |
+| Allocate | Owner or staff | Plan where stock goes: an area, optionally an approved distributor or retailer, by quantity, cartons or single codes. |
+
+Each QR encodes `{PUBLIC_BASE_URL}/p/{code}` with error correction level M and a 4-module quiet zone. The code is printed under it in groups of 4, with "Type the code at <host>/check". QR sizes below 15 mm are allowed with a warning. The page footer names the base URL used. **Set `PUBLIC_BASE_URL` in `backend/.env` before printing real labels: printed codes cannot change.**
+
+**The label file holds every raw code and cannot be downloaded again.** Keep it secure, send it only to the printer, and delete every copy after printing. A full 2,000-pack file takes about 15 seconds to build.
 
 ## Companies, admin review, and the partner directory
 
