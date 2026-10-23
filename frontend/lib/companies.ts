@@ -4,12 +4,26 @@ import { apiFetch } from "./api";
 import { currentUserKey } from "./auth";
 
 // Mirrors backend/app/schemas/company.py.
-export const companyTypes = {
-  MANUFACTURER: "Manufacturer",
-  WHOLESALER: "Wholesaler",
-  BOTH: "Manufacturer and wholesaler",
+export const companyTypeFlags = {
+  is_manufacturer: "Manufacturer",
+  is_distributor: "Distributor",
+  is_retailer: "Retailer",
 } as const;
-const companyTypeValues = ["MANUFACTURER", "WHOLESALER", "BOTH"] as const;
+export type CompanyTypeFlag = keyof typeof companyTypeFlags;
+
+const typeFlags = {
+  is_manufacturer: z.boolean(),
+  is_distributor: z.boolean(),
+  is_retailer: z.boolean(),
+};
+
+/** "Manufacturer · Retailer": what the company does (D105). */
+export function companyTypeLabel(company: Record<CompanyTypeFlag, boolean>): string {
+  return (Object.keys(companyTypeFlags) as CompanyTypeFlag[])
+    .filter((flag) => company[flag])
+    .map((flag) => companyTypeFlags[flag])
+    .join(" · ");
+}
 const companyStatusValues = ["PENDING_REVIEW", "APPROVED", "REJECTED", "SUSPENDED"] as const;
 const reviewStatusValues = ["PENDING_REVIEW", "APPROVED", "REJECTED"] as const;
 
@@ -48,7 +62,7 @@ export const locationSchema = z.object({
 export const companySchema = z.object({
   ...review,
   company_id: z.string(),
-  company_type: z.enum(companyTypeValues),
+  ...typeFlags,
   display_name: z.string(),
   contact_email: z.string(),
   contact_phone: z.string().nullable(),
@@ -75,7 +89,7 @@ export const adminLocationSchema = locationSchema.extend({
 export const supplierSchema = z.object({
   company_id: z.string(),
   display_name: z.string(),
-  company_type: z.enum(companyTypeValues),
+  ...typeFlags,
   contact_email: z.string(),
   contact_phone: z.string().nullable(),
   badge: z.literal("FoodLens demo-reviewed profile"),
@@ -105,15 +119,8 @@ export type AdminCompany = z.infer<typeof adminCompanySchema>;
 export type AdminLocation = z.infer<typeof adminLocationSchema>;
 export type Supplier = z.infer<typeof supplierSchema>;
 
-// Mirrors backend/app/schemas/order.py SupplierDetailRead (D100).
-export const registrationResults = [
-  "ACTIVE_IN_DEMO_REGISTER",
-  "EXPIRED_OR_INACTIVE_IN_DEMO_REGISTER",
-  "REGISTERED_TO_ANOTHER_PRODUCT",
-  "NOT_FOUND_IN_DEMO_REGISTER",
-  "NO_NUMBER_GIVEN",
-] as const;
-export type RegistrationResult = (typeof registrationResults)[number];
+// Mirrors backend/app/schemas/order.py SupplierDetailRead (D100). The NAFDAC number is shown
+// as printed, as information only (D107).
 
 export const supplierDetailSchema = supplierSchema.extend({
   products: z.array(
@@ -122,11 +129,8 @@ export const supplierDetailSchema = supplierSchema.extend({
       name: z.string(),
       brand: z.string(),
       category: z.string(),
-      package_size: z.string().nullable(),
+      size: z.string().nullable(),
       registration_number: z.string().nullable(),
-      registration_result: z.enum(registrationResults),
-      registration_label: z.string(),
-      register_name: z.string().nullable(),
     }),
   ),
   data_mode: z.literal("DEMO"),
@@ -134,15 +138,20 @@ export const supplierDetailSchema = supplierSchema.extend({
 });
 export type SupplierDetail = z.infer<typeof supplierDetailSchema>;
 
-export const companyRegisterFormSchema = z.object({
-  company_type: z.enum(companyTypeValues, "Choose a company type"),
+export const companyRegisterFormSchema = z
+  .object({
+  ...typeFlags,
   display_name: z.string().trim().min(1, "Enter the company name").max(120),
   contact_email: z.email("Enter a valid email address"),
   contact_phone: z.string().trim().max(40),
   claimed_legal_name: z.string().trim().min(1, "Enter the registered legal name").max(200),
   claimed_business_identifier: z.string().trim().max(60),
   claimed_address: z.string().trim().max(300),
-});
+})
+  .refine((form) => form.is_manufacturer || form.is_distributor || form.is_retailer, {
+    message: "Choose at least one: manufacturer, distributor or retailer",
+    path: ["company_types"],
+  });
 export type CompanyRegisterForm = z.infer<typeof companyRegisterFormSchema>;
 
 export const locationFormSchema = z.object({
@@ -169,7 +178,9 @@ export function useRegisterCompany() {
       apiFetch("/api/companies", companySchema, {
         method: "POST",
         body: {
-          company_type: form.company_type,
+          is_manufacturer: form.is_manufacturer,
+          is_distributor: form.is_distributor,
+          is_retailer: form.is_retailer,
           display_name: form.display_name,
           contact_email: form.contact_email,
           contact_phone: form.contact_phone || null,

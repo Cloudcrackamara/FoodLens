@@ -54,8 +54,7 @@ def _http(exc: Exception) -> HTTPException:
     if isinstance(exc, announcement_service.RegulatorClaimError):
         return HTTPException(
             status.HTTP_422_UNPROCESSABLE_CONTENT,
-            "Announcements cannot claim NAFDAC or SON approval, registration, or certification. "
-            "Consumers check registration against the register instead.",
+            "Announcements cannot claim NAFDAC or SON approval, registration, or certification.",
         )
     raise exc
 

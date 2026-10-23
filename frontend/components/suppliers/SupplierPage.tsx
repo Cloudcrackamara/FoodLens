@@ -5,26 +5,15 @@ import { useState, type FormEvent } from "react";
 import { DemoDataBanner } from "@/components/DemoDataBanner";
 import { describeError } from "@/lib/api";
 import { canOrder, useCurrentUser } from "@/lib/auth";
-import {
-  useSupplier,
-  type RegistrationResult,
-  type SupplierDetail,
-} from "@/lib/companies";
+import { useSupplier, type SupplierDetail } from "@/lib/companies";
+import { ordersEnabled } from "@/lib/features";
 import { usePlaceOrder, type OrderRequest } from "@/lib/orders";
 import { SupplierCard } from "./SupplierDirectory";
 
-const badgeStyles: Record<RegistrationResult, string> = {
-  ACTIVE_IN_DEMO_REGISTER: "border-green-700 text-green-800 dark:text-green-300",
-  EXPIRED_OR_INACTIVE_IN_DEMO_REGISTER: "border-amber-700 text-amber-800 dark:text-amber-300",
-  REGISTERED_TO_ANOTHER_PRODUCT: "border-red-700 text-red-800 dark:text-red-300",
-  NOT_FOUND_IN_DEMO_REGISTER: "border-red-700 text-red-800 dark:text-red-300",
-  NO_NUMBER_GIVEN: "border-zinc-500 text-zinc-700 dark:text-zinc-300",
-};
-
 type LineDraft = { quantity: string; unit: string };
 
-/** Order request to this supplier. Shown only to approved wholesaler/both members; the server
- *  checks the same rules (D95-D97). No prices or payment (rule 6). */
+/** Order request to this supplier. Shown only to approved distributor members while orders are
+ *  enabled (D127); the server checks the same rules (D95-D97). No prices or payment (rule 7). */
 export function OrderRequestForm({
   supplier,
   buyerCompanyId,
@@ -187,14 +176,11 @@ export function SupplierPage({ companyId }: { companyId: string }) {
                 <p className="font-medium">{product.name}</p>
                 <p className="text-sm">
                   {product.brand} · {product.category}
-                  {product.package_size && ` · ${product.package_size}`}
+                  {product.size && ` · ${product.size}`}
                 </p>
                 <p className="text-sm">
-                  Number on the pack: {product.registration_number ?? "none given"}
+                  NAFDAC number (as printed): {product.registration_number ?? "none given"}
                 </p>
-                <span className={`mt-1 inline-block rounded-full border px-3 py-1 text-xs font-semibold ${badgeStyles[product.registration_result]}`}>
-                  {product.registration_label}
-                </span>
               </li>
             ))}
           </ul>
@@ -204,9 +190,10 @@ export function SupplierPage({ companyId }: { companyId: string }) {
       {data.products.length > 0 && !ownCompany && buyerCompanyId && canOrder(user) ? (
         <OrderRequestForm supplier={data} buyerCompanyId={buyerCompanyId} />
       ) : (
+        ordersEnabled &&
         !ownCompany && (
           <p className="text-sm">
-            Members of FoodLens-approved wholesaler companies can request orders here.{" "}
+            Members of FoodLens-approved distributor companies can request orders here.{" "}
             {!user && <Link href="/login" className="underline">Sign in</Link>}
           </p>
         )

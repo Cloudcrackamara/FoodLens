@@ -1,43 +1,26 @@
-"""Public supplier directory and supplier pages: approved companies with at least one
-demo-reviewed location (D58, D100).
+"""Public partner directory and partner pages: approved companies with at least one
+demo-reviewed location (D58, D100, D127).
 
-Shows only reviewed locations, opted-in public contacts, and published products with their
-registration result from the simulated register. Never shows claimed fields, review notes,
-pending or rejected data, or login emails, and never says a product is "safe".
+Shows only reviewed locations, opted-in public contacts, and published products. The NAFDAC
+number is shown as printed, as information only: FoodLens never checks it (D104, D107). Never
+shows claimed fields, review notes, pending or rejected data, or login emails.
 """
 
 import uuid
 from collections import defaultdict
-from datetime import date
 
 from sqlmodel import Session, select
 
 from app.models import AppUser, Company, CompanyMember, Product, SupplierLocation
 from app.models.enums import CompanyReviewStatus, MembershipStatus, ProductStatus, ReviewStatus
 from app.schemas.company import SupplierContactRead, SupplierLocationRead, SupplierRead
-from app.schemas.lookup import RegisterRecordStatus
-from app.schemas.order import RegistrationResult, SupplierDetailRead, SupplierProductRead
-from app.services import register
+from app.schemas.order import SupplierDetailRead, SupplierProductRead
 
 SUPPLIER_DISCLAIMER = (
-    "DEMO DATA — NOT AN OFFICIAL REGULATOR SERVICE. Registration results come from a simulated, "
-    "fictional register held by FoodLens, not NAFDAC's or SON's own system. They are not a "
-    "laboratory or food-safety test."
+    "DEMO DATA — NOT AN OFFICIAL REGULATOR SERVICE. Company profiles are reviewed for the "
+    "FoodLens demonstration database only. NAFDAC numbers are shown as the company printed "
+    "them; FoodLens does not check them."
 )
-
-REGISTRATION_LABELS = {
-    RegistrationResult.ACTIVE_IN_DEMO_REGISTER: "Active in the simulated register (demo data)",
-    RegistrationResult.EXPIRED_OR_INACTIVE_IN_DEMO_REGISTER: (
-        "Expired or inactive in the simulated register (demo data)"
-    ),
-    RegistrationResult.REGISTERED_TO_ANOTHER_PRODUCT: (
-        "Number belongs to a different product or company in the simulated register (demo data)"
-    ),
-    RegistrationResult.NOT_FOUND_IN_DEMO_REGISTER: (
-        "Not found in the simulated register (demo data)"
-    ),
-    RegistrationResult.NO_NUMBER_GIVEN: "No registration number given by the company",
-}
 
 
 def _listed_rows(db: Session, company_id: uuid.UUID | None = None):
@@ -79,7 +62,9 @@ def _suppliers(db: Session, rows) -> list[SupplierRead]:
         SupplierRead(
             company_id=company.company_id,
             display_name=company.display_name,
-            company_type=company.company_type,
+            is_manufacturer=company.is_manufacturer,
+            is_distributor=company.is_distributor,
+            is_retailer=company.is_retailer,
             contact_email=company.contact_email,
             contact_phone=company.contact_phone,
             reviewed_at=company.reviewed_at,
@@ -125,55 +110,21 @@ def list_suppliers(db: Session, query: str | None = None) -> list[SupplierRead]:
     ]
 
 
-def registration_result(
-    db: Session, product: Product, company: Company, today: date
-) -> tuple[RegistrationResult, str | None]:
-    """Result for the number the company printed, from the simulated register only (D80).
-    Names are compared like lookups do, ignoring capitals and spaces (D83)."""
-    if not product.registration_number:
-        return RegistrationResult.NO_NUMBER_GIVEN, None
-    found = register.find_record(db, product.registration_number)
-    if found is None:
-        return RegistrationResult.NOT_FOUND_IN_DEMO_REGISTER, None
-    record, agency = found
-    names_match = register.normalize_name(product.name) == register.normalize_name(
-        record.registered_product_name
-    ) and register.normalize_name(company.claimed_legal_name) == register.normalize_name(
-        record.registered_company_name
-    )
-    if register.record_status(record, today) != RegisterRecordStatus.ACTIVE_IN_DEMO_REGISTER:
-        result = RegistrationResult.EXPIRED_OR_INACTIVE_IN_DEMO_REGISTER
-    elif not names_match:
-        result = RegistrationResult.REGISTERED_TO_ANOTHER_PRODUCT
-    else:
-        result = RegistrationResult.ACTIVE_IN_DEMO_REGISTER
-    return result, register.register_label(agency)
-
-
-def supplier_detail(
-    db: Session, company_id: uuid.UUID, today: date | None = None
-) -> SupplierDetailRead | None:
+def supplier_detail(db: Session, company_id: uuid.UUID) -> SupplierDetailRead | None:
     suppliers = _suppliers(db, _listed_rows(db, company_id))
     if not suppliers:
         return None
-    today = today or date.today()
-    company = db.get(Company, company_id)
-    products = []
-    for product in published_products(db, company_id):
-        result, register_name = registration_result(db, product, company, today)
-        products.append(
-            SupplierProductRead(
-                product_id=product.product_id,
-                name=product.name,
-                brand=product.brand,
-                category=product.category,
-                package_size=product.package_size,
-                registration_number=product.registration_number,
-                registration_result=result,
-                registration_label=REGISTRATION_LABELS[result],
-                register_name=register_name,
-            )
+    products = [
+        SupplierProductRead(
+            product_id=product.product_id,
+            name=product.name,
+            brand=product.brand,
+            category=product.category,
+            size=product.size,
+            registration_number=product.registration_number,
         )
+        for product in published_products(db, company_id)
+    ]
     return SupplierDetailRead(
         **suppliers[0].model_dump(), products=products, disclaimer=SUPPLIER_DISCLAIMER
     )

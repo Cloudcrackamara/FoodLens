@@ -23,6 +23,8 @@ describe("CompanyRegisterForm", () => {
     fill("Company name (shown publicly)", "Test Foods (fictional)");
     fill("Contact email (shown publicly)", "hello@testfoods.example.com");
     fill("Registered legal name", "Test Foods Ltd (fictional)");
+    fireEvent.click(screen.getByLabelText("Distributor"));
+    fireEvent.click(screen.getByLabelText("Retailer"));
     fireEvent.click(screen.getByRole("button", { name: "Submit for FoodLens review" }));
 
     await waitFor(() => expect(push).toHaveBeenCalledWith("/company"));
@@ -31,11 +33,30 @@ describe("CompanyRegisterForm", () => {
       "claimed_address",
       "claimed_business_identifier",
       "claimed_legal_name",
-      "company_type",
       "contact_email",
       "contact_phone",
       "display_name",
+      "is_distributor",
+      "is_manufacturer",
+      "is_retailer",
     ]);
+    const sent = JSON.parse(init!.body as string);
+    expect([sent.is_manufacturer, sent.is_distributor, sent.is_retailer]).toEqual([false, true, true]);
+  });
+
+  it("requires at least one company type", () => {
+    const fetchMock = routeFetch({});
+    renderWithQuery(<CompanyRegisterForm />);
+
+    fill("Company name (shown publicly)", "Test Foods (fictional)");
+    fill("Contact email (shown publicly)", "hello@testfoods.example.com");
+    fill("Registered legal name", "Test Foods Ltd (fictional)");
+    fireEvent.click(screen.getByRole("button", { name: "Submit for FoodLens review" }));
+
+    expect(
+      screen.getByText("Choose at least one: manufacturer, distributor or retailer"),
+    ).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("requires a name, email and legal name", () => {

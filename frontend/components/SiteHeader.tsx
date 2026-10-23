@@ -20,10 +20,10 @@ export function SiteHeader() {
             FoodLens
           </Link>
           <Link href="/check" className="text-sm underline">
-            Check a number
+            Check a pack
           </Link>
           <Link href="/suppliers" className="text-sm underline">
-            Suppliers
+            Partners
           </Link>
         </div>
         {isPending ? null : user ? (

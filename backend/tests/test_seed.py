@@ -55,6 +55,31 @@ def test_seed_admin_rejects_weak_password(session: Session) -> None:
         seed_admin(session, settings(seed_admin_password="short"))
 
 
+# --- Demo companies and catalogue ---------------------------------------------------------------
+
+
+def test_demo_data_seeds_an_approved_manufacturer_with_area_locations(session: Session) -> None:
+    from app.demo_data import seed_demo_data
+    from app.models import Company, SupplierLocation
+    from app.models.enums import CompanyReviewStatus, ReviewStatus
+
+    seed_demo_data(session)
+    seed_demo_data(session)  # idempotent
+
+    makers = session.exec(
+        select(Company).where(
+            Company.is_manufacturer.is_(True),
+            Company.review_status == CompanyReviewStatus.APPROVED,
+        )
+    ).all()
+    assert len(makers) == 3
+    assert all(c.claimed_business_identifier.startswith("DEMO-") for c in makers)
+    reviewed = session.exec(
+        select(SupplierLocation).where(SupplierLocation.review_status == ReviewStatus.APPROVED)
+    ).all()
+    assert reviewed and all(loc.area_id is not None for loc in reviewed)
+
+
 # --- Demo orders (D101) -------------------------------------------------------------------------
 
 

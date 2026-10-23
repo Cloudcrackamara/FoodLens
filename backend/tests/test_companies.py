@@ -15,7 +15,7 @@ from tests import factories as f
 PASSWORD = "correct-horse-battery"
 
 COMPANY_BODY = {
-    "company_type": "MANUFACTURER",
+    "is_manufacturer": True,
     "display_name": "Test Foods (fictional)",
     "contact_email": "hello@testfoods.example.com",
     "contact_phone": "+234 000 000 0000",
@@ -415,12 +415,12 @@ def test_directory_hides_claimed_fields_notes_and_login_emails(
         session,
         public,
         company,
-        role=MemberRole.REPRESENTATIVE,
+        role=MemberRole.STAFF,
         is_public_contact=True,
         public_title="Sales lead",
         public_email="sales@company.example",
     )
-    f.make_member(session, hidden, company, role=MemberRole.REPRESENTATIVE)
+    f.make_member(session, hidden, company, role=MemberRole.STAFF)
 
     text = client.get("/api/suppliers").text
     [supplier] = directory(client)

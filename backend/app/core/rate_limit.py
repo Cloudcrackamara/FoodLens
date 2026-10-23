@@ -66,9 +66,9 @@ class RateLimiters:
         self.exempt = parse_networks(settings.rate_limit_exempt_ips)
         self.trusted_proxies = parse_networks(settings.trusted_proxy_ips)
         self.limiters = {
-            "lookup": TokenBucketLimiter(
-                capacity=settings.rate_limit_lookup_burst,
-                refill_per_second=settings.rate_limit_lookup_refill_per_second,
+            "check": TokenBucketLimiter(
+                capacity=settings.rate_limit_check_burst,
+                refill_per_second=settings.rate_limit_check_refill_per_second,
                 clock=clock,
             ),
             "login": TokenBucketLimiter(
@@ -116,7 +116,7 @@ def enforce_rate_limit(request: Request, name: str, extra_key: str = "") -> None
     limiters.enforce(request, name, extra_key)
 
 
-def limit_lookups(request: Request) -> None:
-    """Route dependency for public product lookups:
-    @router.post("/lookups/batch", dependencies=[Depends(limit_lookups)])"""
-    enforce_rate_limit(request, "lookup")
+def limit_checks(request: Request) -> None:
+    """Route dependency for public consumer checks (D119):
+    @router.post("/check/qr", dependencies=[Depends(limit_checks)])"""
+    enforce_rate_limit(request, "check")

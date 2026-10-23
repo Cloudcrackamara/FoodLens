@@ -5,41 +5,43 @@ import { supplier } from "./companyFixtures";
 
 export const buyerCompanyId = "66666666-6666-6666-6666-666666666666";
 
-export const wholesalerUser = {
+export const distributorUser = {
   ...demoUser,
   membership: {
     company_id: buyerCompanyId,
     company_display_name: "Demo Market Traders (fictional)",
     company_review_status: "APPROVED",
-    company_type: "WHOLESALER",
+    is_manufacturer: false,
+    is_distributor: true,
+    is_retailer: false,
     role: "OWNER",
   },
 };
 
 export const manufacturerUser = {
-  ...wholesalerUser,
-  membership: { ...wholesalerUser.membership, company_type: "MANUFACTURER" },
+  ...distributorUser,
+  membership: { ...distributorUser.membership, is_manufacturer: true, is_distributor: false },
 };
 
 const product = {
   brand: "Demo Harvest",
   category: "Oils",
-  package_size: "1 L",
-  register_name: "simulated NAFDAC register",
+  size: "1 L",
 };
 
 export const supplierDetail: SupplierDetail = {
   ...supplier,
   data_mode: "DEMO",
   disclaimer:
-    "DEMO DATA — NOT AN OFFICIAL REGULATOR SERVICE. Registration results come from a simulated, " +
-    "fictional register held by FoodLens, not NAFDAC's or SON's own system.",
+    "DEMO DATA — NOT AN OFFICIAL REGULATOR SERVICE. Company profiles are reviewed for the " +
+    "FoodLens demonstration database only. NAFDAC numbers are shown as the company printed " +
+    "them; FoodLens does not check them.",
   products: [
-    { ...product, product_id: "p-oil", name: "Sample Palm Oil", registration_number: "DEMO-NAFDAC-0001", registration_result: "ACTIVE_IN_DEMO_REGISTER", registration_label: "Active in the simulated register (demo data)" },
-    { ...product, product_id: "p-paste", name: "Sample Tomato Paste", registration_number: "DEMO-NAFDAC-0003", registration_result: "EXPIRED_OR_INACTIVE_IN_DEMO_REGISTER", registration_label: "Expired or inactive in the simulated register (demo data)" },
-    { ...product, product_id: "p-honey", name: "Sample Honey", registration_number: "DEMO-NAFDAC-9999", registration_result: "NOT_FOUND_IN_DEMO_REGISTER", registration_label: "Not found in the simulated register (demo data)", register_name: null },
-    { ...product, product_id: "p-cocoa", name: "Sample Cocoa", registration_number: "DEMO-NAFDAC-0009", registration_result: "REGISTERED_TO_ANOTHER_PRODUCT", registration_label: "Number belongs to a different product or company in the simulated register (demo data)" },
-    { ...product, product_id: "p-yam", name: "Sample Yam Flour", registration_number: null, registration_result: "NO_NUMBER_GIVEN", registration_label: "No registration number given by the company", register_name: null },
+    { ...product, product_id: "p-oil", name: "Sample Palm Oil", registration_number: "DEMO-NAFDAC-0001" },
+    { ...product, product_id: "p-paste", name: "Sample Tomato Paste", registration_number: "DEMO-NAFDAC-0003" },
+    { ...product, product_id: "p-honey", name: "Sample Honey", registration_number: "DEMO-NAFDAC-9999" },
+    { ...product, product_id: "p-cocoa", name: "Sample Cocoa", registration_number: "DEMO-NAFDAC-0009" },
+    { ...product, product_id: "p-yam", name: "Sample Yam Flour", registration_number: null },
   ],
 };
 

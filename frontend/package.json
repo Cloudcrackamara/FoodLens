@@ -9,18 +9,13 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "next typegen && tsc --noEmit",
-    "ocr:assets": "node scripts/copy-ocr-assets.mjs",
-    "predev": "node scripts/copy-ocr-assets.mjs",
-    "prebuild": "node scripts/copy-ocr-assets.mjs"
+    "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.104.1",
-    "@tesseract.js-data/eng": "^1.0.0",
     "next": "16.4.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "tesseract.js": "^7.0.0",
     "zod": "^4.6.5"
   },
   "devDependencies": {

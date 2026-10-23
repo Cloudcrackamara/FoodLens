@@ -5,7 +5,7 @@ import { describeError } from "@/lib/api";
 import { useCurrentUser } from "@/lib/auth";
 import {
   companyStatusLabels,
-  companyTypes,
+  companyTypeLabel,
   locationStatusLabels,
   useAdminCompanies,
   useAdminLocations,
@@ -31,7 +31,7 @@ import {
   useLiveAnnouncements,
   type AdminAnnouncement,
 } from "@/lib/announcements";
-import { formatDate } from "@/lib/lookup";
+import { formatDate } from "@/lib/format";
 
 const companyActions: Record<CompanyStatus, CompanyDecision[]> = {
   PENDING_REVIEW: ["APPROVE", "REJECT"],
@@ -61,7 +61,7 @@ function CompanyRow({ company }: { company: AdminCompany }) {
     <li aria-label={company.display_name} className="flex flex-col gap-2 rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
       <div>
         <h3 className="font-semibold">{company.display_name}</h3>
-        <p className="text-sm">{companyTypes[company.company_type]} · {companyStatusLabels[company.review_status]}</p>
+        <p className="text-sm">{companyTypeLabel(company)} · {companyStatusLabels[company.review_status]}</p>
       </div>
       <dl className="grid grid-cols-1 gap-1 text-sm sm:grid-cols-2">
         <div><dt className="inline font-medium">Owner: </dt><dd className="inline">{company.owner_display_name ?? "None"} {company.owner_email && `(${company.owner_email})`}</dd></div>

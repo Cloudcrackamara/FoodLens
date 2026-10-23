@@ -1,29 +1,40 @@
-"""Wholesale order requests and supplier pages (D95-D100, CLAUDE.md rules 6-7)."""
+"""Wholesale order requests and partner pages (D95-D100, D127, CLAUDE.md rule 7).
+
+Orders are hidden future work: the routes exist only with ORDERS_ENABLED=true, so these tests
+build the app with the flag on."""
 
 import re
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import date, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session, select
 
+from app.core.config import Settings
 from app.core.security import hash_password
 from app.models import AppUser, AuditLog, Company, Product, SupplierLocation
 from app.models.enums import (
     CompanyReviewStatus,
-    CompanyType,
     MemberRole,
     OrderStatus,
     ProductStatus,
-    RegisterStatus,
     ReviewStatus,
 )
 from tests import factories as f
 
 PASSWORD = "correct-horse-battery"
+ORDERS_ON = Settings(orders_enabled=True)
+
+MANUFACTURER = {"is_manufacturer": True}
+DISTRIBUTOR = {"is_manufacturer": False, "is_distributor": True}
+MANUFACTURER_AND_DISTRIBUTOR = {"is_manufacturer": True, "is_distributor": True}
+
+
+@pytest.fixture
+def client(make_client: Callable[..., TestClient]) -> TestClient:
+    return make_client(settings=ORDERS_ON)
 
 
 @dataclass
@@ -49,15 +60,13 @@ def party(make_client: Callable[..., TestClient], session: Session):
     """A signed-in member of a new company, each with their own browser (client)."""
 
     def build(
-        company_type=CompanyType.WHOLESALER,
+        types: dict = DISTRIBUTOR,
         status=CompanyReviewStatus.APPROVED,
         name: str = "Demo Market Traders",
     ) -> Party:
-        client = make_client()
+        client = make_client(settings=ORDERS_ON)
         user = f.make_user(session, password_hash=hash_password(PASSWORD))
-        company = f.make_company(
-            session, company_type=company_type, review_status=status, display_name=name
-        )
+        company = f.make_company(session, review_status=status, display_name=name, **types)
         f.make_member(session, user, company, role=MemberRole.OWNER)
         response = client.post("/api/auth/login", json={"email": user.email, "password": PASSWORD})
         assert response.status_code == 200
@@ -82,7 +91,7 @@ def listed_location(session: Session, company: Company, **overrides) -> Supplier
 
 @pytest.fixture
 def seller(party, session: Session) -> Seller:
-    base = party(company_type=CompanyType.MANUFACTURER, name="Demo Harvest Foods")
+    base = party(types=MANUFACTURER, name="Demo Harvest Foods")
     location = listed_location(session, base.company)
     oil = f.make_product(
         session, base.company, name="Sample Palm Oil", status=ProductStatus.PUBLISHED
@@ -118,7 +127,7 @@ def seller_action(seller: Seller, order: dict, action: str, **body):
 # --- Placing ------------------------------------------------------------------------------------
 
 
-def test_wholesaler_places_pickup_order(buyer: Party, seller: Seller, session: Session) -> None:
+def test_distributor_places_pickup_order(buyer: Party, seller: Seller, session: Session) -> None:
     order = place(buyer, seller, buyer_note="Please pack in cartons")
 
     assert order["status"] == "REQUESTED"
@@ -133,8 +142,8 @@ def test_wholesaler_places_pickup_order(buyer: Party, seller: Seller, session: S
     )
 
 
-def test_both_type_company_can_order_with_delivery(party, seller: Seller) -> None:
-    buyer = party(company_type=CompanyType.BOTH)
+def test_manufacturer_and_distributor_can_order_with_delivery(party, seller: Seller) -> None:
+    buyer = party(types=MANUFACTURER_AND_DISTRIBUTOR)
 
     order = place(
         buyer,
@@ -175,7 +184,7 @@ def test_non_positive_quantity_rejected(buyer: Party, seller: Seller, quantity: 
     assert buyer.client.post(buyer.orders, json=order_body(seller, lines=lines)).status_code == 422
 
 
-@pytest.mark.parametrize("status", [ProductStatus.DRAFT, ProductStatus.WITHDRAWN])
+@pytest.mark.parametrize("status", [ProductStatus.DRAFT, ProductStatus.DISCONTINUED])
 def test_unpublished_product_rejected(
     buyer: Party, seller: Seller, session: Session, status: ProductStatus
 ) -> None:
@@ -191,7 +200,7 @@ def test_unpublished_product_rejected(
 def test_products_from_two_suppliers_rejected(
     buyer: Party, seller: Seller, party, session: Session
 ) -> None:
-    second = party(company_type=CompanyType.MANUFACTURER, name="Second Supplier")
+    second = party(types=MANUFACTURER, name="Second Supplier")
     listed_location(session, second.company)
     other = f.make_product(session, second.company, status=ProductStatus.PUBLISHED)
     lines = [
@@ -211,7 +220,7 @@ def test_duplicate_product_lines_rejected(buyer: Party, seller: Seller) -> None:
 
 
 def test_company_cannot_order_from_itself(party, session: Session) -> None:
-    both = party(company_type=CompanyType.BOTH)
+    both = party(types=MANUFACTURER_AND_DISTRIBUTOR)
     location = listed_location(session, both.company)
     product = f.make_product(session, both.company, status=ProductStatus.PUBLISHED)
     body = {
@@ -227,7 +236,7 @@ def test_company_cannot_order_from_itself(party, session: Session) -> None:
 
 
 def test_manufacturer_only_company_cannot_order(party, seller: Seller) -> None:
-    manufacturer = party(company_type=CompanyType.MANUFACTURER)
+    manufacturer = party(types=MANUFACTURER)
 
     response = manufacturer.client.post(manufacturer.orders, json=order_body(seller))
 
@@ -329,7 +338,7 @@ def test_only_the_addressed_seller_can_respond(
     buyer: Party, seller: Seller, party, session: Session
 ) -> None:
     order = place(buyer, seller)
-    other_seller = party(company_type=CompanyType.MANUFACTURER, name="Other Supplier")
+    other_seller = party(types=MANUFACTURER, name="Other Supplier")
     listed_location(session, other_seller.company)
 
     for action, body in (("accept", {}), ("decline", {}), ("reply", {"message": "Hi"})):
@@ -488,7 +497,7 @@ def test_batch_of_another_company_rejected(
     buyer: Party, seller: Seller, party, session: Session
 ) -> None:
     order = _accepted(buyer, seller)
-    other = party(company_type=CompanyType.MANUFACTURER, name="Other Supplier")
+    other = party(types=MANUFACTURER, name="Other Supplier")
     foreign = f.make_batch(
         session, f.make_product(session, other.company), review_status=ReviewStatus.APPROVED
     )
@@ -511,76 +520,40 @@ def test_unknown_line_or_batch_rejected(buyer: Party, seller: Seller, session: S
 # --- Supplier page ------------------------------------------------------------------------------
 
 
-def test_supplier_page_shows_registration_results(
+def test_partner_page_shows_products_with_printed_numbers_only(
     seller: Seller, client: TestClient, session: Session
 ) -> None:
-    agency = f.make_agency(session)
-    names = {
-        "registered_product_name": "Sample Palm Oil",
-        "registered_company_name": seller.company.claimed_legal_name,
-    }
-    active = f.make_register(session, agency, **names)
-    copied = f.make_register(session, agency, registered_product_name="Sample Chin Chin")
-    expired = f.make_register(session, agency, expires_on=date.today() - timedelta(days=1))
-    inactive = f.make_register(session, agency, status=RegisterStatus.INACTIVE)
-    seller.oil.registration_number = active.registration_number
-    seller.rice.registration_number = expired.registration_number
-    f.make_product(
-        session,
-        seller.company,
-        name="Sample Beans",
-        status=ProductStatus.PUBLISHED,
-        registration_number=inactive.registration_number,
-    )
-    f.make_product(
-        session,
-        seller.company,
-        name="Sample Honey",
-        status=ProductStatus.PUBLISHED,
-        registration_number="DEMO-NAFDAC-UNKNOWN",
-    )
-    f.make_product(session, seller.company, name="Sample Yam Flour", status=ProductStatus.PUBLISHED)
-    f.make_product(
-        session,
-        seller.company,
-        name="Sample Cocoa",
-        status=ProductStatus.PUBLISHED,
-        registration_number=copied.registration_number,
-    )
+    seller.oil.registration_number = "DEMO-NAFDAC-0001"
+    seller.oil.size = "1 L"
+    session.add(seller.oil)
     f.make_product(session, seller.company, name="Draft Product", status=ProductStatus.DRAFT)
-    session.add_all([seller.oil, seller.rice])
     session.flush()
 
     page = client.get(f"/api/suppliers/{seller.company.company_id}").json()
 
-    results = {p["name"]: p["registration_result"] for p in page["products"]}
-    assert results == {
-        "Sample Palm Oil": "ACTIVE_IN_DEMO_REGISTER",
-        "Sample Rice": "EXPIRED_OR_INACTIVE_IN_DEMO_REGISTER",
-        "Sample Beans": "EXPIRED_OR_INACTIVE_IN_DEMO_REGISTER",
-        "Sample Honey": "NOT_FOUND_IN_DEMO_REGISTER",
-        "Sample Yam Flour": "NO_NUMBER_GIVEN",
-        "Sample Cocoa": "REGISTERED_TO_ANOTHER_PRODUCT",
-    }
+    products = {p["name"]: p for p in page["products"]}
+    assert set(products) == {"Sample Palm Oil", "Sample Rice"}
+    assert products["Sample Palm Oil"]["registration_number"] == "DEMO-NAFDAC-0001"
+    assert products["Sample Palm Oil"]["size"] == "1 L"
+    # The number is information only: no register result of any kind (D104, D107).
+    assert not any(
+        "register" in key for p in page["products"] for key in p if key != "registration_number"
+    )
     assert page["data_mode"] == "DEMO"
     assert page["disclaimer"].startswith("DEMO DATA — NOT AN OFFICIAL REGULATOR SERVICE")
+    assert "does not check them" in page["disclaimer"]
+    assert page["is_manufacturer"] is True
     assert page["locations"][0]["location_id"] == str(seller.location.location_id)
-    assert (
-        "(demo data)"
-        in next(p for p in page["products"] if p["name"] == "Sample Palm Oil")["registration_label"]
-    )
     text = str(page).lower()
-    for word in ("safe", "unsafe", "genuine", "verified"):
+    for word in ("safe", "unsafe", "genuine", "authentic", "original", "fake", "verified"):
         assert not re.search(rf"\b{word}\b", text), word
 
 
 def test_supplier_page_hidden_for_unlisted_companies(
     party, client: TestClient, session: Session
 ) -> None:
-    no_location = party(company_type=CompanyType.MANUFACTURER)
-    pending = party(
-        company_type=CompanyType.MANUFACTURER, status=CompanyReviewStatus.PENDING_REVIEW
-    )
+    no_location = party(types=MANUFACTURER)
+    pending = party(types=MANUFACTURER, status=CompanyReviewStatus.PENDING_REVIEW)
     listed_location(session, pending.company)
 
     assert client.get(f"/api/suppliers/{no_location.company.company_id}").status_code == 404
@@ -612,3 +585,19 @@ def test_order_status_values_match_the_flow() -> None:
         "FULFILLED",
         "CANCELLED",
     ]
+
+
+# --- Hidden by default (D127) -------------------------------------------------------------------
+
+
+def test_order_routes_are_not_registered_by_default(
+    make_client: Callable[..., TestClient], buyer: Party
+) -> None:
+    hidden = make_client(settings=Settings(orders_enabled=False))
+
+    assert hidden.get(buyer.orders).status_code == 404
+    assert hidden.post(buyer.orders, json={}).status_code == 404
+    paths = hidden.get("/openapi.json").json()["paths"]
+    assert not any("/orders" in path for path in paths)
+    # The partner directory stays public.
+    assert hidden.get("/api/suppliers").status_code == 200

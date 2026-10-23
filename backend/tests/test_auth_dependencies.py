@@ -110,12 +110,12 @@ def test_admin_can_reach_admin_route(probe_client: TestClient, session: Session)
 def test_member_can_reach_own_company(probe_client: TestClient, session: Session) -> None:
     user = sign_in(probe_client, session)
     company = f.make_company(session)
-    f.make_member(session, user, company, role=MemberRole.REPRESENTATIVE)
+    f.make_member(session, user, company, role=MemberRole.STAFF)
 
     response = probe_client.get(f"/test-only/companies/{company.company_id}/any-member")
 
     assert response.status_code == 200
-    assert response.json() == {"role": "REPRESENTATIVE"}
+    assert response.json() == {"role": "STAFF"}
 
 
 def test_member_cannot_reach_another_company(probe_client: TestClient, session: Session) -> None:
@@ -132,7 +132,7 @@ def test_member_cannot_reach_another_company(probe_client: TestClient, session: 
 def test_role_restriction_is_enforced(probe_client: TestClient, session: Session) -> None:
     user = sign_in(probe_client, session)
     company = f.make_company(session)
-    f.make_member(session, user, company, role=MemberRole.REPRESENTATIVE)
+    f.make_member(session, user, company, role=MemberRole.STAFF)
 
     response = probe_client.get(f"/test-only/companies/{company.company_id}/owner-only")
 

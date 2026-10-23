@@ -5,12 +5,6 @@ class DataMode(StrEnum):
     DEMO = "DEMO"
 
 
-class CompanyType(StrEnum):
-    MANUFACTURER = "MANUFACTURER"
-    WHOLESALER = "WHOLESALER"
-    BOTH = "BOTH"
-
-
 class CompanyReviewStatus(StrEnum):
     PENDING_REVIEW = "PENDING_REVIEW"
     APPROVED = "APPROVED"
@@ -31,22 +25,15 @@ class ProductStatus(StrEnum):
     PENDING_REVIEW = "PENDING_REVIEW"
     PUBLISHED = "PUBLISHED"
     REJECTED = "REJECTED"
-    WITHDRAWN = "WITHDRAWN"
+    DISCONTINUED = "DISCONTINUED"
 
 
 class MemberRole(StrEnum):
     OWNER = "OWNER"
-    REPRESENTATIVE = "REPRESENTATIVE"
+    STAFF = "STAFF"
 
 
 class MembershipStatus(StrEnum):
-    ACTIVE = "ACTIVE"
-    INACTIVE = "INACTIVE"
-
-
-class RegisterStatus(StrEnum):
-    """Status stored in the simulated regulator register. Expiry is computed from expires_on."""
-
     ACTIVE = "ACTIVE"
     INACTIVE = "INACTIVE"
 
@@ -93,11 +80,122 @@ class FulfilmentMethod(StrEnum):
     DELIVERY = "DELIVERY"
 
 
-class LookupResult(StrEnum):
-    """One primary state per lookup, checked in this order (docs/DECISIONS.md D80-D84)."""
+class AnnouncementKind(StrEnum):
+    NOTICE = "NOTICE"
+    RECALL = "RECALL"
 
-    INSUFFICIENT_OR_AMBIGUOUS = "INSUFFICIENT_OR_AMBIGUOUS"
-    REGISTRATION_NOT_FOUND = "REGISTRATION_NOT_FOUND"
-    REGISTRATION_EXPIRED_OR_INACTIVE = "REGISTRATION_EXPIRED_OR_INACTIVE"
-    REGISTRATION_MISMATCH = "REGISTRATION_MISMATCH"
-    REGISTERED_ACTIVE = "REGISTERED_ACTIVE"
+
+# --- Unit identity and lifecycle (D112, D138, D140) -------------------------------------------
+
+
+class LifecycleStatus(StrEnum):
+    """Derived by replaying lifecycle events; written only by services/lifecycle.py."""
+
+    ISSUED = "ISSUED"
+    RELEASED = "RELEASED"
+    IN_TRANSIT = "IN_TRANSIT"
+    IN_STOCK = "IN_STOCK"
+    SOLD = "SOLD"
+    RECALLED = "RECALLED"
+    VOIDED = "VOIDED"
+
+
+class LifecycleEventType(StrEnum):
+    ISSUED = "ISSUED"
+    RELEASED = "RELEASED"
+    TRANSFERRED = "TRANSFERRED"
+    RECEIVED = "RECEIVED"
+    SOLD = "SOLD"
+    RETURNED = "RETURNED"
+    SALE_CORRECTED = "SALE_CORRECTED"
+    RECALLED = "RECALLED"
+    VOIDED = "VOIDED"
+
+
+class EventSource(StrEnum):
+    MANUFACTURER = "MANUFACTURER"
+    MERCHANT_APP = "MERCHANT_APP"
+    POS_API = "POS_API"
+    CONSUMER_CHECK = "CONSUMER_CHECK"
+    SYSTEM = "SYSTEM"
+
+
+# --- Consumer checks (D115, D138, D141) -------------------------------------------------------
+
+
+class IdentifierType(StrEnum):
+    QR = "QR"
+    TYPED = "TYPED"
+
+
+class CheckResult(StrEnum):
+    """One main result per check, in precedence order (D115, D141)."""
+
+    INVALID_IDENTITY = "INVALID_IDENTITY"
+    SUSPICIOUS_ACTIVITY = "SUSPICIOUS_ACTIVITY"
+    BATCH_OR_PRODUCT_WARNING = "BATCH_OR_PRODUCT_WARNING"
+    RECOGNISED_JUST_SOLD = "RECOGNISED_JUST_SOLD"
+    RECOGNISED_PREVIOUSLY_SOLD = "RECOGNISED_PREVIOUSLY_SOLD"
+    RECOGNISED_NOT_SOLD = "RECOGNISED_NOT_SOLD"
+
+
+class ConcernType(StrEnum):
+    PREVIOUSLY_SOLD = "PREVIOUSLY_SOLD"
+    SUSPICIOUS_RESULT = "SUSPICIOUS_RESULT"
+    PACKAGING = "PACKAGING"
+    OTHER = "OTHER"
+
+
+class ReportStatus(StrEnum):
+    NEW = "NEW"
+    REVIEWED = "REVIEWED"
+    CLOSED = "CLOSED"
+
+
+class RateLimitBucket(StrEnum):
+    CHECK = "CHECK"
+    REPORT = "REPORT"
+    LOGIN = "LOGIN"
+    REGISTER = "REGISTER"
+    POS = "POS"
+
+
+# --- Risk alerts (D125, D143) ----------------------------------------------------------------
+
+
+class RiskRule(StrEnum):
+    R1_SCAN_AFTER_SALE_ELSEWHERE = "R1_SCAN_AFTER_SALE_ELSEWHERE"
+    R2_IMPOSSIBLE_TRAVEL = "R2_IMPOSSIBLE_TRAVEL"
+    R3_SCAN_VOLUME = "R3_SCAN_VOLUME"
+    R4_INVALID_BURST = "R4_INVALID_BURST"
+    R5_POS_UNAVAILABLE_UNIT = "R5_POS_UNAVAILABLE_UNIT"
+    R6_UNRELEASED_SCANNED = "R6_UNRELEASED_SCANNED"
+    R7_CUSTODY_CONFLICT = "R7_CUSTODY_CONFLICT"
+    R8_VOIDED_CODE_IN_USE = "R8_VOIDED_CODE_IN_USE"
+    R9_MORE_OBSERVED_THAN_ALLOCATED = "R9_MORE_OBSERVED_THAN_ALLOCATED"
+
+
+class AlertLevel(StrEnum):
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+
+
+class AlertStatus(StrEnum):
+    OPEN = "OPEN"
+    INVESTIGATING = "INVESTIGATING"
+    RESOLVED_LEGITIMATE = "RESOLVED_LEGITIMATE"
+    RESOLVED_SUSPECTED_COPY = "RESOLVED_SUSPECTED_COPY"
+
+
+# --- POS integration (D121) ------------------------------------------------------------------
+
+
+class PosPartnerStatus(StrEnum):
+    ACTIVE = "ACTIVE"
+    SUSPENDED = "SUSPENDED"
+
+
+class PosLinkStatus(StrEnum):
+    ACTIVE = "ACTIVE"
+    REVOKED = "REVOKED"

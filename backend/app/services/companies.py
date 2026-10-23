@@ -72,7 +72,9 @@ def register_company(db: Session, user: AppUser, data: CompanyRegisterRequest) -
         raise AlreadyInCompanyError
 
     company = Company(
-        company_type=data.company_type,
+        is_manufacturer=data.is_manufacturer,
+        is_distributor=data.is_distributor,
+        is_retailer=data.is_retailer,
         display_name=data.display_name,
         contact_email=str(data.contact_email).lower(),
         contact_phone=data.contact_phone or None,

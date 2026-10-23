@@ -14,6 +14,7 @@ from app.models.base import (
     uuid_pk,
 )
 from app.models.enums import (
+    AnnouncementKind,
     AnnouncementStatus,
     AttachmentMimeType,
     ChangeNoticeStatus,
@@ -86,13 +87,27 @@ class NoticeAttachment(CreatedAtMixin, table=True):
 
 
 class ProductAnnouncement(TimestampMixin, table=True):
-    """Company pop-up message ("POPs"). Live without review, labelled as not reviewed by
-    FoodLens, never changes product data. Admins may hide it."""
+    """Company notice or recall (D75, D126). Live without review, labelled as not reviewed by
+    FoodLens, never changes product data. Admins may hide it; hiding a recall needs a reason."""
 
     __tablename__ = "product_announcement"
+    __table_args__ = (
+        CheckConstraint(
+            "kind <> 'RECALL' OR (recall_reason IS NOT NULL AND btrim(recall_reason) <> '')",
+            name="recall_has_reason",
+        ),
+    )
 
     announcement_id: uuid.UUID = uuid_pk()
+    kind: AnnouncementKind = Field(
+        default=AnnouncementKind.NOTICE, sa_type=enum_column(AnnouncementKind, "announcement_kind")
+    )
     product_id: uuid.UUID = Field(foreign_key="product.product_id", index=True)
+    # When set, a recall targets this batch only; it must belong to the product (service).
+    batch_id: uuid.UUID | None = Field(
+        default=None, foreign_key="product_batch.batch_id", index=True
+    )
+    recall_reason: str | None = Field(default=None, sa_type=Text)
     title: str
     message: str = Field(sa_type=Text)
     image_storage_key: str | None = None

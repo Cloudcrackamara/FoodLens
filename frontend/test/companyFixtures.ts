@@ -2,7 +2,9 @@ import type { AdminCompany, Company, Supplier } from "@/lib/companies";
 
 export const pendingCompany: Company = {
   company_id: "22222222-2222-2222-2222-222222222222",
-  company_type: "MANUFACTURER",
+  is_manufacturer: true,
+  is_distributor: false,
+  is_retailer: false,
   display_name: "Test Foods (fictional)",
   contact_email: "hello@testfoods.example.com",
   contact_phone: null,
@@ -45,7 +47,9 @@ export const adminPendingCompany: AdminCompany = {
 export const supplier: Supplier = {
   company_id: "44444444-4444-4444-4444-444444444444",
   display_name: "Demo Harvest Foods (fictional)",
-  company_type: "MANUFACTURER",
+  is_manufacturer: true,
+  is_distributor: false,
+  is_retailer: false,
   contact_email: "contact@demo-rc-0001.example",
   contact_phone: null,
   badge: "FoodLens demo-reviewed profile",

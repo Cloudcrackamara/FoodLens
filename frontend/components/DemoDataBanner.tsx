@@ -1,7 +1,7 @@
 export const DEMO_BANNER_TEXT = "DEMO DATA — NOT AN OFFICIAL REGULATOR SERVICE";
 
 /**
- * Shown on every page and every lookup result. The backend also returns
+ * Shown on every page and every check result. The backend also returns
  * data_mode "DEMO" and a disclaimer, so neither layer relies on the other.
  */
 export function DemoDataBanner() {

@@ -27,14 +27,17 @@ class Settings(BaseSettings):
 
     # Rate limits, per client network (IP). Token buckets: a burst, then a steady refill.
     rate_limit_enabled: bool = True
-    rate_limit_lookup_burst: int = Field(default=20, ge=1)
-    rate_limit_lookup_refill_per_second: float = Field(default=1.0, gt=0)
+    rate_limit_check_burst: int = Field(default=20, ge=1)
+    rate_limit_check_refill_per_second: float = Field(default=1.0, gt=0)
     rate_limit_login_per_minute: int = Field(default=5, ge=1)  # per IP + email
     rate_limit_register_per_hour: int = Field(default=5, ge=1)
     # Comma-separated IPs or CIDR ranges never limited, e.g. usability-test machines.
     rate_limit_exempt_ips: str = ""
     # Proxies whose X-Forwarded-For header is trusted (the Next.js server).
     trusted_proxy_ips: str = "127.0.0.1,::1"
+
+    # Wholesale order requests are future work: the routes exist only when true (D127).
+    orders_enabled: bool = False
 
     # Private folder for change-notice attachments (relative to backend/). Never served statically.
     upload_dir: str = "storage/notices"

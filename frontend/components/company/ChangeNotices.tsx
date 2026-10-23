@@ -17,7 +17,7 @@ import {
   type ChangeTypeValue,
   type Notice,
 } from "@/lib/changeNotices";
-import { formatDate } from "@/lib/lookup";
+import { formatDate } from "@/lib/format";
 
 const inputClass = "rounded-md border border-zinc-400 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-900";
 const buttonClass =

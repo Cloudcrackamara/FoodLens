@@ -13,7 +13,6 @@ from app.routers import (
     change_notices,
     companies,
     health,
-    lookups,
     orders,
     suppliers,
 )
@@ -34,14 +33,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.include_router(health.router)
     app.include_router(auth.router)
-    app.include_router(lookups.router)
     app.include_router(companies.router)
     app.include_router(catalogue.router)
     app.include_router(change_notices.router)
     app.include_router(announcements.router)
     app.include_router(admin.router)
     app.include_router(suppliers.router)
-    app.include_router(orders.router)
+    if settings.orders_enabled:
+        app.include_router(orders.router)
     return app
 
 

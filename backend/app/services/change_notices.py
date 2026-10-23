@@ -45,12 +45,12 @@ from app.schemas.change_notice import (
 )
 from app.services import audit
 from app.services.auth import active_membership
+from app.services.catalogue import is_valid_registration_number, normalize_registration_number
 from app.services.companies import (
     ConflictOfInterestError,
     InvalidTransitionError,
     NotFoundError,
 )
-from app.services.register import is_valid_registration_number, normalize_registration_number
 
 MAX_ATTACHMENTS_PER_NOTICE = 5
 OPEN_STATUSES = {ChangeNoticeStatus.PENDING_REVIEW, ChangeNoticeStatus.CLARIFICATION_REQUESTED}

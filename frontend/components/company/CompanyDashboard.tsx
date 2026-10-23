@@ -6,12 +6,13 @@ import { FormField } from "@/components/auth/FormField";
 import { Catalogue } from "./Catalogue";
 import { Announcements } from "./Announcements";
 import { ChangeNotices } from "./ChangeNotices";
+import { ordersEnabled } from "@/lib/features";
 import { IncomingOrders } from "./IncomingOrders";
 import { describeError } from "@/lib/api";
 import { fieldErrors, useCurrentUser } from "@/lib/auth";
 import {
   companyStatusLabels,
-  companyTypes,
+  companyTypeLabel,
   contactFormSchema,
   locationFormSchema,
   locationStatusLabels,
@@ -118,7 +119,7 @@ function ContactDetails({ company, isOwner }: { company: Company; isOwner: boole
         <form onSubmit={handleSubmit} noValidate aria-label="Edit contact details" className="flex flex-col gap-3">
           <p className="text-sm text-zinc-700 dark:text-zinc-300">
             Changes are saved straight away and recorded with your name and the time. They are shown in
-            the supplier directory.
+            the partner directory.
           </p>
           <FormField id="contact_email" label="Contact email" type="email" value={form.contact_email}
             error={errors.contact_email} onChange={(value) => setForm({ ...form, contact_email: value })} />
@@ -145,7 +146,7 @@ export function CompanyView({ company, isOwner = false }: { company: Company; is
     <div className="flex flex-col gap-6">
       <section aria-labelledby="company-status" className="rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
         <h2 id="company-status" className="text-xl font-bold">{company.display_name}</h2>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">{companyTypes[company.company_type]}</p>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">{companyTypeLabel(company)}</p>
         <p className="mt-2 font-medium">Status: {companyStatusLabels[company.review_status]}</p>
         <p>{statusExplanations[company.review_status]}</p>
         {company.review_note && <p className="mt-1 text-sm">Reviewer note: {company.review_note}</p>}
@@ -154,7 +155,7 @@ export function CompanyView({ company, isOwner = false }: { company: Company; is
       <ContactDetails company={company} isOwner={isOwner} />
 
       <section aria-labelledby="locations-heading" className="flex flex-col gap-3">
-        <h2 id="locations-heading" className="text-lg font-semibold">Supplier locations</h2>
+        <h2 id="locations-heading" className="text-lg font-semibold">Locations</h2>
         {company.locations.length === 0 ? (
           <p>No locations yet.</p>
         ) : (
@@ -174,7 +175,7 @@ export function CompanyView({ company, isOwner = false }: { company: Company; is
       {company.review_status === "APPROVED" && <Catalogue companyId={company.company_id} />}
       {company.review_status === "APPROVED" && <ChangeNotices companyId={company.company_id} />}
       {company.review_status === "APPROVED" && <Announcements companyId={company.company_id} />}
-      {company.review_status === "APPROVED" && <IncomingOrders companyId={company.company_id} />}
+      {ordersEnabled && company.review_status === "APPROVED" && <IncomingOrders companyId={company.company_id} />}
     </div>
   );
 }

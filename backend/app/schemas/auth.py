@@ -3,7 +3,8 @@ import uuid
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 from app.core.security import MAX_PASSWORD_BYTES, MIN_PASSWORD_LENGTH
-from app.models.enums import CompanyReviewStatus, CompanyType, MemberRole
+from app.models.enums import CompanyReviewStatus, MemberRole
+from app.schemas.company import CompanyTypeFlags
 
 
 class RegisterRequest(BaseModel):
@@ -39,11 +40,10 @@ class LoginRequest(BaseModel):
     password: str = Field(min_length=1, max_length=1024)
 
 
-class MembershipRead(BaseModel):
+class MembershipRead(CompanyTypeFlags):
     company_id: uuid.UUID
     company_display_name: str
     company_review_status: CompanyReviewStatus
-    company_type: CompanyType
     role: MemberRole
 
 

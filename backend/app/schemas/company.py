@@ -2,9 +2,9 @@ import uuid
 from datetime import datetime
 from enum import StrEnum
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
-from app.models.enums import CompanyReviewStatus, CompanyType, ReviewStatus
+from app.models.enums import CompanyReviewStatus, ReviewStatus
 
 SUPPLIER_BADGE = "FoodLens demo-reviewed profile"
 SUPPLIER_BADGE_NOTE = (
@@ -13,19 +13,32 @@ SUPPLIER_BADGE_NOTE = (
 )
 
 
+class CompanyTypeFlags(BaseModel):
+    """What the company does (D105). A company may be several; at least one is set."""
+
+    is_manufacturer: bool = False
+    is_distributor: bool = False
+    is_retailer: bool = False
+
+
 # --- Requests (client input never includes review, status, or ownership fields) -------------
 
 
-class CompanyRegisterRequest(BaseModel):
+class CompanyRegisterRequest(CompanyTypeFlags):
     model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
 
-    company_type: CompanyType
     display_name: str = Field(min_length=1, max_length=120)
     contact_email: EmailStr
     contact_phone: str | None = Field(default=None, max_length=40)
     claimed_legal_name: str = Field(min_length=1, max_length=200)
     claimed_business_identifier: str | None = Field(default=None, max_length=60)
     claimed_address: str | None = Field(default=None, max_length=300)
+
+    @model_validator(mode="after")
+    def at_least_one_type(self):
+        if not (self.is_manufacturer or self.is_distributor or self.is_retailer):
+            raise ValueError("Choose at least one: manufacturer, distributor or retailer")
+        return self
 
 
 class ContactUpdateRequest(BaseModel):
@@ -89,11 +102,10 @@ class LocationRead(ReviewRead):
     created_at: datetime
 
 
-class CompanyRead(ReviewRead):
+class CompanyRead(ReviewRead, CompanyTypeFlags):
     """Owner's and admin's view of a company, including claimed fields and review state."""
 
     company_id: uuid.UUID
-    company_type: CompanyType
     display_name: str
     contact_email: str
     contact_phone: str | None
@@ -132,12 +144,12 @@ class SupplierContactRead(BaseModel):
     email: str | None
 
 
-class SupplierRead(BaseModel):
-    """Public directory entry. Never includes claimed fields, review notes, or login emails."""
+class SupplierRead(CompanyTypeFlags):
+    """Public partner-directory entry. Never includes claimed fields, review notes, or login
+    emails."""
 
     company_id: uuid.UUID
     display_name: str
-    company_type: CompanyType
     contact_email: str
     contact_phone: str | None
     badge: str = SUPPLIER_BADGE

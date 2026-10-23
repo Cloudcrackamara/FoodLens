@@ -91,7 +91,7 @@ erDiagram
         string manufacturer_name
         text label_information "nullable"
         string registration_number "as printed, information only"
-        enum status "DRAFT, PENDING_REVIEW, PUBLISHED, REJECTED, WITHDRAWN"
+        enum status "DRAFT, PENDING_REVIEW, PUBLISHED, REJECTED, DISCONTINUED"
         uuid reviewed_by_user_id FK "nullable"
         datetime reviewed_at "nullable"
         string review_note "nullable"
@@ -119,7 +119,7 @@ erDiagram
         uuid batch_id FK
         uuid manufacturer_id FK
         string carton_ref "UK with batch_id, labels only"
-        string qr_token_hash UK "sha256, never raw"
+        string qr_token_hash UK "sha256 hex, CHECK, never raw"
         enum lifecycle_status "derived"
         uuid current_holder_company_id FK "derived"
         datetime created_at
@@ -132,7 +132,7 @@ erDiagram
         uuid product_id FK
         uuid manufacturer_id FK
         uuid parent_carton_id FK "nullable"
-        string qr_token_hash UK "sha256 of normalised token, never raw"
+        string qr_token_hash UK "sha256 hex of normalised token, CHECK, never raw"
         enum lifecycle_status "ISSUED, RELEASED, IN_TRANSIT, IN_STOCK, SOLD, RECALLED, VOIDED"
         uuid current_holder_company_id FK "derived"
         datetime last_sold_at "derived, nullable"
@@ -143,7 +143,7 @@ erDiagram
     }
 
     LIFECYCLE_EVENT {
-        uuid event_id PK "append-only"
+        uuid event_id PK "append-only, trigger refuses UPDATE and DELETE"
         uuid unit_id FK "exactly one of unit/carton"
         uuid carton_id FK "exactly one of unit/carton"
         uuid group_id "carton or bulk action"
@@ -152,7 +152,7 @@ erDiagram
         uuid actor_user_id FK "nullable"
         uuid actor_company_id FK "nullable"
         uuid retailer_company_id FK "nullable"
-        uuid to_company_id FK "TRANSFERRED only"
+        uuid to_company_id FK "required for TRANSFERRED"
         uuid pos_partner_id FK "nullable"
         string till_ref "nullable"
         uuid area_id FK "nullable"
@@ -165,6 +165,7 @@ erDiagram
         boolean received_without_transfer
         boolean outside_allocation "RECEIVED only, note, no alert"
         uuid returns_event_id FK "nullable, SOLD reversed"
+        datetime created_at
     }
 
     BATCH_ALLOCATION {
@@ -180,26 +181,31 @@ erDiagram
     }
 
     ALLOCATION_CARTON {
+        uuid allocation_carton_id PK
         uuid allocation_id FK
         uuid carton_id FK,UK "one allocation per carton"
         datetime created_at
     }
 
     ALLOCATION_UNIT {
+        uuid allocation_unit_id PK
         uuid allocation_id FK
         uuid unit_id FK,UK "one allocation per unit"
         datetime created_at
     }
 
     RATE_LIMIT_DAILY {
-        uuid area_id FK "nullable, UK with day+bucket"
+        uuid rate_limit_id PK
+        uuid area_id FK "nullable, UK with day+bucket, nulls not distinct"
         date day
         enum bucket "CHECK, REPORT, LOGIN, REGISTER, POS"
-        int count "no IP column"
+        int count ">= 0, no IP column"
+        datetime created_at
+        datetime updated_at
     }
 
     SCAN_EVENT {
-        uuid scan_id PK "no IP, UA, cookie, device, GPS"
+        uuid scan_id PK "no IP, UA, cookie, device, GPS; trigger refuses UPDATE"
         enum identifier_type "QR, TYPED"
         uuid unit_id FK "nullable"
         uuid carton_id FK "nullable"
@@ -215,8 +221,8 @@ erDiagram
         uuid manufacturer_id FK "null = admin only"
         uuid unit_id FK "nullable"
         uuid carton_id FK "nullable"
-        uuid batch_id FK "nullable, rule 9"
-        uuid area_id FK "nullable"
+        uuid batch_id FK "required for rule 9"
+        uuid area_id FK "required for rule 9"
         jsonb evidence "ids, snapshot, explanation"
         enum status "OPEN, INVESTIGATING, RESOLVED_LEGITIMATE, RESOLVED_SUSPECTED_COPY"
         text notes "nullable"
@@ -231,7 +237,7 @@ erDiagram
         uuid unit_id FK "nullable"
         uuid manufacturer_id FK "nullable"
         enum concern_type
-        text description "max 1000"
+        text description "max 1000, CHECK"
         uuid area_id FK "nullable"
         enum status "NEW, REVIEWED, CLOSED"
         datetime created_at
@@ -252,7 +258,7 @@ erDiagram
         uuid key_id PK
         uuid partner_id FK
         string key_prefix "display only"
-        string key_hash UK "sha256"
+        string key_hash UK "sha256 hex, CHECK"
         datetime revoked_at "nullable"
         datetime created_at
     }
@@ -425,7 +431,7 @@ erDiagram
     PRODUCT_BATCH ||--o{ ORDER_BATCH_ALLOCATION : "allocated in"
     SUPPLIER_LOCATION o|--o{ WHOLESALE_ORDER : "pickup at"
 
-%% Target schema for migrations 0006_unit_identity and 0007_drop_register (Phase 1, 2026-10-21, final design 2026-10-22; D104-D147).
+%% Schema built by migrations 0006_unit_identity and 0007_drop_register (Phase 1, 2026-10-22; D104-D147).
 %% REGULATOR_REGISTER, REGULATORY_AGENCY and BATCH_SCAN are dropped; earlier ERD in git history (28d4fb6).
 %% QR only, no hidden codes (D138). Raw QR tokens, POS keys and secrets are never stored; only hashes (POS signing secret encrypted).
 %% Every reviewer FK (reviewed_by_user_id, hidden_by_user_id, resolved_by_user_id) references APP_USER; omitted above for readability.

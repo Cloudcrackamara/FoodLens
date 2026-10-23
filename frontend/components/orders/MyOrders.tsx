@@ -16,7 +16,7 @@ function BuyerOrders({ companyId }: { companyId: string }) {
     return (
       <p>
         No order requests yet. Find a supplier in the{" "}
-        <Link href="/suppliers" className="underline">supplier directory</Link>.
+        <Link href="/suppliers" className="underline">partner directory</Link>.
       </p>
     );
   }

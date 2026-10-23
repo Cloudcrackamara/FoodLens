@@ -8,7 +8,7 @@ import {
   useWithdrawAnnouncement,
 } from "@/lib/announcements";
 import { useProducts } from "@/lib/catalogue";
-import { formatDate } from "@/lib/lookup";
+import { formatDate } from "@/lib/format";
 
 const inputClass = "rounded-md border border-zinc-400 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-900";
 

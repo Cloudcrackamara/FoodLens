@@ -1,7 +1,7 @@
 import { screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { demoUser, mockFetch, renderWithQuery } from "@/test/utils";
-import { manufacturerUser, wholesalerUser } from "@/test/orderFixtures";
+import { distributorUser } from "@/test/orderFixtures";
 import { SiteHeader } from "./SiteHeader";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
@@ -45,7 +45,9 @@ describe("SiteHeader role links", () => {
           company_id: "c1",
           company_display_name: "Demo Co",
           company_review_status: "PENDING_REVIEW",
-          company_type: "MANUFACTURER",
+          is_manufacturer: true,
+          is_distributor: false,
+          is_retailer: false,
           role: "OWNER",
         },
       },
@@ -58,21 +60,18 @@ describe("SiteHeader role links", () => {
     renderWithQuery(<SiteHeader />);
 
     expect(await screen.findByRole("link", { name: label })).toHaveAttribute("href", href);
-    expect(screen.getByRole("link", { name: "Suppliers" })).toHaveAttribute("href", "/suppliers");
+    expect(screen.getByRole("link", { name: "Partners" })).toHaveAttribute("href", "/suppliers");
+    expect(screen.getByRole("link", { name: "Check a pack" })).toHaveAttribute("href", "/check");
   });
 });
 
 describe("SiteHeader orders link", () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it("shows My orders only to approved wholesaler members", async () => {
-    mockFetch({ status: 200, body: wholesalerUser });
-    const { unmount } = renderWithQuery(<SiteHeader />);
-    expect(await screen.findByRole("link", { name: "My orders" })).toHaveAttribute("href", "/orders");
-    unmount();
-
-    mockFetch({ status: 200, body: manufacturerUser });
+  it("hides My orders while order requests are switched off (the default, D127)", async () => {
+    mockFetch({ status: 200, body: distributorUser });
     renderWithQuery(<SiteHeader />);
+
     await screen.findByRole("link", { name: "My company" });
     expect(screen.queryByRole("link", { name: "My orders" })).not.toBeInTheDocument();
   });

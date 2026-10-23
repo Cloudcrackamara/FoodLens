@@ -54,19 +54,19 @@ The earlier plan (Gate and Phases 0–7: foundation, auth, registration lookup, 
 - `docs/SCHEMA.md` and `docs/ERD.mmd` match the models.
 
 **Done when**
-- [ ] `alembic upgrade head`, `downgrade` to 0005 and `upgrade` again all work, and `alembic check` reports no drift.
-- [ ] Test: `qr_token_hash` is unique on units and on cartons; `carton_ref` is unique per batch.
-- [ ] Test: no `secret_code_hash`, `secret_claimed_*`, `return_disposition` or `WITHDRAWN` exists in the schema.
-- [ ] Test: the `scan_event` column list is exact (no IP, user agent, cookie, device or GPS column); `identifier_type` accepts only `QR` and `TYPED`.
-- [ ] Test: the `rate_limit_daily` column list is exact (area, day, bucket, count; no IP).
-- [ ] Test: a lifecycle event has exactly one of unit or carton; enums reject unknown values (e.g. `'GENUINE'`, `'CLAIMED'`).
-- [ ] Test: a company with no type flag set is rejected.
-- [ ] Test: the POS idempotency key is unique on (partner, transaction, unit, event type).
-- [ ] Test: allocation `quantity` > 0; a carton sits in at most one allocation; a unit sits in at most one allocation.
-- [ ] Test: no amount, price, card or customer columns exist anywhere.
-- [ ] Test: with `ORDERS_ENABLED=false`, the order routes return 404. The order tests pass with the flag on.
-- [ ] Test: no file under `frontend/` imports `tesseract.js`, and the dependency is absent from `package.json`.
-- [ ] Removed tests are deleted and the remaining backend and frontend suites are green.
+- [x] `alembic upgrade head`, `downgrade` to 0005 and `upgrade` again all work, and `alembic check` reports no drift.
+- [x] Test: `qr_token_hash` is unique on units and on cartons; `carton_ref` is unique per batch.
+- [x] Test: no `secret_code_hash`, `secret_claimed_*`, `return_disposition` or `WITHDRAWN` exists in the schema.
+- [x] Test: the `scan_event` column list is exact (no IP, user agent, cookie, device or GPS column); `identifier_type` accepts only `QR` and `TYPED`.
+- [x] Test: the `rate_limit_daily` column list is exact (area, day, bucket, count; no IP).
+- [x] Test: a lifecycle event has exactly one of unit or carton; enums reject unknown values (e.g. `'GENUINE'`, `'CLAIMED'`).
+- [x] Test: a company with no type flag set is rejected.
+- [x] Test: the POS idempotency key is unique on (partner, transaction, unit, event type).
+- [x] Test: allocation `quantity` > 0; a carton sits in at most one allocation; a unit sits in at most one allocation.
+- [x] Test: no amount, price, card or customer columns exist anywhere.
+- [x] Test: with `ORDERS_ENABLED=false`, the order routes return 404. The order tests pass with the flag on.
+- [x] Test: no file under `frontend/` imports `tesseract.js`, and the dependency is absent from `package.json`.
+- [x] Removed tests are deleted and the remaining backend and frontend suites are green.
 
 ---
 

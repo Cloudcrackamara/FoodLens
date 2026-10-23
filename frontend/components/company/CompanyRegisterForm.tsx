@@ -7,13 +7,16 @@ import { describeError } from "@/lib/api";
 import { fieldErrors } from "@/lib/auth";
 import {
   companyRegisterFormSchema,
-  companyTypes,
+  companyTypeFlags,
   useRegisterCompany,
+  type CompanyTypeFlag,
   type CompanyRegisterForm as Form,
 } from "@/lib/companies";
 
 const emptyForm: Form = {
-  company_type: "MANUFACTURER",
+  is_manufacturer: false,
+  is_distributor: false,
+  is_retailer: false,
   display_name: "",
   contact_email: "",
   contact_phone: "",
@@ -29,6 +32,7 @@ export function CompanyRegisterForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const set = (key: keyof Form) => (value: string) => setForm({ ...form, [key]: value });
+  const toggle = (flag: CompanyTypeFlag) => setForm({ ...form, [flag]: !form[flag] });
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -43,20 +47,23 @@ export function CompanyRegisterForm() {
 
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
-      <label className="flex flex-col gap-1">
-        <span className="font-medium">Company type</span>
-        <select
-          value={form.company_type}
-          onChange={(event) => set("company_type")(event.target.value)}
-          className="rounded-md border border-zinc-400 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-900"
-        >
-          {Object.entries(companyTypes).map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </select>
-      </label>
+      <fieldset
+        aria-describedby={errors.company_types ? "company_types-error" : undefined}
+        className="flex flex-col gap-2"
+      >
+        <legend className="font-medium">What does your company do? Choose all that apply.</legend>
+        {(Object.keys(companyTypeFlags) as CompanyTypeFlag[]).map((flag) => (
+          <label key={flag} className="flex items-center gap-2">
+            <input type="checkbox" checked={form[flag]} onChange={() => toggle(flag)} />
+            {companyTypeFlags[flag]}
+          </label>
+        ))}
+        {errors.company_types && (
+          <p id="company_types-error" className="text-sm text-red-700 dark:text-red-400">
+            {errors.company_types}
+          </p>
+        )}
+      </fieldset>
       <FormField
         id="display_name"
         label="Company name (shown publicly)"

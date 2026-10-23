@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import { describeError } from "@/lib/api";
-import { companyTypes, useSuppliers, type Supplier } from "@/lib/companies";
-import { formatDate } from "@/lib/lookup";
+import { companyTypeLabel, useSuppliers, type Supplier } from "@/lib/companies";
+import { formatDate } from "@/lib/format";
 
 export function SupplierCard({ supplier, linked = false }: { supplier: Supplier; linked?: boolean }) {
   return (
@@ -24,7 +24,7 @@ export function SupplierCard({ supplier, linked = false }: { supplier: Supplier;
             )}
           </h2>
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            {companyTypes[supplier.company_type]}
+            {companyTypeLabel(supplier)}
           </p>
         </div>
         <span className="rounded-full border border-zinc-500 px-3 py-1 text-xs font-semibold">
