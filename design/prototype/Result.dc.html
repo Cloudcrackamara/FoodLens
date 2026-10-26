@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FoodLens check result</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&amp;family=Open+Sans:wght@400;600&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap">
+<style>
+body{margin:0}
+@keyframes fl-spin{to{transform:rotate(360deg)}}
+@keyframes fl-scan{0%{top:6%}50%{top:88%}100%{top:6%}}
+.fl-spin{animation:fl-spin .9s linear infinite}
+.fl-scanline{animation:fl-scan 2.4s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){.fl-spin,.fl-scanline{animation:none}}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-direction: column; background: #F5F5F3; color: #16143D; font-family: 'Open Sans', system-ui, sans-serif; font-size: 16px; line-height: 1.5">
+
+<header style="display: flex; align-items: center; gap: 4px; padding: 8px 12px; background: #FFFFFF; border-bottom: 1px solid #ECEDF1">
+<a href="Confirm.dc.html" aria-label="Back to the number" style="width: 44px; height: 44px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #16143D">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>
+</a>
+<p style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600">Check result</p>
+</header>
+
+<div role="note" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 16px; background: #F6B93B; color: #1F1D5C; font-size: 14px; font-weight: 700; text-align: center">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1F1D5C" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" style="flex: none"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 7.5h.01"></path></svg>
+Demo data — not an official NAFDAC or SON service.</div>
+
+<main style="flex: 1; width: 100%; max-width: 1040px; margin: 0 auto; box-sizing: border-box; padding: 20px 16px; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px">
+
+<!-- COLUMN A: status -->
+<div style="flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+
+<sc-if value="{{isMatch}}" hint-placeholder-val="{{ true }}">
+<section style="padding: 22px 20px; border-radius: 18px; background: #E3F4EA; border: 1px solid #BFE0CC">
+<div style="display: flex; align-items: center; gap: 12px">
+<span aria-hidden="true" style="flex: none; width: 48px; height: 48px; border-radius: 50%; background: #1B7A45; display: inline-flex; align-items: center; justify-content: center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>
+<span style="font-size: 13px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #145C34">Active registration</span>
+</div>
+<h1 style="margin: 14px 0 6px; font-family: 'Poppins', sans-serif; font-size: 25px; font-weight: 700; line-height: 1.25">This number matches an active registration</h1>
+<p style="margin: 0; color: #2E3A33">The register has an active record for <b style="font-family: 'IBM Plex Mono', monospace">A7-0412L</b>. Compare it with the pack in your hand.</p>
+</section>
+<p style="display: flex; align-items: center; gap: 10px; margin: 0; padding: 12px 14px; border-radius: 12px; background: #FFFFFF; border: 1px solid #E3E5EA; font-size: 14px; color: #2A2F3A">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B7A45" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+<span><b>Batch note:</b> batch <span style="font-family: 'IBM Plex Mono', monospace">24B-117</span> is listed for this product.</span></p>
+</sc-if>
+
+<sc-if value="{{isNotFound}}" hint-placeholder-val="{{ false }}">
+<section style="padding: 22px 20px; border-radius: 18px; background: #EEEFF2; border: 1px solid #DADCE2">
+<div style="display: flex; align-items: center; gap: 12px">
+<span aria-hidden="true" style="flex: none; width: 48px; height: 48px; border-radius: 50%; background: #4B4F5C; display: inline-flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"></circle><path d="M20 20l-4.2-4.2M8.8 8.8l4.4 4.4M13.2 8.8l-4.4 4.4"></path></svg></span>
+<span style="font-size: 13px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #3A3F4B">No record found</span>
+</div>
+<h1 style="margin: 14px 0 6px; font-family: 'Poppins', sans-serif; font-size: 25px; font-weight: 700; line-height: 1.25">We couldn’t find this number in the register</h1>
+<p style="margin: 0; color: #3A3F4B">The demo register has no record for <b style="font-family: 'IBM Plex Mono', monospace">A7-0412X</b>. Check the letters and digits, then try again.</p>
+</section>
+</sc-if>
+
+<sc-if value="{{isExpired}}" hint-placeholder-val="{{ false }}">
+<section style="padding: 22px 20px; border-radius: 18px; background: #FDF1DC; border: 1px solid #F2D29C">
+<div style="display: flex; align-items: center; gap: 12px">
+<span aria-hidden="true" style="flex: none; width: 48px; height: 48px; border-radius: 50%; background: #B45309; display: inline-flex; align-items: center; justify-content: center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"></rect><path d="M4 10h16M9 3v4M15 3v4M10 14l4 4M14 14l-4 4"></path></svg></span>
+<span style="font-size: 13px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #8A4100">Registration expired</span>
+</div>
+<h1 style="margin: 14px 0 6px; font-family: 'Poppins', sans-serif; font-size: 25px; font-weight: 700; line-height: 1.25">This registration has expired</h1>
+<p style="margin: 0; color: #4A3412">The register shows that <b style="font-family: 'IBM Plex Mono', monospace">01-2298L</b> expired on <b>30 June 2025</b>.</p>
+</section>
+</sc-if>
+
+<sc-if value="{{isMismatch}}" hint-placeholder-val="{{ false }}">
+<section style="padding: 22px 20px; border-radius: 18px; background: #B42318; color: #FFFFFF; box-shadow: 0 10px 24px rgba(180,35,24,0.25)">
+<div style="display: flex; align-items: center; gap: 12px">
+<span aria-hidden="true" style="flex: none; width: 48px; height: 48px; border-radius: 50%; background: #FFFFFF; display: inline-flex; align-items: center; justify-content: center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#B42318" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3L2.5 20h19z"></path><path d="M12 10v4.5M12 17.5h.01"></path></svg></span>
+<span style="font-size: 13px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase">Warning · different product</span>
+</div>
+<h1 style="margin: 14px 0 6px; font-family: 'Poppins', sans-serif; font-size: 26px; font-weight: 700; line-height: 1.22">This number is registered to a different product</h1>
+<p style="margin: 0; color: #FFE9E6">The register lists <b style="font-family: 'IBM Plex Mono', monospace">A7-0412L</b> for a tomato paste by Demo Foods Nigeria Ltd, not the groundnut oil on your pack.</p>
+</section>
+</sc-if>
+
+<sc-if value="{{isInsufficient}}" hint-placeholder-val="{{ false }}">
+<section style="padding: 22px 20px; border-radius: 18px; background: #ECEBF7; border: 1px solid #D4D2EE">
+<div style="display: flex; align-items: center; gap: 12px">
+<span aria-hidden="true" style="flex: none; width: 48px; height: 48px; border-radius: 50%; background: #433F8A; display: inline-flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round"><path d="M9 9.5a3 3 0 1 1 4.2 2.8c-.8.3-1.2 1-1.2 1.8v.6M12 18h.01"></path></svg></span>
+<span style="font-size: 13px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #433F8A">Number needed</span>
+</div>
+<h1 style="margin: 14px 0 6px; font-family: 'Poppins', sans-serif; font-size: 25px; font-weight: 700; line-height: 1.25">We need the NAFDAC number to check</h1>
+<p style="margin: 0; color: #2F2C5E">We couldn’t read a registration number from your photo. Scan it again with the number inside the box, or type it in.</p>
+</section>
+</sc-if>
+
+<sc-if value="{{isLimit}}" hint-placeholder-val="{{ false }}">
+<section style="padding: 22px 20px; border-radius: 18px; background: #EEEFF2; border: 1px solid #DADCE2">
+<div style="display: flex; align-items: center; gap: 12px">
+<span aria-hidden="true" style="flex: none; width: 48px; height: 48px; border-radius: 50%; background: #16143D; display: inline-flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h10M7 21h10M8 3c0 5 8 5 8 9s-8 4-8 9M16 3c0 5-8 5-8 9s8 4 8 9"></path></svg></span>
+<span style="font-size: 13px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #3A3F4B">Please wait</span>
+</div>
+<h1 style="margin: 14px 0 6px; font-family: 'Poppins', sans-serif; font-size: 25px; font-weight: 700; line-height: 1.25">Too many checks from your network</h1>
+<p style="margin: 0; color: #3A3F4B">Try again in 30 seconds. Nothing is wrong with your phone or the product.</p>
+</section>
+</sc-if>
+</div>
+
+<!-- COLUMN B: details -->
+<div style="flex: 1.3 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+
+<sc-if value="{{isMatch}}" hint-placeholder-val="{{ true }}">
+<section aria-labelledby="reg-title" style="padding: 20px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E3E5EA">
+<h2 id="reg-title" style="margin: 0 0 12px; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600">What the register shows</h2>
+<dl style="margin: 0; display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr); row-gap: 0; font-size: 15px">
+<dt style="padding: 10px 0; border-top: 1px solid #ECEDF1; color: #4B4F5C">Product</dt><dd style="margin: 0; padding: 10px 0; border-top: 1px solid #ECEDF1; font-weight: 600">Tomato paste, 70 g, double concentrate</dd>
+<dt style="padding: 10px 0; border-top: 1px solid #ECEDF1; color: #4B4F5C">Company</dt><dd style="margin: 0; padding: 10px 0; border-top: 1px solid #ECEDF1; font-weight: 600">Demo Foods Nigeria Ltd</dd>
+<dt style="padding: 10px 0; border-top: 1px solid #ECEDF1; color: #4B4F5C">Registration no.</dt><dd style="margin: 0; padding: 10px 0; border-top: 1px solid #ECEDF1; font-family: 'IBM Plex Mono', monospace; font-weight: 600">A7-0412L</dd>
+<dt style="padding: 10px 0; border-top: 1px solid #ECEDF1; color: #4B4F5C">Agency</dt><dd style="margin: 0; padding: 10px 0; border-top: 1px solid #ECEDF1; font-weight: 600">NAFDAC <span style="font-weight: 400; color: #4B4F5C">(simulated record)</span></dd>
+<dt style="padding: 10px 0; border-top: 1px solid #ECEDF1; color: #4B4F5C">Status</dt><dd style="margin: 0; padding: 10px 0; border-top: 1px solid #ECEDF1"><span style="display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; background: #E3F4EA; color: #145C34; font-size: 14px; font-weight: 700"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#145C34" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Active</span></dd>
+<dt style="padding: 10px 0; border-top: 1px solid #ECEDF1; color: #4B4F5C">Expires</dt><dd style="margin: 0; padding: 10px 0; border-top: 1px solid #ECEDF1; font-weight: 600">14 March 2028</dd>
+</dl>
+</section>
+<section aria-labelledby="cmp-title" style="padding: 20px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E3E5EA">
+<h2 id="cmp-title" style="margin: 0 0 10px; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600">Compare with your pack</h2>
+<label style="display: flex; align-items: center; gap: 12px; min-height: 44px"><input type="checkbox" style="width: 22px; height: 22px; accent-color: #1B7A45">Product name and size are the same</label>
+<label style="display: flex; align-items: center; gap: 12px; min-height: 44px"><input type="checkbox" style="width: 22px; height: 22px; accent-color: #1B7A45">Company name is the same</label>
+<label style="display: flex; align-items: center; gap: 12px; min-height: 44px"><input type="checkbox" style="width: 22px; height: 22px; accent-color: #1B7A45">The pack shows <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 600">A7-0412L</span></label>
+<p style="margin: 10px 0 0; padding: 12px; border-radius: 10px; background: #F5F5F3; font-size: 14px; color: #3A3F4B">A match tells you what the register says. It can’t check the pack in your hand: a copied number can look exactly the same.</p>
+</section>
+<sc-if value="{{msgOpen}}" hint-placeholder-val="{{ true }}">
+<section aria-labelledby="msg-title" style="padding: 18px 20px 20px; border-radius: 16px; background: #FFFFFF; border: 1px dashed #B9BCC6">
+<div style="display: flex; align-items: flex-start; gap: 8px">
+<div style="flex: 1">
+<h2 id="msg-title" style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: 600">Message from the company</h2>
+<p style="margin: 2px 0 0; font-size: 13px; color: #4B4F5C">Not reviewed by FoodLens</p>
+</div>
+<button type="button" onClick="{{closeMsg}}" aria-label="Close company messages" style="flex: none; width: 44px; height: 44px; margin: -8px -10px 0 0; border: 0; border-radius: 50%; background: transparent; cursor: pointer; display: inline-flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3A3F4B" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+</div>
+<article style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #ECEDF1">
+<h3 style="margin: 0; font-size: 15px; font-weight: 700">Copies with a blue cap</h3>
+<p style="margin: 4px 0 2px; font-size: 15px; color: #2A2F3A">Our tomato paste has a red cap. Packs with a blue cap have been seen in Onitsha market.</p>
+<p style="margin: 0; font-size: 13px; color: #4B4F5C">Demo Foods Nigeria Ltd · 3 Oct 2026</p>
+</article>
+<article style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #ECEDF1">
+<h3 style="margin: 0; font-size: 15px; font-weight: 700">New label from November</h3>
+<p style="margin: 4px 0 2px; font-size: 15px; color: #2A2F3A">The label is getting a green stripe. Both designs will be on shelves for a while.</p>
+<p style="margin: 0; font-size: 13px; color: #4B4F5C">Demo Foods Nigeria Ltd · 28 Sep 2026</p>
+</article>
+</section>
+</sc-if>
+<sc-if value="{{msgClosed}}" hint-placeholder-val="{{ false }}">
+<button type="button" onClick="{{openMsg}}" style="align-self: flex-start; min-height: 44px; padding: 0 16px; border: 1px solid #C9CCD4; border-radius: 999px; background: #FFFFFF; color: #16143D; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer">Show company messages (2)</button>
+</sc-if>
+</sc-if>
+
+<sc-if value="{{isNotFound}}" hint-placeholder-val="{{ false }}">
+<section style="padding: 20px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E3E5EA">
+<h2 style="margin: 0 0 12px; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600">What you entered</h2>
+<dl style="margin: 0; display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr); font-size: 15px">
+<dt style="padding: 10px 0; border-top: 1px solid #ECEDF1; color: #4B4F5C">Registration no.</dt><dd style="margin: 0; padding: 10px 0; border-top: 1px solid #ECEDF1; font-family: 'IBM Plex Mono', monospace; font-weight: 600">A7-0412X</dd>
+<dt style="padding: 10px 0; border-top: 1px solid #ECEDF1; color: #4B4F5C">Batch</dt><dd style="margin: 0; padding: 10px 0; border-top: 1px solid #ECEDF1; color: #4B4F5C">Not entered</dd>
+</dl>
+</section>
+<section style="padding: 20px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E3E5EA">
+<h2 style="margin: 0 0 8px; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600">Before you decide</h2>
+<ul style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px">
+<li>Check characters that look alike: <b>0</b> and <b>O</b>, <b>1</b> and <b>I</b>, <b>5</b> and <b>S</b>.</li>
+<li>Scan again in good light, with the number inside the box.</li>
+<li>Ask the seller to show you the number on the pack.</li>
+</ul>
+<p style="margin: 14px 0 0; padding: 12px; border-radius: 10px; background: #F5F5F3; font-size: 14px; color: #3A3F4B">No record here doesn’t mean the product is a copy. It means this demo register has no match for the number.</p>
+</section>
+</sc-if>
+
+<sc-if value="{{isExpired}}" hint-placeholder-val="{{ false }}">
+<section style="padding: 20px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E3E5EA">
+<h2 style="margin: 0 0 12px; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600">What the register shows</h2>
+<dl style="margin: 0; display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr); font-size: 15px">
+<dt style="padding: 10px 0; border-top: 1px solid #ECEDF1; color: #4B4F5C">Product</dt><dd style="margin: 0; padding: 10px 0; border-top: 1px solid #ECEDF1; font-weight: 600">Groundnut oil, 1 L</dd>
+<dt style="padding: 10px 0; border-top: 1px solid #ECEDF1; color: #4B4F5C">Company</dt><dd style="margin: 0; padding: 10px 0; border-top: 1px solid #ECEDF1; font-weight: 600">Demo Mills Ltd</dd>
+<dt style="padding: 10px 0; border-top: 1px solid #ECEDF1; color: #4B4F5C">Registration no.</dt><dd style="margin: 0; padding: 10px 0; border-top: 1px solid #ECEDF1; font-family: 'IBM Plex Mono', monospace; font-weight: 600">01-2298L</dd>
+<dt style="padding: 10px 0; border-top: 1px solid #ECEDF1; color: #4B4F5C">Agency</dt><dd style="margin: 0; padding: 10px 0; border-top: 1px solid #ECEDF1; font-weight: 600">NAFDAC <span style="font-weight: 400; color: #4B4F5C">(simulated record)</span></dd>
+<dt style="padding: 10px 0; border-top: 1px solid #ECEDF1; color: #4B4F5C">Status</dt><dd style="margin: 0; padding: 10px 0; border-top: 1px solid #ECEDF1"><span style="display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; background: #FDF1DC; color: #8A4100; font-size: 14px; font-weight: 700"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8A4100" stroke-width="3" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Expired</span></dd>
+<dt style="padding: 10px 0; border-top: 1px solid #ECEDF1; color: #4B4F5C">Expired on</dt><dd style="margin: 0; padding: 10px 0; border-top: 1px solid #ECEDF1; font-weight: 600">30 June 2025</dd>
+</dl>
+<p style="margin: 12px 0 0; padding: 12px; border-radius: 10px; background: #F5F5F3; font-size: 14px; color: #3A3F4B">This is what the demo register shows today. A company can renew a registration, so ask the seller, or check again later.</p>
+</section>
+</sc-if>
+
+<sc-if value="{{isMismatch}}" hint-placeholder-val="{{ false }}">
+<section aria-labelledby="vs-title" style="padding: 20px; border-radius: 16px; background: #FFFFFF; border: 2px solid #B42318">
+<h2 id="vs-title" style="margin: 0 0 4px; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600">Your pack vs the register</h2>
+<p style="margin: 0 0 14px; font-size: 13px; color: #4B4F5C">Product and company on your pack were read from your photo.</p>
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; font-size: 13px; font-weight: 700; color: #4B4F5C; text-transform: uppercase; letter-spacing: 0.04em">
+<span>On your pack</span><span>In the register</span>
+</div>
+<div style="margin-top: 12px">
+<p style="display: flex; align-items: center; gap: 6px; margin: 0 0 6px; font-size: 14px; font-weight: 600; color: #145C34"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#145C34" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Registration no. · same</p>
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 15px; font-weight: 600">
+<span style="padding: 10px 12px; border-radius: 10px; background: #F5F5F3">A7-0412L</span><span style="padding: 10px 12px; border-radius: 10px; background: #F5F5F3">A7-0412L</span>
+</div>
+</div>
+<div style="margin-top: 14px">
+<p style="display: flex; align-items: center; gap: 6px; margin: 0 0 6px; font-size: 14px; font-weight: 700; color: #B42318"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B42318" stroke-width="3.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>Product · different</p>
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; font-size: 15px; font-weight: 600">
+<span style="padding: 10px 12px; border-radius: 10px; background: #FDECEA; border: 1px solid #F3B8B2">Groundnut oil, 1 L</span><span style="padding: 10px 12px; border-radius: 10px; background: #FDECEA; border: 1px solid #F3B8B2">Tomato paste, 70 g</span>
+</div>
+</div>
+<div style="margin-top: 14px">
+<p style="display: flex; align-items: center; gap: 6px; margin: 0 0 6px; font-size: 14px; font-weight: 700; color: #B42318"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B42318" stroke-width="3.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>Company · different</p>
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; font-size: 15px; font-weight: 600">
+<span style="padding: 10px 12px; border-radius: 10px; background: #FDECEA; border: 1px solid #F3B8B2">Golden Pot Oils</span><span style="padding: 10px 12px; border-radius: 10px; background: #FDECEA; border: 1px solid #F3B8B2">Demo Foods Nigeria Ltd</span>
+</div>
+</div>
+</section>
+<section style="padding: 20px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E3E5EA">
+<h2 style="margin: 0 0 8px; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600">What you can do</h2>
+<ul style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px">
+<li>Don’t go by this pack’s number on its own.</li>
+<li>Ask the seller where the stock came from.</li>
+<li>Choose a pack whose number matches its own record.</li>
+</ul>
+<a href="Report.dc.html" style="margin-top: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; border-radius: 999px; border: 2px solid #B42318; box-sizing: border-box; color: #B42318; text-decoration: none; font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: 600"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5"></path></svg>Report a concern</a>
+</section>
+</sc-if>
+
+<sc-if value="{{isInsufficient}}" hint-placeholder-val="{{ false }}">
+<section style="padding: 20px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E3E5EA">
+<h2 style="margin: 0 0 12px; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600">Where to find the number</h2>
+<svg viewBox="0 0 320 170" width="100%" role="img" aria-label="Back of a pack: the registration number is printed near the barcode and best-before date" style="display: block; border-radius: 12px; background: #F5F5F3"><rect x="40" y="18" width="240" height="134" rx="10" fill="#FFFFFF" stroke="#D5D8DF" stroke-width="2"></rect><rect x="58" y="34" width="110" height="8" rx="4" fill="#E3E5EA"></rect><rect x="58" y="50" width="80" height="8" rx="4" fill="#E3E5EA"></rect><g fill="#16143D"><rect x="58" y="88" width="3" height="44"></rect><rect x="64" y="88" width="2" height="44"></rect><rect x="69" y="88" width="4" height="44"></rect><rect x="76" y="88" width="2" height="44"></rect><rect x="81" y="88" width="3" height="44"></rect><rect x="87" y="88" width="2" height="44"></rect><rect x="92" y="88" width="4" height="44"></rect></g><text x="128" y="100" font-family="IBM Plex Mono, monospace" font-size="10" fill="#4B4F5C">NAFDAC Reg. No.</text><text x="128" y="118" font-family="IBM Plex Mono, monospace" font-size="15" font-weight="600" fill="#16143D">A7-0412L</text><text x="128" y="136" font-family="IBM Plex Mono, monospace" font-size="9" fill="#4B4F5C">BB 03/2027 · LOT 24B-117</text><rect x="120" y="86" width="132" height="40" rx="6" fill="none" stroke="#1B7A45" stroke-width="3"></rect></svg>
+<ul style="margin: 14px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px">
+<li>Look near the barcode or the best-before date.</li>
+<li>It usually mixes letters and digits, like <b style="font-family: 'IBM Plex Mono', monospace">A7-0412L</b>.</li>
+<li>Some packs show an SON number instead.</li>
+</ul>
+</section>
+</sc-if>
+
+<sc-if value="{{isLimit}}" hint-placeholder-val="{{ false }}">
+<section role="timer" aria-live="off" style="padding: 24px 20px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E3E5EA; display: flex; flex-direction: column; align-items: center; text-align: center">
+<p style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 48px; font-weight: 700; line-height: 1.1">{{countdown}}</p>
+<p style="margin: 4px 0 0; color: #3A3F4B">until you can check again</p>
+<p style="margin: 16px 0 0; padding: 12px; border-radius: 10px; background: #F5F5F3; font-size: 14px; color: #3A3F4B; text-align: left">Shared networks, like market Wi-Fi, reach the limit sooner. Your last result is still on the screen before this one.</p>
+</section>
+</sc-if>
+</div>
+</main>
+
+<div style="position: sticky; bottom: 0; background: #FFFFFF; border-top: 1px solid #E3E5EA">
+<div style="max-width: 1040px; margin: 0 auto; box-sizing: border-box; padding: 12px 16px 20px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+<sc-if value="{{groupMain}}" hint-placeholder-val="{{ true }}">
+<a href="Scan.dc.html" style="flex: 1 1 260px; display: flex; align-items: center; justify-content: center; min-height: 54px; border-radius: 999px; background: #1B7A45; color: #FFFFFF; text-decoration: none; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600">Check another product</a>
+<a href="Confirm.dc.html" style="flex: 1 1 200px; display: flex; align-items: center; justify-content: center; min-height: 48px; border-radius: 999px; border: 2px solid #1B7A45; box-sizing: border-box; color: #145C34; text-decoration: none; font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: 600">Edit number</a>
+</sc-if>
+<sc-if value="{{isNotFound}}" hint-placeholder-val="{{ false }}">
+<a href="Confirm.dc.html" style="flex: 1 1 260px; display: flex; align-items: center; justify-content: center; min-height: 54px; border-radius: 999px; background: #1B7A45; color: #FFFFFF; text-decoration: none; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600">Edit number</a>
+<a href="Scan.dc.html" style="flex: 1 1 200px; display: flex; align-items: center; justify-content: center; min-height: 48px; border-radius: 999px; border: 2px solid #1B7A45; box-sizing: border-box; color: #145C34; text-decoration: none; font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: 600">Check another product</a>
+</sc-if>
+<sc-if value="{{isInsufficient}}" hint-placeholder-val="{{ false }}">
+<a href="Scan.dc.html" style="flex: 1 1 260px; display: flex; align-items: center; justify-content: center; min-height: 54px; border-radius: 999px; background: #1B7A45; color: #FFFFFF; text-decoration: none; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600">Scan pack</a>
+<a href="ConfirmTyped.dc.html" style="flex: 1 1 200px; display: flex; align-items: center; justify-content: center; min-height: 48px; border-radius: 999px; border: 2px solid #1B7A45; box-sizing: border-box; color: #145C34; text-decoration: none; font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: 600">Type the number</a>
+</sc-if>
+<sc-if value="{{limitWaiting}}" hint-placeholder-val="{{ false }}">
+<button type="button" disabled="" style="flex: 1 1 260px; display: flex; align-items: center; justify-content: center; min-height: 54px; border: 0; border-radius: 999px; background: #E3E5EA; color: #4B4F5C; font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: 600">Check another product in {{countdown}}</button>
+</sc-if>
+<sc-if value="{{limitDone}}" hint-placeholder-val="{{ false }}">
+<a href="Scan.dc.html" style="flex: 1 1 260px; display: flex; align-items: center; justify-content: center; min-height: 54px; border-radius: 999px; background: #1B7A45; color: #FFFFFF; text-decoration: none; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600">Check another product</a>
+</sc-if>
+<sc-if value="{{showReport}}" hint-placeholder-val="{{ true }}">
+<a href="Report.dc.html" style="flex: 1 1 100%; display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; color: #16143D; font-size: 15px; font-weight: 600">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5"></path></svg>Report a product concern</a>
+</sc-if>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"variant":{"editor":"enum","options":["match","notfound","expired","mismatch","insufficient","limit"],"default":"match","section":"State"},"$preview":{"width":390,"height":1560}}'>
+class Component extends DCLogic {
+componentDidMount() {
+this._t = setInterval(() => {
+if ((this.props.variant || 'match') !== 'limit') return;
+const s = this.state && this.state.secs != null ? this.state.secs : 24;
+if (s > 0) this.setState({ secs: s - 1 });
+}, 1000);
+}
+componentWillUnmount() { clearInterval(this._t); }
+renderVals() {
+const v = this.props.variant || 'match';
+const st = this.state || {};
+const secs = st.secs != null ? st.secs : 24;
+const closed = !!st.msgClosed;
+return {
+isMatch: v === 'match',
+isNotFound: v === 'notfound',
+isExpired: v === 'expired',
+isMismatch: v === 'mismatch',
+isInsufficient: v === 'insufficient',
+isLimit: v === 'limit',
+groupMain: v === 'match' || v === 'expired' || v === 'mismatch',
+showReport: v === 'match' || v === 'expired' || v === 'notfound',
+limitWaiting: v === 'limit' && secs > 0,
+limitDone: v === 'limit' && secs <= 0,
+countdown: '0:' + String(secs).padStart(2, '0'),
+msgOpen: !closed,
+msgClosed: closed,
+closeMsg: () => this.setState({ msgClosed: true }),
+openMsg: () => this.setState({ msgClosed: false })
+};
+}
+}
+</script>
+</body>
+</html>

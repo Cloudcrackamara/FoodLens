@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FoodLens wholesaler workspace</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&amp;family=Open+Sans:wght@400;600;700&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1F5F8F}a:hover{color:#174A70}
+.ws-side{flex:0 0 256px;box-sizing:border-box}
+.ws-menu{display:none}
+.ws-row{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:24px;align-items:start}
+.ws-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
+.ws-hide-sm{display:inline-flex}
+@keyframes ws-pulse{0%,100%{opacity:.5}50%{opacity:1}}
+.ws-skel{animation:ws-pulse 1.4s ease-in-out infinite}
+@media (max-width:1023px){.ws-side{display:none !important}.ws-menu{display:inline-flex}.ws-row{grid-template-columns:minmax(0,1fr)}.ws-pad{padding-left:20px !important;padding-right:20px !important}}
+@media (max-width:640px){.ws-cards{grid-template-columns:minmax(0,1fr);gap:14px}.ws-hide-sm{display:none !important}.ws-pad{padding-left:14px !important;padding-right:14px !important}}
+@media (prefers-reduced-motion: reduce){.ws-skel{animation:none}}
+</style>
+</helmet>
+<div style="display: flex; min-height: 100vh; background: #FAF8F3; color: #2A2F3A; font-family: 'Open Sans', system-ui, sans-serif; font-size: 14px; line-height: 1.5">
+
+<aside class="ws-side" aria-label="Wholesaler navigation" style="background: #16143D; color: #DCDAF0; padding: 22px 16px; display: flex; flex-direction: column; gap: 6px">
+<a href="Main.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 2px 6px 18px; color: #FFFFFF; text-decoration: none">
+<svg width="30" height="30" viewBox="0 0 36 36" aria-hidden="true"><circle cx="15" cy="15" r="11" fill="none" stroke="#F6B93B" stroke-width="3.5"></circle><path d="M23 23l9 9" stroke="#F6B93B" stroke-width="4" stroke-linecap="round"></path><path d="M10 15.5l3.5 3.5 6.5-7" fill="none" stroke="#3CC37A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span style="font-family: 'Poppins', sans-serif; font-size: 20px"><b>FoodLens</b> <span style="font-weight: 500; color: #F6B93B">business</span></span>
+</a>
+<div style="display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.07); margin-bottom: 8px">
+<span aria-hidden="true" style="flex: none; width: 40px; height: 40px; border-radius: 10px; background: #24689C; color: #FFFFFF; display: inline-flex; align-items: center; justify-content: center; font-family: 'Poppins', sans-serif; font-weight: 700">AG</span>
+<span style="min-width: 0"><b style="display: block; color: #FFFFFF; font-size: 14px; line-height: 1.3">{{companyName}}</b><span style="display: inline-block; margin-top: 3px; padding: 0 8px; border-radius: 999px; background: rgba(110,176,230,0.22); color: #BFDDF4; font-size: 11px; font-weight: 700">Reviewed · demo</span></span>
+</div>
+<p style="margin: 8px 8px 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #9C9AC4">BUYING</p>
+<nav style="display: flex; flex-direction: column; gap: 3px">
+<sc-for list="{{nav}}" as="n" hint-placeholder-count="2">
+<button type="button" onClick="{{n.go}}" aria-current="{{n.current}}" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border: 0; border-radius: 8px; background: {{n.bg}}; color: {{n.fg}}; font: inherit; font-weight: {{n.weight}}; text-align: left; cursor: pointer"><span style="flex: 1">{{n.label}}</span><sc-if value="{{n.hasCount}}" hint-placeholder-val="{{ false }}"><span style="font-size: 11px; font-weight: 700; padding: 0 8px; border-radius: 999px; background: rgba(255,255,255,0.14); color: #FFFFFF">{{n.count}}</span></sc-if></button>
+</sc-for>
+</nav>
+<div style="margin-top: auto; padding: 14px; border-radius: 12px; background: rgba(110,176,230,0.12); color: #BFDDF4; font-size: 12px; line-height: 1.45">Supplier profiles are reviewed by FoodLens for this demo. That is not a NAFDAC or SON approval.</div>
+<a href="AccLogin.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; color: #DCDAF0; text-decoration: none; font-weight: 600">Log out</a>
+</aside>
+
+<div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column">
+<header class="ws-pad" style="display: flex; align-items: center; gap: 12px; height: 68px; padding: 0 48px 0 32px; box-sizing: border-box; background: #FFFFFF; border-bottom: 1px solid #ECEDF1">
+<button type="button" class="ws-menu" onClick="{{toggleMenu}}" aria-label="Open navigation" aria-expanded="{{menuOpen}}" style="width: 44px; height: 44px; border: 1px solid #E3E5EA; border-radius: 8px; background: #FFFFFF; align-items: center; justify-content: center; cursor: pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2A2F3A" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+<p style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: 600; color: #16143D">{{pageTitle}}</p>
+<div style="flex: 1"></div>
+<span class="ws-hide-sm" style="align-items: center; height: 32px; padding: 0 12px; border-radius: 999px; background: #E3EFF8; color: #1F5F8F; font-size: 12px; font-weight: 700">Wholesaler</span>
+<span class="ws-hide-sm" style="align-items: center; height: 32px; padding: 0 12px; border-radius: 999px; background: #FDF5E2; color: #7A4F00; font-size: 12px; font-weight: 700">Demo data</span>
+<span style="position: relative; display: inline-flex"><button type="button" onClick="{{toggleAcct}}" aria-label="Account: Ibrahim Musa" aria-haspopup="true" aria-expanded="{{acctOpen}}" style="width: 40px; height: 40px; border: 0; border-radius: 50%; background: #24689C; color: #FFFFFF; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer">IM</button><sc-if value="{{acctOpen}}" hint-placeholder-val="{{ false }}"><div role="menu" aria-label="Account" style="position: absolute; right: 0; top: 48px; z-index: 20; width: 260px; padding: 8px; border-radius: 10px; background: #FFFFFF; box-shadow: 0 10px 30px rgba(20,22,40,0.18); border: 1px solid #ECEDF1"><p style="margin: 0; padding: 8px 10px 10px; border-bottom: 1px solid #ECEDF1"><b style="display: block; color: #16143D">Ibrahim Musa</b><span style="font-size: 12px; color: #5F6472">Arewa Grainline · Wholesaler</span></p><a role="menuitem" href="AccStatusApprovedWholesaler.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 10px; border-radius: 6px; color: #2A2F3A; text-decoration: none; font-weight: 400">Company details &amp; review status</a><a role="menuitem" href="AccForgot.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 10px; border-radius: 6px; color: #2A2F3A; text-decoration: none; font-weight: 400">Reset password</a><a role="menuitem" href="AccLogin.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 10px; border-radius: 6px; color: #8C1D16; text-decoration: none; font-weight: 600">Log out</a></div></sc-if></span>
+</header>
+<sc-if value="{{menuOpen}}" hint-placeholder-val="{{ false }}">
+<nav aria-label="Wholesaler navigation" style="display: flex; flex-direction: column; gap: 2px; padding: 10px; background: #16143D">
+<sc-for list="{{nav}}" as="n" hint-placeholder-count="2"><button type="button" onClick="{{n.go}}" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; border: 0; border-radius: 8px; background: {{n.bg}}; color: {{n.fg}}; font: inherit; font-weight: 600; text-align: left; cursor: pointer">{{n.label}}</button></sc-for>
+</nav>
+</sc-if>
+
+<main class="ws-pad" style="padding: 28px 48px 40px 32px; display: flex; flex-direction: column; gap: 22px">
+
+<!-- ======== FIND ======== -->
+<sc-if value="{{isFind}}" hint-placeholder-val="{{ true }}">
+<div><h1 style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 22px; font-weight: 600; color: #16143D">Find suppliers</h1><p style="margin: 2px 0 0; color: #5F6472">Manufacturers with a FoodLens-reviewed profile. Check any product’s register status before you request stock.</p></div>
+<section aria-label="Search and filters" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; padding: 18px 20px; border-radius: 12px; background: #FFFFFF; box-shadow: 0 1px 12px rgba(20,22,40,0.07)">
+<label style="flex: 2 1 260px; display: flex; flex-direction: column; gap: 4px; font-weight: 600">Search<input type="search" value="{{q}}" onChange="{{onQ}}" placeholder="Company, product or registration number" style="height: 44px; padding: 0 12px; border: 1px solid #C9CCD4; border-radius: 8px; font: inherit; font-weight: 400"></label>
+<label style="flex: 1 1 160px; display: flex; flex-direction: column; gap: 4px; font-weight: 600">Region<select value="{{region}}" onChange="{{onRegion}}" style="height: 44px; padding: 0 8px; border: 1px solid #C9CCD4; border-radius: 8px; font: inherit; font-weight: 400"><option value="all">All regions</option><option value="North">North</option><option value="South West">South West</option><option value="South East">South East</option><option value="South South">South South</option></select></label>
+<fieldset style="flex: 1 1 220px; margin: 0; padding: 0; border: 0"><legend style="padding: 0; margin-bottom: 4px; font-weight: 600">Fulfilment</legend>
+<div style="display: flex; gap: 6px"><sc-for list="{{fulTabs}}" as="t" hint-placeholder-count="3"><button type="button" aria-pressed="{{t.on}}" onClick="{{t.pick}}" style="min-height: 44px; padding: 0 14px; border-radius: 8px; border: {{t.border}}; background: {{t.bg}}; color: {{t.fg}}; font: inherit; font-weight: 600; cursor: pointer">{{t.label}}</button></sc-for></div></fieldset>
+</section>
+<sc-if value="{{findData}}" hint-placeholder-val="{{ true }}">
+<p style="margin: 0; font-size: 13px; color: #5F6472">{{resultCount}}</p>
+<div class="ws-cards">
+<sc-for list="{{suppliers}}" as="s" hint-placeholder-count="5">
+<article style="display: flex; flex-direction: column; gap: 8px; padding: 22px; border-radius: 12px; background: #FFFFFF; box-shadow: 0 1px 12px rgba(20,22,40,0.07)">
+<div style="display: flex; align-items: center; gap: 12px"><span aria-hidden="true" style="flex: none; width: 44px; height: 44px; border-radius: 10px; background: {{s.tint}}; color: #16143D; display: inline-flex; align-items: center; justify-content: center; font-family: 'Poppins', sans-serif; font-weight: 700">{{s.initials}}</span><span style="min-width: 0"><b style="display: block; font-family: 'Poppins', sans-serif; font-size: 16px; color: #16143D">{{s.name}}</b><span style="font-size: 13px; color: #5F6472">{{s.city}} · {{s.region}}</span></span></div>
+<span style="align-self: flex-start; padding: 1px 10px; border-radius: 999px; background: #E3EFF8; color: #1F5F8F; font-size: 12px; font-weight: 700">FoodLens demo-reviewed profile</span>
+<p style="margin: 0; color: #3A3F4B">{{s.makes}}</p>
+<p style="margin: 0; font-size: 13px; color: #5F6472">{{s.productCount}} products · {{s.locCount}} reviewed locations · {{s.ful}}</p>
+<button type="button" onClick="{{s.open}}" style="margin-top: auto; min-height: 44px; border: 2px solid #24689C; border-radius: 999px; background: #FFFFFF; color: #1F5F8F; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer">View supplier</button>
+</article>
+</sc-for>
+</div>
+<sc-if value="{{noMatches}}" hint-placeholder-val="{{ false }}"><section style="padding: 40px 24px; border-radius: 12px; border: 1px dashed #C9CCD4; background: #FFFFFF; text-align: center"><p style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 600; color: #16143D">No suppliers match</p><p style="margin: 6px 0 14px; color: #5F6472">Try another region or clear your search.</p><button type="button" onClick="{{clearFilters}}" style="min-height: 44px; padding: 0 20px; border: 2px solid #24689C; border-radius: 999px; background: #FFFFFF; color: #1F5F8F; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer">Clear filters</button></section></sc-if>
+</sc-if>
+<sc-if value="{{listLoading}}" hint-placeholder-val="{{ false }}">
+<div class="ws-cards" aria-busy="true" aria-label="Loading suppliers">
+<sc-for list="{{skels}}" as="k" hint-placeholder-count="3"><div style="padding: 22px; border-radius: 12px; background: #FFFFFF; box-shadow: 0 1px 12px rgba(20,22,40,0.07); display: flex; flex-direction: column; gap: 12px"><div class="ws-skel" style="height: 44px; width: 60%; border-radius: 10px; background: #ECEDF1"></div><div class="ws-skel" style="height: 14px; width: 80%; border-radius: 6px; background: #ECEDF1"></div><div class="ws-skel" style="height: 14px; width: 50%; border-radius: 6px; background: #ECEDF1"></div><div class="ws-skel" style="height: 44px; border-radius: 999px; background: #ECEDF1"></div></div></sc-for>
+</div>
+</sc-if>
+<sc-if value="{{listEmpty}}" hint-placeholder-val="{{ false }}">
+<section style="padding: 48px 24px; border-radius: 12px; border: 1px dashed #C9CCD4; background: #FFFFFF; text-align: center"><p style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 600; color: #16143D">No suppliers listed in your regions yet</p><p style="margin: 6px auto 0; max-width: 460px; color: #5F6472">FoodLens is still reviewing manufacturers. Widen the regions you buy for, or check back later.</p></section>
+</sc-if>
+<sc-if value="{{listError}}" hint-placeholder-val="{{ false }}">
+<section role="alert" style="padding: 36px 24px; border-radius: 12px; border: 2px solid #B42318; background: #FFFFFF; text-align: center"><p style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 600; color: #16143D">We couldn’t load suppliers</p><p style="margin: 6px 0 16px; color: #5F6472">Check your connection and try again.</p><button type="button" onClick="{{retryList}}" style="min-height: 44px; padding: 0 20px; border: 2px solid #24689C; border-radius: 999px; background: #FFFFFF; color: #1F5F8F; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer">Try again</button></section>
+</sc-if>
+</sc-if>
+
+<!-- ======== SUPPLIER PAGE ======== -->
+<sc-if value="{{isSupplier}}" hint-placeholder-val="{{ false }}">
+<nav aria-label="Breadcrumb" style="font-size: 14px"><button type="button" onClick="{{goFind}}" style="padding: 0; border: 0; background: none; color: #1F5F8F; font: inherit; font-weight: 700; cursor: pointer">Find suppliers</button> <span aria-hidden="true" style="color: #9AA0AC">/</span> Demo Foods Nigeria Ltd</nav>
+<section style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 24px 28px; border-radius: 14px; background: #FFFFFF; box-shadow: 0 1px 12px rgba(20,22,40,0.07)">
+<span aria-hidden="true" style="flex: none; width: 64px; height: 64px; border-radius: 14px; background: #E8F5EE; color: #16143D; display: inline-flex; align-items: center; justify-content: center; font-family: 'Poppins', sans-serif; font-size: 22px; font-weight: 700">DF</span>
+<div style="flex: 1 1 260px; min-width: 0"><h1 style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 22px; font-weight: 600; color: #16143D">Demo Foods Nigeria Ltd</h1><p style="margin: 2px 0 6px; color: #5F6472">Manufacturer · Ikeja, Lagos · CAC RC-000000 (demo)</p><span style="padding: 1px 10px; border-radius: 999px; background: #E3EFF8; color: #1F5F8F; font-size: 12px; font-weight: 700">FoodLens demo-reviewed profile</span></div>
+<button type="button" onClick="{{goRequest}}" style="min-height: 48px; padding: 0 24px; border: 0; border-radius: 999px; background: #24689C; color: #FFFFFF; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer">Request an order</button>
+</section>
+<p style="margin: 0; padding: 12px 16px; border-radius: 10px; background: #ECEBF7; color: #2F2C5E; font-size: 13px">A reviewed profile means FoodLens checked the company details for this demo. It is not a NAFDAC or SON approval, and it doesn’t describe the products’ quality.</p>
+<div class="ws-row">
+<section style="background: #FFFFFF; border-radius: 12px; box-shadow: 0 1px 12px rgba(20,22,40,0.07); padding: 8px 24px 16px">
+<h2 style="margin: 14px 0 4px; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600; color: #16143D">Products</h2>
+<sc-for list="{{supProducts}}" as="p" hint-placeholder-count="6">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; padding: 12px 0; border-top: 1px solid #ECEDF1">
+<span style="flex: 2 1 220px; min-width: 0"><b style="display: block; color: #16143D">{{p.name}}</b><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5F6472">{{p.reg}}</span></span>
+<span style="flex: 1.5 1 220px"><span style="display: inline-flex; padding: 1px 10px; border-radius: 999px; background: {{p.rsBg}}; color: {{p.rsFg}}; font-size: 12px; font-weight: 700">{{p.rsLabel}}</span><span style="display: block; margin-top: 2px; font-size: 12px; color: #5F6472">{{p.rsHelp}}</span></span>
+</div>
+</sc-for>
+<p style="margin: 10px 0 0; font-size: 12px; color: #5F6472">Status from the demo register. Products that are expired, not found or mismatched can’t be requested.</p>
+</section>
+<div style="display: flex; flex-direction: column; gap: 24px">
+<section style="background: #FFFFFF; border-radius: 12px; box-shadow: 0 1px 12px rgba(20,22,40,0.07); padding: 24px">
+<h2 style="margin: 0 0 8px; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600; color: #16143D">Reviewed locations</h2>
+<div style="padding: 10px 0; border-top: 1px solid #ECEDF1"><b style="color: #16143D">Ikeja depot</b><br><span style="font-size: 13px">12 Demo Industrial Ave, Ikeja, Lagos</span><br><span style="font-size: 12px; color: #5F6472">Mon–Sat 8:00–18:00 · Pickup</span></div>
+<div style="padding: 10px 0; border-top: 1px solid #ECEDF1"><b style="color: #16143D">Apapa warehouse</b><br><span style="font-size: 13px">Wharf Rd, Apapa, Lagos</span><br><span style="font-size: 12px; color: #5F6472">Mon–Fri 7:00–17:00 · Delivery dispatch</span></div>
+</section>
+<section style="background: #FFFFFF; border-radius: 12px; box-shadow: 0 1px 12px rgba(20,22,40,0.07); padding: 24px">
+<h2 style="margin: 0 0 8px; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600; color: #16143D">Business contact</h2>
+<p style="margin: 0"><b style="color: #16143D">Tolu Adebayo</b>, Sales</p>
+<p style="margin: 4px 0 0; font-size: 13px">+234 801 000 0000<br>trade@demofoods.example</p>
+<p style="margin: 10px 0 0; font-size: 12px; color: #5F6472">Delivers to: South West, North · Pickup at Ikeja</p>
+</section>
+</div>
+</div>
+</sc-if>
+
+<!-- ======== REQUEST ======== -->
+<sc-if value="{{isRequest}}" hint-placeholder-val="{{ false }}">
+<nav aria-label="Breadcrumb" style="font-size: 14px"><button type="button" onClick="{{goSupplier}}" style="padding: 0; border: 0; background: none; color: #1F5F8F; font: inherit; font-weight: 700; cursor: pointer">Demo Foods Nigeria Ltd</button> <span aria-hidden="true" style="color: #9AA0AC">/</span> Request an order</nav>
+<ol aria-label="Steps" style="list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{steps}}" as="s" hint-placeholder-count="3"><li aria-current="{{s.current}}" style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px 6px 6px; border-radius: 999px; background: {{s.bg}}; color: {{s.fg}}; font-weight: 600"><span style="width: 26px; height: 26px; border-radius: 50%; background: {{s.dotBg}}; color: {{s.dotFg}}; display: inline-flex; align-items: center; justify-content: center; font-size: 13px">{{s.n}}</span>{{s.label}}</li></sc-for>
+</ol>
+
+<sc-if value="{{rBuild}}" hint-placeholder-val="{{ true }}">
+<sc-if value="{{buildError}}" hint-placeholder-val="{{ false }}"><div role="alert" style="padding: 14px 16px; border-radius: 10px; border: 2px solid #B42318; background: #FDECEA; color: #6E1A13"><b>Add a quantity for at least one product.</b></div></sc-if>
+<div class="ws-row">
+<section style="background: #FFFFFF; border-radius: 12px; box-shadow: 0 1px 12px rgba(20,22,40,0.07); padding: 8px 24px 20px">
+<h2 style="margin: 14px 0 4px; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600; color: #16143D">What do you need?</h2>
+<sc-for list="{{reqLines}}" as="l" hint-placeholder-count="6">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 12px 0; border-top: 1px solid #ECEDF1; opacity: {{l.opacity}}">
+<span style="flex: 2 1 220px; min-width: 0"><b style="display: block; color: #16143D">{{l.name}}</b><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5F6472">{{l.reg}}</span> <span style="padding: 0 8px; border-radius: 999px; background: {{l.rsBg}}; color: {{l.rsFg}}; font-size: 11px; font-weight: 700">{{l.rsLabel}}</span></span>
+<sc-if value="{{l.ok}}" hint-placeholder-val="{{ true }}">
+<span style="display: flex; align-items: center; gap: 6px"><button type="button" onClick="{{l.dec}}" aria-label="{{l.decLabel}}" style="width: 40px; height: 40px; border: 1px solid #C9CCD4; border-radius: 8px; background: #FFFFFF; font-size: 18px; cursor: pointer">−</button><label><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">{{l.qtyLabel}}</span><input type="number" min="0" inputmode="numeric" value="{{l.qty}}" onChange="{{l.setQty}}" style="width: 64px; height: 40px; box-sizing: border-box; text-align: center; border: 1px solid #C9CCD4; border-radius: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 15px"></label><button type="button" onClick="{{l.inc}}" aria-label="{{l.incLabel}}" style="width: 40px; height: 40px; border: 1px solid #C9CCD4; border-radius: 8px; background: #FFFFFF; font-size: 18px; cursor: pointer">+</button></span>
+<label><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Unit</span><select value="{{l.unit}}" onChange="{{l.setUnit}}" style="height: 40px; padding: 0 8px; border: 1px solid #C9CCD4; border-radius: 8px; font: inherit"><option value="cartons">cartons</option><option value="cases">cases</option><option value="pieces">pieces</option></select></label>
+</sc-if>
+<sc-if value="{{l.blocked}}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; color: #3A3F4B">Can’t be requested · {{l.rsLabel}} in the register</span></sc-if>
+</div>
+</sc-for>
+</section>
+<div style="display: flex; flex-direction: column; gap: 24px">
+<section style="background: #FFFFFF; border-radius: 12px; box-shadow: 0 1px 12px rgba(20,22,40,0.07); padding: 24px; display: flex; flex-direction: column; gap: 12px">
+<fieldset style="margin: 0; padding: 0; border: 0"><legend style="padding: 0; margin-bottom: 6px; font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: 600; color: #16143D">Pickup or delivery</legend>
+<sc-for list="{{fulOpts}}" as="f" hint-placeholder-count="2"><label style="display: flex; gap: 10px; align-items: flex-start; padding: 12px; margin-bottom: 8px; border-radius: 10px; border: {{f.border}}; background: {{f.bg}}; cursor: pointer"><input type="radio" name="ful" checked="{{f.on}}" onChange="{{f.pick}}" style="width: 20px; height: 20px; margin: 2px 0 0; accent-color: #24689C"><span><b style="color: #16143D">{{f.label}}</b><br><span style="font-size: 13px; color: #5F6472">{{f.help}}</span></span></label></sc-for>
+</fieldset>
+<label style="display: flex; flex-direction: column; gap: 4px; font-weight: 600">Note for the supplier <span style="font-weight: 400; font-size: 12px; color: #5F6472">Optional</span><textarea rows="3" value="{{reqNote}}" onChange="{{onReqNote}}" style="padding: 8px 10px; border: 1px solid #C9CCD4; border-radius: 8px; font: inherit; font-weight: 400; resize: vertical"></textarea></label>
+<button type="button" onClick="{{toReview}}" style="min-height: 48px; border: 0; border-radius: 999px; background: #24689C; color: #FFFFFF; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer">Review request</button>
+<p style="margin: 0; font-size: 12px; color: #5F6472">No prices or payments in FoodLens. You agree those with the supplier.</p>
+</section>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{rReview}}" hint-placeholder-val="{{ false }}">
+<section style="max-width: 760px; background: #FFFFFF; border-radius: 12px; box-shadow: 0 1px 12px rgba(20,22,40,0.07); padding: 28px">
+<h2 style="margin: 0 0 4px; font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 600; color: #16143D">Check your request</h2>
+<p style="margin: 0 0 14px; color: #5F6472">To Demo Foods Nigeria Ltd. They can accept, decline or reply.</p>
+<sc-for list="{{chosen}}" as="c" hint-placeholder-count="3"><div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #ECEDF1"><span><b style="color: #16143D">{{c.name}}</b> <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5F6472">{{c.reg}}</span></span><b style="color: #16143D">{{c.qty}}</b></div></sc-for>
+<dl style="margin: 14px 0 0; display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 8px 12px"><dt style="color: #5F6472">Fulfilment</dt><dd style="margin: 0; font-weight: 600">{{fulText}}</dd><dt style="color: #5F6472">Note</dt><dd style="margin: 0">{{noteText}}</dd></dl>
+<div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px"><button type="button" onClick="{{send}}" style="min-height: 48px; padding: 0 26px; border: 0; border-radius: 999px; background: #24689C; color: #FFFFFF; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer">Send request</button><button type="button" onClick="{{backBuild}}" style="min-height: 48px; padding: 0 22px; border: 2px solid #C9CCD4; border-radius: 999px; background: #FFFFFF; color: #16143D; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer">Edit</button></div>
+</section>
+</sc-if>
+
+<sc-if value="{{rDone}}" hint-placeholder-val="{{ false }}">
+<section role="status" style="max-width: 640px; background: #FFFFFF; border-radius: 12px; box-shadow: 0 1px 12px rgba(20,22,40,0.07); padding: 32px; text-align: center">
+<span aria-hidden="true" style="display: inline-flex; width: 64px; height: 64px; border-radius: 50%; background: #E3EFF8; align-items: center; justify-content: center"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#1F5F8F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg></span>
+<h2 style="margin: 14px 0 4px; font-family: 'Poppins', sans-serif; font-size: 22px; font-weight: 600; color: #16143D">Request sent to Demo Foods</h2>
+<p style="margin: 0 0 4px; color: #3A3F4B">Reference <b style="font-family: 'IBM Plex Mono', monospace">DEMO-OR-1093</b></p>
+<p style="margin: 0 auto 20px; max-width: 440px; color: #5F6472">The supplier will accept, decline or reply. You’ll see their answer in My orders. Nothing is reserved until they accept.</p>
+<div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px"><button type="button" onClick="{{goOrders}}" style="min-height: 48px; padding: 0 24px; border: 0; border-radius: 999px; background: #24689C; color: #FFFFFF; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer">Go to My orders</button><button type="button" onClick="{{goFind}}" style="min-height: 48px; padding: 0 22px; border: 2px solid #C9CCD4; border-radius: 999px; background: #FFFFFF; color: #16143D; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer">Find more suppliers</button></div>
+</section>
+</sc-if>
+</sc-if>
+
+<!-- ======== MY ORDERS ======== -->
+<sc-if value="{{isOrders}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px"><div><h1 style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 22px; font-weight: 600; color: #16143D">My orders</h1><p style="margin: 2px 0 0; color: #5F6472">Requests you’ve sent and what suppliers said.</p></div><button type="button" onClick="{{goFind}}" style="min-height: 44px; padding: 0 20px; border: 0; border-radius: 999px; background: #24689C; color: #FFFFFF; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer">+ New request</button></div>
+<sc-if value="{{listData}}" hint-placeholder-val="{{ true }}">
+<section style="background: #FFFFFF; border-radius: 12px; box-shadow: 0 1px 12px rgba(20,22,40,0.07); padding: 8px 24px">
+<sc-for list="{{myOrders}}" as="o" hint-placeholder-count="5">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; padding: 14px 0; border-top: {{o.topBorder}}">
+<span style="flex: 0 0 76px; font-family: 'IBM Plex Mono', monospace; color: #16143D">{{o.ref}}</span>
+<span style="flex: 2 1 200px; min-width: 0"><b style="display: block; color: #16143D">{{o.supplier}}</b><span style="font-size: 13px; color: #5F6472">{{o.summary}}</span></span>
+<span style="flex: 0 1 120px; font-size: 13px; color: #5F6472">{{o.when}}</span>
+<span style="padding: 1px 10px; border-radius: 999px; background: {{o.chipBg}}; color: {{o.chipFg}}; font-size: 12px; font-weight: 700">{{o.status}}</span>
+<button type="button" onClick="{{o.open}}" style="min-height: 36px; padding: 0 14px; border: 1px solid #C9CCD4; border-radius: 6px; background: #FFFFFF; font: inherit; font-weight: 600; color: #16143D; cursor: pointer">Open</button>
+</div>
+</sc-for>
+</section>
+</sc-if>
+<sc-if value="{{listLoading}}" hint-placeholder-val="{{ false }}"><section aria-busy="true" aria-label="Loading" style="background: #FFFFFF; border-radius: 12px; padding: 16px 24px; display: flex; flex-direction: column; gap: 18px"><div class="ws-skel" style="height: 18px; width: 70%; border-radius: 6px; background: #ECEDF1"></div><div class="ws-skel" style="height: 18px; width: 55%; border-radius: 6px; background: #ECEDF1"></div><div class="ws-skel" style="height: 18px; width: 62%; border-radius: 6px; background: #ECEDF1"></div></section></sc-if>
+<sc-if value="{{listEmpty}}" hint-placeholder-val="{{ false }}"><section style="padding: 48px 24px; border-radius: 12px; border: 1px dashed #C9CCD4; background: #FFFFFF; text-align: center"><p style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 600; color: #16143D">No orders yet</p><p style="margin: 6px auto 16px; max-width: 420px; color: #5F6472">Find a supplier and send your first stock request.</p><button type="button" onClick="{{goFind}}" style="min-height: 44px; padding: 0 20px; border: 0; border-radius: 999px; background: #24689C; color: #FFFFFF; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer">Find suppliers</button></section></sc-if>
+<sc-if value="{{listError}}" hint-placeholder-val="{{ false }}"><section role="alert" style="padding: 36px 24px; border-radius: 12px; border: 2px solid #B42318; background: #FFFFFF; text-align: center"><p style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 600; color: #16143D">We couldn’t load your orders</p><p style="margin: 6px 0 16px; color: #5F6472">Check your connection and try again.</p><button type="button" onClick="{{retryList}}" style="min-height: 44px; padding: 0 20px; border: 2px solid #24689C; border-radius: 999px; background: #FFFFFF; color: #1F5F8F; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer">Try again</button></section></sc-if>
+</sc-if>
+
+<!-- ======== ORDER DETAIL ======== -->
+<sc-if value="{{isOrder}}" hint-placeholder-val="{{ false }}">
+<nav aria-label="Breadcrumb" style="font-size: 14px"><button type="button" onClick="{{goOrders}}" style="padding: 0; border: 0; background: none; color: #1F5F8F; font: inherit; font-weight: 700; cursor: pointer">My orders</button> <span aria-hidden="true" style="color: #9AA0AC">/</span> <span style="font-family: 'IBM Plex Mono', monospace">{{mo.ref}}</span></nav>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px"><h1 style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 22px; font-weight: 600; color: #16143D">{{mo.ref}} · {{mo.supplier}}</h1><span style="padding: 2px 12px; border-radius: 999px; background: {{mo.chipBg}}; color: {{mo.chipFg}}; font-size: 13px; font-weight: 700">{{mo.status}}</span></div>
+<div class="ws-row">
+<div style="display: flex; flex-direction: column; gap: 24px; min-width: 0">
+<section style="background: #FFFFFF; border-radius: 12px; box-shadow: 0 1px 12px rgba(20,22,40,0.07); padding: 24px">
+<h2 style="margin: 0 0 8px; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600; color: #16143D">Products</h2>
+<sc-for list="{{moLines}}" as="l" hint-placeholder-count="3">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; padding: 12px 0; border-top: 1px solid #ECEDF1">
+<span style="flex: 2 1 200px; min-width: 0"><b style="display: block; color: #16143D">{{l.name}}</b><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5F6472">{{l.reg}}</span></span>
+<b style="flex: 0 1 120px; color: #16143D">{{l.qty}}</b>
+<sc-if value="{{l.hasBatch}}" hint-placeholder-val="{{ false }}"><span style="flex: 1 1 220px; font-size: 13px">Batch <b style="font-family: 'IBM Plex Mono', monospace">{{l.batch}}</b> · <a href="Scan.dc.html">check this batch</a></span></sc-if>
+</div>
+</sc-for>
+</section>
+<section style="background: #FFFFFF; border-radius: 12px; box-shadow: 0 1px 12px rgba(20,22,40,0.07); padding: 24px">
+<h2 style="margin: 0 0 10px; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600; color: #16143D">Messages</h2>
+<sc-for list="{{moMsgs}}" as="m" hint-placeholder-count="2"><div style="margin-bottom: 10px; padding: 10px 12px; border-radius: 10px; background: {{m.bg}}; max-width: 86%"><b style="font-size: 12px; color: #5F6472">{{m.who}} · {{m.when}}</b><p style="margin: 2px 0 0">{{m.text}}</p></div></sc-for>
+<sc-if value="{{moCanMsg}}" hint-placeholder-val="{{ true }}"><div style="display: flex; gap: 8px; margin-top: 6px"><label style="flex: 1; min-width: 0"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Message the supplier</span><input type="text" value="{{reply}}" onChange="{{onReply}}" placeholder="Message Demo Foods…" style="width: 100%; box-sizing: border-box; height: 44px; padding: 0 12px; border: 1px solid #C9CCD4; border-radius: 8px; font: inherit"></label><button type="button" onClick="{{sendReply}}" style="flex: none; min-height: 44px; padding: 0 16px; border: 0; border-radius: 8px; background: #16143D; color: #FFFFFF; font: inherit; font-weight: 700; cursor: pointer">Send</button></div></sc-if>
+</section>
+</div>
+<div style="display: flex; flex-direction: column; gap: 24px; min-width: 0">
+<section style="background: #FFFFFF; border-radius: 12px; box-shadow: 0 1px 12px rgba(20,22,40,0.07); padding: 24px">
+<h2 style="margin: 0 0 8px; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600; color: #16143D">Status</h2>
+<ol style="list-style: none; margin: 0 0 12px; padding: 0">
+<sc-for list="{{moTimeline}}" as="t" hint-placeholder-count="3"><li style="display: flex; gap: 10px; padding: 6px 0"><span aria-hidden="true" style="flex: none; width: 12px; height: 12px; margin-top: 5px; border-radius: 50%; background: {{t.dot}}"></span><span><b style="color: #16143D">{{t.what}}</b><br><span style="font-size: 12px; color: #5F6472">{{t.when}}</span></span></li></sc-for>
+</ol>
+<p style="margin: 0; font-size: 14px; color: #3A3F4B">{{moText}}</p>
+<sc-if value="{{moCanCancel}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{cancel}}" style="width: 100%; margin-top: 14px; min-height: 46px; border: 2px solid #C9CCD4; border-radius: 999px; background: #FFFFFF; color: #16143D; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer">Cancel request</button></sc-if>
+</section>
+<section style="background: #FFFFFF; border-radius: 12px; box-shadow: 0 1px 12px rgba(20,22,40,0.07); padding: 24px">
+<h2 style="margin: 0 0 8px; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600; color: #16143D">Fulfilment</h2>
+<p style="margin: 0; font-size: 14px">{{mo.ful}}</p>
+<p style="margin: 10px 0 0; font-size: 12px; color: #5F6472">Agree price and payment with the supplier directly.</p>
+</section>
+</div>
+</div>
+</sc-if>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"variant":{"editor":"string","default":"","section":"State"},"page":{"editor":"enum","options":["find","supplier","request","orders","order"],"default":"find","section":"State"},"listState":{"editor":"enum","options":["data","loading","empty","error"],"default":"data","section":"State"},"requestStep":{"editor":"enum","options":["build","review","done"],"default":"build","section":"State"},"orderRef":{"editor":"enum","options":["OR-1093","OR-1086","OR-1079","OR-1072","OR-1065"],"default":"OR-1093","section":"State"},"$preview":{"width":1440,"height":1350}}'>
+class Component extends DCLogic {
+renderVals() {
+const VM = { supplier: { page: 'supplier' }, findLoading: { listState: 'loading' }, findEmpty: { listState: 'empty' }, request: { page: 'request' }, requestReview: { page: 'request', requestStep: 'review' }, requestDone: { page: 'request', requestStep: 'done' }, orders: { page: 'orders' }, order: { page: 'order' }, orderFulfilled: { page: 'order', orderRef: 'OR-1079' }, ordersEmpty: { page: 'orders', listState: 'empty' } };
+const P = Object.assign({}, this.props, VM[this.props.variant] || {}), st = this.state || {};
+const set = (o) => this.setState(o);
+const page = st.page || P.page || 'find';
+const listState = st.listState || P.listState || 'data';
+const step = st.step || P.requestStep || 'build';
+const go = (p, extra) => () => set(Object.assign({ page: p, menuOpen: false }, extra || {}));
+const RS = { active: ['Active', '#E3F4EA', '#145C34', 'Matches an active registration'], expired: ['Expired', '#FDF1DC', '#8A4100', 'Registration expired on 30 Jun 2025'], notfound: ['Not found', '#EEEFF2', '#3A3F4B', 'Number isn’t in the register'], mismatch: ['Mismatch', '#FDECEA', '#8C1D16', 'Register lists a different product for this number'] };
+const prods = [
+{ id: 1, name: 'Tomato paste, 70 g', reg: 'A7-0412L', rs: 'active', unit: 'cartons' },
+{ id: 2, name: 'Tomato paste, 210 g', reg: 'A7-0418L', rs: 'active', unit: 'cartons' },
+{ id: 3, name: 'Tomato paste, 400 g', reg: 'A7-0421L', rs: 'expired', unit: 'cartons' },
+{ id: 4, name: 'Seasoning cubes, 10 g', reg: '02-4410L', rs: 'active', unit: 'cases' },
+{ id: 5, name: 'Chilli sauce, 250 ml', reg: 'A7-0533L', rs: 'notfound', unit: 'cartons' },
+{ id: 6, name: 'Tomato ketchup, 500 g', reg: 'A7-0611L', rs: 'mismatch', unit: 'cartons' }
+];
+const allSup = [
+{ name: 'Demo Foods Nigeria Ltd', initials: 'DF', city: 'Ikeja, Lagos', region: 'South West', makes: 'Tomato paste, seasoning cubes, sauces', productCount: 6, locCount: 2, ful: 'Pickup & delivery', f: ['pickup', 'delivery'], tint: '#E8F5EE' },
+{ name: 'Demo Mills Ltd', initials: 'DM', city: 'Kano', region: 'North', makes: 'Semolina, wheat flour, pasta', productCount: 9, locCount: 3, ful: 'Pickup & delivery', f: ['pickup', 'delivery'], tint: '#FDF5E2' },
+{ name: 'Okeke Foods', initials: 'OF', city: 'Onitsha, Anambra', region: 'South East', makes: 'Palm oil, garri, custard powder', productCount: 5, locCount: 1, ful: 'Pickup only', f: ['pickup'], tint: '#EEEDF8' },
+{ name: 'Golden Grains Co', initials: 'GG', city: 'Kaduna', region: 'North', makes: 'Parboiled rice, beans, millet', productCount: 7, locCount: 2, ful: 'Delivery only', f: ['delivery'], tint: '#FDEFE4' },
+{ name: 'Delta Dairy Demo', initials: 'DD', city: 'Warri, Delta', region: 'South South', makes: 'Powdered milk, evaporated milk, yoghurt', productCount: 4, locCount: 1, ful: 'Pickup & delivery', f: ['pickup', 'delivery'], tint: '#E7F1F8' }
+];
+const q = (st.q || '').toLowerCase(), region = st.region || 'all', fil = st.fil || 'any';
+const suppliers = allSup.filter((s) => (region === 'all' || s.region === region) && (fil === 'any' || s.f.indexOf(fil) >= 0) && (!q || (s.name + ' ' + s.makes).toLowerCase().indexOf(q) >= 0)).map((s) => Object.assign({}, s, { open: go('supplier') }));
+const qty = Object.assign({ 1: 40, 2: 25, 4: 10 }, st.qty || {});
+const unit = Object.assign({}, st.unit || {});
+const reqLines = prods.map((p) => { const ok = p.rs === 'active'; const n = qty[p.id] || 0; return { name: p.name, reg: p.reg, rsLabel: RS[p.rs][0], rsBg: RS[p.rs][1], rsFg: RS[p.rs][2], ok: ok, blocked: !ok, opacity: ok ? 1 : 0.75, qty: n, unit: unit[p.id] || p.unit, qtyLabel: 'Quantity of ' + p.name, decLabel: 'Fewer ' + p.name, incLabel: 'More ' + p.name, dec: () => set({ qty: Object.assign({}, qty, { [p.id]: Math.max(0, n - 5) }), buildErr: false }), inc: () => set({ qty: Object.assign({}, qty, { [p.id]: n + 5 }), buildErr: false }), setQty: (e) => set({ qty: Object.assign({}, qty, { [p.id]: Math.max(0, parseInt(e.target.value, 10) || 0) }), buildErr: false }), setUnit: (e) => set({ unit: Object.assign({}, unit, { [p.id]: e.target.value }) }) }; });
+const chosen = prods.filter((p) => p.rs === 'active' && (qty[p.id] || 0) > 0).map((p) => ({ name: p.name, reg: p.reg, qty: qty[p.id] + ' ' + (unit[p.id] || p.unit) }));
+const ful = st.ful || 'pickup';
+const fulOpts = [['pickup', 'Pickup', 'Ikeja depot · Mon–Sat 8:00–18:00'], ['delivery', 'Delivery', 'To Arewa Grainline, Sabon Gari, Kano']].map(([k, l, h]) => ({ label: l, help: h, on: ful === k, border: ful === k ? '2px solid #24689C' : '1px solid #E3E5EA', bg: ful === k ? '#F1F7FC' : '#FFFFFF', pick: () => set({ ful: k }) }));
+const reqNote = st.reqNote !== undefined ? st.reqNote : 'Restocking our Kano depot before month end. Can we collect on Friday?';
+const stepIdx = { build: 0, review: 1, done: 2 }[step];
+const steps = ['Choose products', 'Review', 'Sent'].map((l, i) => ({ n: i + 1, label: l, current: i === stepIdx ? 'step' : 'false', bg: i === stepIdx ? '#E3EFF8' : '#FFFFFF', fg: i <= stepIdx ? '#16143D' : '#5F6472', dotBg: i < stepIdx ? '#24689C' : i === stepIdx ? '#24689C' : '#ECEDF1', dotFg: i <= stepIdx ? '#FFFFFF' : '#5F6472' }));
+const OS = { requested: ['Requested', '#E3EFF8', '#1F5F8F'], accepted: ['Accepted', '#ECEBF7', '#433F8A'], fulfilled: ['Fulfilled', '#E3F4EA', '#145C34'], declined: ['Declined', '#EEEFF2', '#3A3F4B'], cancelled: ['Cancelled', '#EEEFF2', '#3A3F4B'] };
+const ordersBase = [
+{ ref: 'OR-1093', supplier: 'Demo Foods Nigeria Ltd', when: 'Today, 10:14', s: 'requested', ful: 'Pickup · Ikeja depot · from 24 Oct', lines: [['Tomato paste, 70 g', 'A7-0412L', '40 cartons'], ['Tomato paste, 210 g', 'A7-0418L', '25 cartons'], ['Seasoning cubes, 10 g', '02-4410L', '10 cases']], msgs: [['You', 'Today, 10:14', 'Restocking our Kano depot before month end. Can we collect on Friday?']] },
+{ ref: 'OR-1086', supplier: 'Demo Mills Ltd', when: '16 Oct', s: 'accepted', ful: 'Delivery · Sabon Gari, Kano · 22 Oct', lines: [['Semolina, 1 kg', 'B1-2210L', '60 bags'], ['Spaghetti, 500 g', 'B1-2304L', '30 cartons']], msgs: [['You', '16 Oct', 'Weekly order.'], ['Demo Mills Ltd', '17 Oct', 'Accepted. Truck leaves Tuesday morning.']] },
+{ ref: 'OR-1079', supplier: 'Demo Foods Nigeria Ltd', when: '9 Oct', s: 'fulfilled', ful: 'Pickup · Ikeja depot · collected 12 Oct', lines: [['Tomato paste, 70 g', 'A7-0412L', '30 cartons', '24E-310'], ['Seasoning cubes, 10 g', '02-4410L', '20 cases', 'SC-2607']], msgs: [['Demo Foods Nigeria Ltd', '12 Oct', 'Collected. Thank you.']] },
+{ ref: 'OR-1072', supplier: 'Golden Grains Co', when: '2 Oct', s: 'declined', ful: 'Delivery · Sabon Gari, Kano', lines: [['Parboiled rice, 50 kg', 'C3-1102L', '100 bags']], msgs: [['Golden Grains Co', '3 Oct', 'Declined: below our minimum order for delivery.']], reason: 'Below their minimum order for delivery.' },
+{ ref: 'OR-1065', supplier: 'Okeke Foods', when: '24 Sep', s: 'cancelled', ful: 'Pickup · Onitsha', lines: [['Palm oil, 5 L', 'D2-0045L', '20 jerrycans']], msgs: [['You', '25 Sep', 'Cancelled, we found stock locally.']] }
+];
+const ostat = st.ostat || {};
+const orders = ordersBase.map((o) => Object.assign({}, o, { s: ostat[o.ref] || o.s }));
+const myOrders = orders.map((o, i) => ({ ref: o.ref, supplier: o.supplier, summary: o.lines.length + (o.lines.length === 1 ? ' product · ' : ' products · ') + o.ful.split(' · ')[0], when: o.when, status: OS[o.s][0], chipBg: OS[o.s][1], chipFg: OS[o.s][2], topBorder: i ? '1px solid #ECEDF1' : '0', open: go('order', { ordRef: o.ref }) }));
+const o0 = orders.find((o) => o.ref === (st.ordRef || P.orderRef || 'OR-1093'));
+const order = ['requested', 'accepted', 'fulfilled'];
+const tl = [{ what: 'Requested', when: o0.when, dot: '#24689C' }];
+if (o0.s === 'accepted' || o0.s === 'fulfilled') tl.push({ what: 'Accepted by supplier', when: o0.ref === 'OR-1079' ? '10 Oct' : '17 Oct', dot: '#24689C' });
+if (o0.s === 'fulfilled') tl.push({ what: 'Fulfilled', when: '12 Oct', dot: '#24689C' });
+if (o0.s === 'declined') tl.push({ what: 'Declined by supplier', when: '3 Oct', dot: '#3A3F4B' });
+if (o0.s === 'cancelled') tl.push({ what: 'Cancelled by you', when: ostat[o0.ref] ? 'Just now' : '25 Sep', dot: '#3A3F4B' });
+if (o0.s === 'requested') tl.push({ what: 'Waiting for the supplier', when: 'Usually within 2 working days', dot: '#C9CCD4' });
+const moText = { requested: 'The supplier hasn’t answered yet. You can cancel while it’s still requested.', accepted: 'The supplier accepted. They’ll add the batch for each line when the stock leaves.', fulfilled: 'Fulfilled. Check each batch number against the register when the stock arrives.', declined: 'Declined: ' + (o0.reason || ''), cancelled: 'You cancelled this request.' }[o0.s];
+const moMsgs = o0.msgs.map((m) => ({ who: m[0], when: m[1], text: m[2], bg: m[0] === 'You' ? '#E3EFF8' : '#F1F2F5' })).concat((st.replies || []).map((r) => ({ who: 'You', when: 'Just now', text: r, bg: '#E3EFF8' })));
+const titles = { find: 'Find suppliers', supplier: 'Find suppliers', request: 'Request an order', orders: 'My orders', order: 'My orders' };
+const active = page === 'orders' || page === 'order' ? 'orders' : 'find';
+const nav = [['find', 'Find suppliers', 0], ['orders', 'My orders', orders.filter((o) => o.s === 'requested' || o.s === 'accepted').length]].map(([k, l, c]) => ({ label: l, count: c, hasCount: !!c, go: go(k), current: active === k ? 'page' : 'false', bg: active === k ? '#24689C' : 'transparent', fg: active === k ? '#FFFFFF' : '#DCDAF0', weight: active === k ? 700 : 500 }));
+return {
+acctOpen: !!st.acctOpen, toggleAcct: () => set({ acctOpen: !st.acctOpen }),
+companyName: 'Arewa Grainline',
+menuOpen: !!st.menuOpen, toggleMenu: () => set({ menuOpen: !st.menuOpen }), nav: nav, pageTitle: titles[page],
+isFind: page === 'find', isSupplier: page === 'supplier', isRequest: page === 'request', isOrders: page === 'orders', isOrder: page === 'order',
+listData: listState === 'data', findData: listState === 'data', listLoading: listState === 'loading', listEmpty: listState === 'empty', listError: listState === 'error', retryList: () => set({ listState: 'data' }),
+skels: [1, 2, 3],
+goFind: go('find', { step: 'build' }), goSupplier: go('supplier'), goRequest: go('request', { step: 'build' }), goOrders: go('orders'),
+q: st.q || '', onQ: (e) => set({ q: e.target.value }), region: region, onRegion: (e) => set({ region: e.target.value }),
+fulTabs: [['any', 'Any'], ['pickup', 'Pickup'], ['delivery', 'Delivery']].map(([k, l]) => ({ label: l, on: fil === k, border: fil === k ? '2px solid #24689C' : '1px solid #C9CCD4', bg: fil === k ? '#E3EFF8' : '#FFFFFF', fg: fil === k ? '#1F5F8F' : '#2A2F3A', pick: () => set({ fil: k }) })),
+suppliers: suppliers, resultCount: suppliers.length + (suppliers.length === 1 ? ' supplier' : ' suppliers'), noMatches: suppliers.length === 0, clearFilters: () => set({ q: '', region: 'all', fil: 'any' }),
+supProducts: prods.map((p) => ({ name: p.name, reg: p.reg, rsLabel: RS[p.rs][0], rsBg: RS[p.rs][1], rsFg: RS[p.rs][2], rsHelp: RS[p.rs][3] })),
+steps: steps, rBuild: step === 'build', rReview: step === 'review', rDone: step === 'done',
+reqLines: reqLines, fulOpts: fulOpts, reqNote: reqNote, onReqNote: (e) => set({ reqNote: e.target.value }),
+buildError: !!st.buildErr, toReview: () => { if (!chosen.length) { set({ buildErr: true }); return; } set({ step: 'review' }); },
+chosen: chosen, fulText: ful === 'pickup' ? 'Pickup · Ikeja depot' : 'Delivery · Sabon Gari, Kano', noteText: reqNote || 'No note',
+send: () => set({ step: 'done' }), backBuild: () => set({ step: 'build' }),
+myOrders: myOrders,
+mo: { ref: o0.ref, supplier: o0.supplier, ful: o0.ful, status: OS[o0.s][0], chipBg: OS[o0.s][1], chipFg: OS[o0.s][2] },
+moLines: o0.lines.map((l) => ({ name: l[0], reg: l[1], qty: l[2], batch: l[3] || '', hasBatch: !!l[3] })),
+moMsgs: moMsgs, moTimeline: tl, moText: moText, moCanCancel: o0.s === 'requested', moCanMsg: o0.s === 'requested' || o0.s === 'accepted',
+cancel: () => set({ ostat: Object.assign({}, ostat, { [o0.ref]: 'cancelled' }) }),
+reply: st.reply || '', onReply: (e) => set({ reply: e.target.value }), sendReply: () => { if (!(st.reply || '').trim()) return; set({ replies: (st.replies || []).concat([st.reply]), reply: '' }); }
+};
+}
+}
+</script>
+</body>
+</html>

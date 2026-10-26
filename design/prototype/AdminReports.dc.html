@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FoodLens admin reports</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&amp;family=Open+Sans:wght@400;600&amp;family=IBM+Plex+Mono:wght@500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#145C34}a:hover{color:#0F4A29}
+.ad-side{flex:0 0 270px;box-sizing:border-box}
+.ad-menu{display:none}
+.ad-row{display:grid;grid-template-columns:minmax(0,696fr) minmax(0,336fr);gap:24px;align-items:start}
+.ad-hide-sm{display:block}
+@media (max-width:1023px){.ad-side{display:none !important}.ad-menu{display:inline-flex}.ad-row{grid-template-columns:minmax(0,1fr)}.ad-pad{padding-left:24px !important;padding-right:24px !important}}
+@media (max-width:640px){.ad-hide-sm{display:none !important}.ad-pad{padding-left:16px !important;padding-right:16px !important}}
+</style>
+</helmet>
+<div style="display: flex; min-height: 100%; background: #FFFFFF; color: #3A3F4B; font-family: 'Open Sans', system-ui, sans-serif; font-size: 14px; line-height: 1.5">
+
+<!-- SIDEBAR (from the approved dashboard; Reports active) -->
+<aside class="ad-side" aria-label="Admin navigation" style="padding: 22px 24px; display: flex; flex-direction: column; gap: 6px">
+<a href="Admin.dc.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #16143D; padding: 4px 0 32px">
+<svg width="34" height="34" viewBox="0 0 36 36" aria-hidden="true"><circle cx="15" cy="15" r="11" fill="none" stroke="#1B7A45" stroke-width="3.5"></circle><path d="M23 23l9 9" stroke="#1B7A45" stroke-width="4" stroke-linecap="round"></path><path d="M10 15.5l3.5 3.5 6.5-7" fill="none" stroke="#F6B93B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span style="font-family: 'Poppins', sans-serif; font-size: 22px"><span style="font-weight: 700">FoodLens</span><span style="font-weight: 500; color: #5F6472">admin</span></span>
+</a>
+<p style="margin: 8px 0 8px; font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.04em; color: #16143D">REVIEW</p>
+<nav style="display: flex; flex-direction: column; gap: 3px">
+<a href="Admin.dc.html" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 14px; border-radius: 6px; color: #2A2F3A; text-decoration: none">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="2"></rect><rect x="14" y="3" width="7" height="7" rx="2"></rect><rect x="3" y="14" width="7" height="7" rx="2"></rect><rect x="14" y="14" width="7" height="7" rx="2"></rect></svg>Overview</a>
+<a href="AdminQueue.dc.html" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 14px; border-radius: 6px; color: #2A2F3A; text-decoration: none">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5l8-2v18M12 8h8v13M4 21h17M8 8h1M8 12h1M8 16h1M16 12h1M16 16h1"></path></svg>
+<span style="flex: 1">Companies</span><span style="font-size: 11px; font-weight: 600; color: #145C34; background: #E3F4EA; padding: 1px 8px; border-radius: 999px">4</span></a>
+<a href="AdminLocations.dc.html" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 14px; border-radius: 6px; color: #2A2F3A; text-decoration: none">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"></path><circle cx="12" cy="9.5" r="2.5"></circle></svg>
+<span style="flex: 1">Locations</span><span style="font-size: 11px; font-weight: 600; color: #1F5F8F; background: #E3EFF8; padding: 1px 8px; border-radius: 999px">6</span></a>
+<a href="AdminChanges.dc.html" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 14px; border-radius: 6px; color: #2A2F3A; text-decoration: none">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 7.5L12 3l9 4.5v9L12 21l-9-4.5z"></path><path d="M3 7.5l9 4.5 9-4.5M12 12v9"></path></svg>
+<span style="flex: 1">Product changes</span><span style="font-size: 11px; font-weight: 600; color: #433F8A; background: #ECEBF7; padding: 1px 8px; border-radius: 999px">5</span></a>
+<a href="AdminReports.dc.html" aria-current="page" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 14px; border-radius: 6px; background: #1B7A45; color: #FFFFFF; text-decoration: none; font-weight: 600">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5"></path></svg>
+<span style="flex: 1">Reports</span><span style="font-size: 11px; font-weight: 700; color: #145C34; background: #FFFFFF; padding: 1px 8px; border-radius: 999px">3</span></a>
+<a href="AdminAnnouncements.dc.html" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 14px; border-radius: 6px; color: #2A2F3A;; text-decoration: none">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M4 10v4h3l7 4V6L7 10H4zM18 9a4 4 0 0 1 0 6"></path></svg>
+<span style="flex: 1">Announcements</span>
+</a>
+</nav>
+</aside>
+<div aria-hidden="true" class="ad-side" style="flex: 0 0 1px; width: 1px; background: #ECEDF1; align-self: flex-start; height: 600px"></div>
+
+<div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column">
+<header class="ad-pad" style="display: flex; align-items: center; gap: 14px; height: 72px; padding: 0 56px 0 16px; box-sizing: border-box">
+<button type="button" class="ad-menu" aria-label="Open navigation" style="width: 44px; height: 44px; border: 1px solid #E3E5EA; border-radius: 8px; background: #FFFFFF; align-items: center; justify-content: center; cursor: pointer">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2A2F3A" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+</button>
+<label style="flex: 0 1 260px; min-width: 0; display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px; border: 1px solid #E3E5EA; border-radius: 6px; box-sizing: border-box">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B6E7B" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+<span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Search reports</span>
+<input type="search" placeholder="Reference or product…" style="flex: 1; min-width: 0; border: 0; outline-offset: 4px; font: inherit; font-size: 13px; color: #2A2F3A; background: transparent">
+</label>
+<div style="flex: 1"></div>
+<span class="ad-hide-sm" style="display: inline-flex; align-items: center; height: 40px; padding: 0 16px; box-sizing: border-box; border: 2px solid #1B7A45; border-radius: 999px; font-family: 'Poppins', sans-serif; font-size: 15px; font-weight: 600; color: #145C34">Demo register</span>
+<button type="button" aria-label="Switch to dark theme" style="width: 44px; height: 44px; margin-left: 4px; border: 0; border-radius: 50%; background: transparent; display: inline-flex; align-items: center; justify-content: center; cursor: pointer">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2A2F3A" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"></path></svg>
+</button>
+<span style="position: relative; display: inline-flex"><button type="button" onClick="{{toggleAcct}}" aria-label="Account: Amaka Bello" aria-haspopup="true" aria-expanded="{{acctOpen}}" style="width: 40px; height: 40px; margin-left: 4px; border: 0; border-radius: 50%; background: #16143D; color: #F6B93B; font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer">AB</button><sc-if value="{{acctOpen}}" hint-placeholder-val="{{ false }}"><div role="menu" aria-label="Account" style="position: absolute; right: 0; top: 48px; z-index: 20; width: 240px; padding: 8px; border-radius: 10px; background: #FFFFFF; box-shadow: 0 10px 30px rgba(20,22,40,0.18); border: 1px solid #ECEDF1; text-align: left"><p style="margin: 0; padding: 8px 10px 10px; border-bottom: 1px solid #ECEDF1; font-size: 14px"><b style="display: block; color: #16143D">Amaka Bello</b><span style="font-size: 12px; color: #5F6472">FoodLens staff · Moderator</span></p><a role="menuitem" href="Admin.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 10px; border-radius: 6px; color: #2A2F3A; text-decoration: none; font-weight: 400">Dashboard</a><a role="menuitem" href="AdminLogin.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 10px; border-radius: 6px; color: #8C1D16; text-decoration: none; font-weight: 600">Sign out</a></div></sc-if></span>
+</header>
+
+<main class="ad-pad" style="padding: 32px 60px 30px 20px; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px">
+<div>
+<h1 style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 22px; font-weight: 600; color: #16143D">Consumer reports</h1>
+<p style="margin: 2px 0 0; color: #5F6472">Anonymous concerns from shoppers, with any photos they attached. Demo data.</p>
+</div>
+<span style="font-size: 12px; font-weight: 700; color: #7A4F00; background: #FDF5E2; padding: 2px 10px; border-radius: 999px">Demo data</span>
+</div>
+
+<div role="note" style="display: flex; gap: 10px; padding: 14px 16px; border-radius: 8px; background: #ECEBF7; color: #2F2C5E">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#433F8A" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="flex: none; margin-top: 1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 7.5h.01"></path></svg>
+<span><b>Reports are allegations, not findings.</b> They stay unverified until a moderator decides, and no decision here changes a product’s public result or publishes a claim about it.</span>
+</div>
+
+<div role="tablist" aria-label="Filter by status" style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="6">
+<button type="button" role="tab" aria-selected="{{t.on}}" onClick="{{t.pick}}" style="display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; border-radius: 999px; border: {{t.border}}; background: {{t.bg}}; color: {{t.fg}}; font: inherit; font-weight: 600; cursor: pointer">{{t.label}} <span style="font-size: 12px; padding: 0 7px; border-radius: 999px; background: {{t.countBg}}">{{t.count}}</span></button>
+</sc-for>
+</div>
+
+<section aria-label="Reports" style="background: #FFFFFF; border-radius: 8px; box-shadow: 0 1px 12px rgba(20,22,40,0.08); padding: 24px 30px 12px; min-width: 0">
+<div style="overflow-x: auto">
+<table style="width: 100%; min-width: 860px; border-collapse: collapse; font-size: 14px; color: #2A2F3A">
+<thead>
+<tr style="text-align: left; color: #16143D">
+<th scope="col" style="padding: 0 12px 14px 0; font-weight: 600">Reference</th>
+<th scope="col" style="padding: 0 12px 14px; font-weight: 600">Category</th>
+<th scope="col" style="padding: 0 12px 14px; font-weight: 600">Related product</th>
+<th scope="col" style="padding: 0 12px 14px; font-weight: 600">Submitted</th>
+<th scope="col" style="padding: 0 12px 14px; font-weight: 600">Photos</th>
+<th scope="col" style="padding: 0 12px 14px; font-weight: 600">Status</th>
+<th scope="col" style="padding: 0 0 14px 12px; font-weight: 600; text-align: right"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Action</span></th>
+</tr>
+</thead>
+<tbody>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="8">
+<tr style="border-top: 1px solid #ECEDF1">
+<td style="padding: 14px 12px 14px 0; white-space: nowrap"><a href="AdminReportDetail.dc.html" style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 500; color: #16143D">{{r.ref}}</a><sc-if value="{{r.isNew}}" hint-placeholder-val="{{ false }}"> <span style="font-size: 11px; font-weight: 700; color: #145C34; background: #E3F4EA; padding: 0 6px; border-radius: 999px">New</span></sc-if></td>
+<td style="padding: 14px 12px; max-width: 220px">{{r.cat}}</td>
+<td style="padding: 14px 12px; white-space: nowrap"><b style="display: block; font-weight: 600; color: #16143D">{{r.product}}</b><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5F6472">{{r.reg}}</span></td>
+<td style="padding: 14px 12px; white-space: nowrap">{{r.date}}</td>
+<td style="padding: 14px 12px; white-space: nowrap"><span style="display: inline-flex; align-items: center; gap: 5px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5F6472" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><circle cx="9" cy="10" r="1.5"></circle><path d="M21 16l-5-5-8 8"></path></svg>{{r.photos}}</span></td>
+<td style="padding: 14px 12px"><span style="display: inline-block; padding: 2px 10px; border-radius: 999px; background: {{r.pillBg}}; color: {{r.pillFg}}; font-size: 13px; font-weight: 600; white-space: nowrap">{{r.status}}</span></td>
+<td style="padding: 14px 0 14px 12px; text-align: right"><a href="AdminReportDetail.dc.html" style="display: inline-flex; align-items: center; min-height: 36px; padding: 0 14px; border-radius: 6px; border: 1px solid #C9CCD4; color: #16143D; text-decoration: none; font-weight: 600">Open</a></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+<sc-if value="{{empty}}" hint-placeholder-val="{{ false }}">
+<p style="margin: 0; padding: 32px 0; text-align: center; color: #5F6472">No reports with this status.</p>
+</sc-if>
+</section>
+</main>
+<footer class="ad-pad" style="padding: 10px 60px 30px 20px; text-align: center; font-size: 15px; color: #3A3F4B">FoodLens admin · capstone prototype · <a href="Main.dc.html">Public site</a> · all records are fictional</footer>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1150}}'>
+class Component extends DCLogic {
+renderVals() {
+const f = (this.state && this.state.f) || 'all';
+const S = {
+pending: ['Pending review', '#FDF5E2', '#7A4F00'],
+clarify: ['Clarification requested', '#ECEBF7', '#433F8A'],
+escalated: ['Escalated', '#FDEFE4', '#8F430B'],
+reviewed: ['Reviewed', '#E3F4EA', '#145C34'],
+rejected: ['Rejected', '#EEEFF2', '#3A3F4B']
+};
+const data = [
+['RP-0458', 'Registration details do not match the packaging', 'Tomato paste, 70 g', 'A7-0412L', 'Today, 14:32', 2, 'pending', true],
+['RP-0457', 'Damaged or suspicious packaging', 'Table water, 75 cl', '03-1187L', 'Today, 11:05', 3, 'pending', true],
+['RP-0455', 'Missing or unclear product information', 'Infant formula, 400 g', 'B1-5520L', 'Yesterday, 18:40', 1, 'pending', false],
+['RP-0452', 'Other concern', 'Groundnut oil, 1 L', '01-2298L', 'Yesterday, 09:12', 0, 'reviewed', false],
+['RP-0450', 'Registration details do not match the packaging', 'Semovita, 1 kg', 'A4-7731L', '18 Oct 2026', 2, 'clarify', false],
+['RP-0447', 'Damaged or suspicious packaging', 'Tomato paste, 210 g', 'A7-0418L', '17 Oct 2026', 4, 'clarify', false],
+['RP-0444', 'Registration details do not match the packaging', 'Groundnut oil, 1 L', 'A7-0412L', '16 Oct 2026', 2, 'escalated', false],
+['RP-0441', 'Missing or unclear product information', 'Seasoning cubes, 10 g', '02-4410L', '15 Oct 2026', 1, 'reviewed', false],
+['RP-0438', 'Damaged or suspicious packaging', 'Table water, 1.5 L', '03-1190L', '14 Oct 2026', 2, 'reviewed', false],
+['RP-0436', 'Other concern', 'Noodles, 70 g', 'A1-8820L', '14 Oct 2026', 0, 'reviewed', false],
+['RP-0431', 'Other concern', 'Rice, 5 kg', 'No number given', '12 Oct 2026', 0, 'rejected', false]
+];
+const rows = data.filter((d) => f === 'all' || d[6] === f).map((d) => ({ ref: d[0], cat: d[1], product: d[2], reg: d[3], date: d[4], photos: d[5], status: S[d[6]][0], pillBg: S[d[6]][1], pillFg: S[d[6]][2], isNew: d[7] }));
+const count = (k) => data.filter((d) => k === 'all' || d[6] === k).length;
+const tabs = [['all', 'All'], ['pending', 'Pending review'], ['clarify', 'Clarification requested'], ['escalated', 'Escalated'], ['reviewed', 'Reviewed'], ['rejected', 'Rejected']].map(([k, l]) => ({
+label: l, count: count(k), on: f === k,
+border: f === k ? '1px solid #1B7A45' : '1px solid #E3E5EA',
+bg: f === k ? '#1B7A45' : '#FFFFFF', fg: f === k ? '#FFFFFF' : '#2A2F3A', countBg: f === k ? 'rgba(255,255,255,0.22)' : '#F1F2F5',
+pick: () => this.setState({ f: k })
+}));
+return { tabs: tabs, rows: rows, empty: rows.length === 0, acctOpen: !!(this.state && this.state.acctOpen), toggleAcct: () => this.setState({ acctOpen: !(this.state && this.state.acctOpen) }) };
+}
+}
+</script>
+</body>
+</html>

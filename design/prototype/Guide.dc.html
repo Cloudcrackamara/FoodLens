@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FoodLens pack guide</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&amp;family=Open+Sans:wght@400;600;700&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#145C34}a:hover{color:#0F4A29}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-direction: column; background: #F5F5F3; color: #16143D; font-family: 'Open Sans', system-ui, sans-serif; font-size: 16px; line-height: 1.6">
+
+<header style="display: flex; align-items: center; gap: 4px; padding: 8px 12px; background: #FFFFFF; border-bottom: 1px solid #ECEDF1">
+<a href="{{backHref}}" aria-label="{{backLabel}}" style="width: 44px; height: 44px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #16143D">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>
+</a>
+<p style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600">Pack guide</p>
+</header>
+
+<div role="note" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 16px; background: #F6B93B; color: #1F1D5C; font-size: 14px; font-weight: 700; text-align: center">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1F1D5C" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" style="flex: none"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 7.5h.01"></path></svg>
+Demo data — not an official NAFDAC or SON service.</div>
+
+<main style="flex: 1; width: 100%; max-width: 760px; margin: 0 auto; box-sizing: border-box; padding: 28px 16px 48px; display: flex; flex-direction: column; gap: 18px">
+<p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #145C34">Guide · {{readTime}}</p>
+<h1 style="margin: -8px 0 0; font-family: 'Poppins', sans-serif; font-size: clamp(26px, 5vw, 34px); font-weight: 700; line-height: 1.2">{{title}}</h1>
+<p style="margin: 0; font-size: 18px; color: #3A3F4B">{{lead}}</p>
+
+<!-- GUIDE 1: where to find the number -->
+<sc-if value="{{isFind}}" hint-placeholder-val="{{ true }}">
+<figure style="margin: 0; padding: 22px; border-radius: 18px; background: #FFFFFF; border: 1px solid #E3E5EA">
+<svg viewBox="0 0 640 300" role="img" aria-labelledby="pack-t" style="display: block; width: 100%; height: auto">
+<title id="pack-t">Back of a pack with the registration number printed under the barcode, and the batch and best-before date beside it</title>
+<rect x="20" y="16" width="600" height="268" rx="22" fill="#FFF3DC" stroke="#E7C98F" stroke-width="2"></rect>
+<rect x="44" y="40" width="250" height="26" rx="6" fill="#E9D3A6"></rect>
+<rect x="44" y="78" width="210" height="12" rx="6" fill="#EBDDC0"></rect><rect x="44" y="98" width="230" height="12" rx="6" fill="#EBDDC0"></rect><rect x="44" y="118" width="190" height="12" rx="6" fill="#EBDDC0"></rect><rect x="44" y="138" width="220" height="12" rx="6" fill="#EBDDC0"></rect>
+<g transform="translate(360 44)"><rect width="220" height="96" rx="8" fill="#FFFFFF"></rect><g fill="#16143D"><rect x="16" y="14" width="4" height="58"></rect><rect x="24" y="14" width="2" height="58"></rect><rect x="30" y="14" width="6" height="58"></rect><rect x="40" y="14" width="2" height="58"></rect><rect x="46" y="14" width="4" height="58"></rect><rect x="56" y="14" width="2" height="58"></rect><rect x="62" y="14" width="6" height="58"></rect><rect x="72" y="14" width="2" height="58"></rect><rect x="78" y="14" width="4" height="58"></rect><rect x="88" y="14" width="6" height="58"></rect><rect x="98" y="14" width="2" height="58"></rect><rect x="104" y="14" width="4" height="58"></rect><rect x="112" y="14" width="2" height="58"></rect><rect x="118" y="14" width="6" height="58"></rect><rect x="128" y="14" width="2" height="58"></rect><rect x="134" y="14" width="4" height="58"></rect><rect x="144" y="14" width="2" height="58"></rect><rect x="150" y="14" width="6" height="58"></rect><rect x="160" y="14" width="4" height="58"></rect><rect x="170" y="14" width="2" height="58"></rect><rect x="176" y="14" width="6" height="58"></rect><rect x="186" y="14" width="2" height="58"></rect><rect x="192" y="14" width="4" height="58"></rect><rect x="200" y="14" width="2" height="58"></rect></g><text x="110" y="88" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="#16143D">6 151234 567890</text></g>
+<rect x="352" y="156" width="236" height="44" rx="10" fill="#E3F4EA" stroke="#1B7A45" stroke-width="3"></rect>
+<text x="470" y="184" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="17" font-weight="600" fill="#145C34">Reg. No. A7-0412L</text>
+<rect x="44" y="196" width="262" height="60" rx="10" fill="#FFFFFF" stroke="#F6B93B" stroke-width="3" stroke-dasharray="7 5"></rect>
+<text x="60" y="220" font-family="IBM Plex Mono, monospace" font-size="15" fill="#16143D">LOT 24B-117</text>
+<text x="60" y="243" font-family="IBM Plex Mono, monospace" font-size="15" fill="#16143D">BB 03 MAR 2027</text>
+<circle cx="606" cy="178" r="15" fill="#1B7A45"></circle><text x="606" y="184" text-anchor="middle" font-family="Poppins, sans-serif" font-size="16" font-weight="700" fill="#FFFFFF">1</text>
+<circle cx="320" cy="226" r="15" fill="#F6B93B"></circle><text x="320" y="232" text-anchor="middle" font-family="Poppins, sans-serif" font-size="16" font-weight="700" fill="#16143D">2</text>
+</svg>
+<figcaption style="display: flex; flex-wrap: wrap; gap: 10px 22px; margin-top: 12px; font-size: 14px; color: #3A3F4B"><span><b style="color: #145C34">1 · Registration number</b>, near the barcode</span><span><b style="color: #8A5A00">2 · Batch and dates</b>, often stamped or printed on the side</span></figcaption>
+</figure>
+<section style="padding: 22px; border-radius: 18px; background: #FFFFFF; border: 1px solid #E3E5EA">
+<h2 style="margin: 0 0 8px; font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 600">Where to look</h2>
+<ol style="margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px">
+<li><b>Near the barcode.</b> Most packs print the number just under or beside it.</li>
+<li><b>Close to the best-before date.</b> On tins and bottles it is often on the base, lid or neck.</li>
+<li><b>On the back or side panel</b>, next to the ingredients or the maker’s address.</li>
+<li><b>On a sachet</b>, check the folded seal at the top or bottom.</li>
+</ol>
+</section>
+<section style="padding: 22px; border-radius: 18px; background: #FFFFFF; border: 1px solid #E3E5EA">
+<h2 style="margin: 0 0 8px; font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 600">What it looks like</h2>
+<p style="margin: 0 0 10px">Letters and digits joined by a hyphen, sometimes after “NAFDAC Reg. No.” or “Reg. No.”. For example:</p>
+<p style="margin: 0; display: flex; flex-wrap: wrap; gap: 8px"><span style="padding: 4px 12px; border-radius: 8px; background: #F1F2F5; font-family: 'IBM Plex Mono', monospace; font-weight: 600">A7-0412L</span><span style="padding: 4px 12px; border-radius: 8px; background: #F1F2F5; font-family: 'IBM Plex Mono', monospace; font-weight: 600">01-2298L</span><span style="padding: 4px 12px; border-radius: 8px; background: #F1F2F5; font-family: 'IBM Plex Mono', monospace; font-weight: 600">03-1187L</span></p>
+<p style="margin: 12px 0 0; font-size: 14px; color: #4B4F5C">These are demo numbers. Type the number exactly as printed, including letters. If the print is curved or faint, tilt the pack towards the light or type it in.</p>
+</section>
+</sc-if>
+
+<!-- GUIDE 2: batch -->
+<sc-if value="{{isBatch}}" hint-placeholder-val="{{ false }}">
+<section style="padding: 22px; border-radius: 18px; background: #FFFFFF; border: 1px solid #E3E5EA">
+<h2 style="margin: 0 0 8px; font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 600">What a batch number is</h2>
+<p style="margin: 0">A batch (or LOT) number marks a group of packs made together. It is usually printed with the production and best-before dates, for example <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 600">LOT 24B-117</span>.</p>
+</section>
+<section style="padding: 22px; border-radius: 18px; background: #FFFFFF; border: 1px solid #E3E5EA">
+<h2 style="margin: 0 0 8px; font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 600">What adding it tells you</h2>
+<ul style="margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px">
+<li><b>Listed for this product:</b> the company has added this batch to FoodLens for the product the number belongs to.</li>
+<li><b>Not listed:</b> the company hasn’t added this batch. It may be new, or the number may have been copied onto another product. Compare the pack carefully.</li>
+<li><b>No batch entered:</b> you still get the register result for the number. The batch is optional.</li>
+</ul>
+</section>
+<p style="margin: 0; padding: 14px 16px; border-radius: 12px; background: #ECEBF7; color: #2F2C5E; font-size: 15px">Batch lists come from the companies themselves. FoodLens shows them as provided and doesn’t test products.</p>
+</sc-if>
+
+<!-- GUIDE 3: limits -->
+<sc-if value="{{isLimits}}" hint-placeholder-val="{{ false }}">
+<section style="padding: 22px; border-radius: 18px; background: #FFFFFF; border: 1px solid #E3E5EA">
+<h2 style="margin: 0 0 8px; font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 600">What a lookup can tell you</h2>
+<ul style="margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px">
+<li>Whether the number is in the demo register, and whether that registration is active or expired.</li>
+<li>Which product and company the register lists for the number, so you can compare it with the pack.</li>
+<li>Whether a batch you enter is listed by the company.</li>
+</ul>
+</section>
+<section style="padding: 22px; border-radius: 18px; background: #FFFFFF; border: 1px solid #E3E5EA">
+<h2 style="margin: 0 0 8px; font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 600">What it can’t tell you</h2>
+<ul style="margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px">
+<li>Whether the pack in your hand is the original. A real number can be printed on a copied pack.</li>
+<li>Anything about what is inside. A lookup isn’t a lab test.</li>
+<li>How the product was stored or transported before it reached the shelf.</li>
+</ul>
+</section>
+<p style="margin: 0; padding: 14px 16px; border-radius: 12px; background: #ECEBF7; color: #2F2C5E; font-size: 15px">If something about a pack worries you, you can report it anonymously from the result screen after a check. Reports are reviewed by FoodLens and stay unverified until then.</p>
+</sc-if>
+
+<a href="Scan.dc.html" style="display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 54px; border-radius: 999px; background: #1B7A45; color: #FFFFFF; text-decoration: none; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600">Check a product</a>
+
+<nav aria-label="More guides" style="padding-top: 8px">
+<h2 style="margin: 0 0 10px; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600">More pack guides</h2>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<sc-for list="{{others}}" as="o" hint-placeholder-count="2">
+<a href="{{o.href}}" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; padding: 0 18px; border-radius: 14px; background: #FFFFFF; border: 1px solid #E3E5EA; color: #16143D; text-decoration: none; font-weight: 600">{{o.title}}<span aria-hidden="true" style="color: #1B7A45">›</span></a>
+</sc-for>
+</div>
+</nav>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"variant":{"editor":"enum","options":["find","batch","limits"],"default":"find","section":"State"},"from":{"editor":"enum","options":["home","scan"],"default":"home","section":"State"},"$preview":{"width":390,"height":1700}}'>
+class Component extends DCLogic {
+renderVals() {
+const raw = this.props.variant || 'find';
+const fromScan = raw === 'findFromScan' || this.props.from === 'scan';
+const v = raw === 'findFromScan' ? 'find' : raw;
+const G = {
+find: ['Where to find the NAFDAC or SON number', '2 min read', 'It is usually printed near the barcode or the best-before date, and often starts with letters and digits joined by a hyphen.', 'Guide.dc.html'],
+batch: ['What the batch (LOT) number adds', '2 min read', 'Adding the batch lets FoodLens spot a real number copied onto the wrong product, or a batch the company never listed.', 'GuideBatch.dc.html'],
+limits: ['What a lookup can’t tell you', '3 min read', 'A matching number can’t rule out a copied pack. It isn’t a lab test and doesn’t check the package in your hand.', 'GuideLimits.dc.html']
+};
+const g = G[v] || G.find;
+return {
+title: g[0], readTime: g[1], lead: g[2],
+isFind: v === 'find', isBatch: v === 'batch', isLimits: v === 'limits',
+backHref: fromScan ? 'Scan.dc.html' : 'Main.dc.html', backLabel: fromScan ? 'Back to scan' : 'Back to home',
+others: Object.keys(G).filter((k) => k !== v).map((k) => ({ title: G[k][0], href: G[k][3] }))
+};
+}
+}
+</script>
+</body>
+</html>

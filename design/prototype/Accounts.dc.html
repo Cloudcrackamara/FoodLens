@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FoodLens business accounts</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&amp;family=Open+Sans:wght@400;600;700&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#145C34}a:hover{color:#0F4A29}
+.ws-hide-sm{display:inline-flex}
+@media (max-width:640px){.ws-hide-sm{display:none !important}}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-direction: column; background: #FAF8F3; color: #16143D; font-family: 'Open Sans', system-ui, sans-serif; font-size: 15px; line-height: 1.5">
+
+<div style="background: #F6B93B; color: #1F1D5C; text-align: center; padding: 6px 16px; font-family: 'Poppins', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase">Demo data · not an official NAFDAC or SON service</div>
+
+<!-- ================= REGISTER / LOGIN ================= -->
+<sc-if value="{{isAuth}}" hint-placeholder-val="{{ true }}">
+<div style="flex: 1; display: flex; flex-wrap: wrap">
+<aside style="flex: 1 1 380px; background: #16143D; color: #FFFFFF; padding: 40px clamp(20px, 4vw, 56px); box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+<a href="Main.dc.html" style="display: flex; align-items: center; gap: 10px; color: #FFFFFF; text-decoration: none">
+<svg width="34" height="34" viewBox="0 0 36 36" aria-hidden="true"><circle cx="15" cy="15" r="11" fill="none" stroke="#F6B93B" stroke-width="3.5"></circle><path d="M23 23l9 9" stroke="#F6B93B" stroke-width="4" stroke-linecap="round"></path><path d="M10 15.5l3.5 3.5 6.5-7" fill="none" stroke="#3CC37A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span style="font-family: 'Poppins', sans-serif; font-size: 22px"><b>FoodLens</b> <span style="font-weight: 500; color: #F6B93B">business</span></span>
+</a>
+<div>
+<h2 style="margin: 0 0 14px; font-family: 'Poppins', sans-serif; font-size: clamp(24px, 2.6vw, 34px); font-weight: 700; line-height: 1.2">A workspace for the companies behind the packs.</h2>
+<ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; color: #DCDAF0">
+<li style="display: flex; gap: 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3CC37A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg><span><b style="color: #FFFFFF">Manufacturers</b> list products, batches and depots that shoppers can check, and warn them about copies.</span></li>
+<li style="display: flex; gap: 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3CC37A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg><span><b style="color: #FFFFFF">Wholesalers</b> find suppliers whose products show an active registration and request stock.</span></li>
+<li style="display: flex; gap: 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3CC37A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg><span>Order requests only. No prices or payments go through FoodLens.</span></li>
+</ul>
+</div>
+<p style="margin: auto 0 0; padding: 14px; border-radius: 12px; background: rgba(255,255,255,0.08); font-size: 13px; color: #DCDAF0">FoodLens reviews every company before it can publish. A reviewed profile is a FoodLens demo review, not NAFDAC or SON approval.</p>
+</aside>
+
+<main style="flex: 1.4 1 480px; min-width: 0; padding: 36px clamp(16px, 4vw, 64px) 48px; box-sizing: border-box">
+<div style="max-width: 620px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px">
+
+<p style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; padding: 12px 14px; border-radius: 12px; background: #E3F4EA; color: #145C34; font-size: 14px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B7A45" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M4 12h16"></path></svg><span><b>Checking a product?</b> You don’t need an account.</span> <a href="Scan.dc.html" style="font-weight: 700">Check a product</a></p>
+
+<!-- REGISTER -->
+<sc-if value="{{isRegister}}" hint-placeholder-val="{{ true }}">
+<div>
+<h1 style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 28px; font-weight: 700">Register your company</h1>
+<p style="margin: 4px 0 0; color: #3A3F4B">About 5 minutes. Already registered? <button type="button" onClick="{{goLogin}}" style="padding: 0; border: 0; background: none; color: #145C34; font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer">Log in</button></p>
+</div>
+<sc-if value="{{showErrors}}" hint-placeholder-val="{{ false }}">
+<div role="alert" style="padding: 14px 16px; border-radius: 12px; background: #FFFFFF; border: 2px solid #B42318">
+<p style="margin: 0 0 4px; font-weight: 700; color: #8C1D16">Fix 4 things before sending</p>
+<ul style="margin: 0; padding-left: 20px; font-size: 14px; color: #8C1D16"><li>Enter a work email like name@company.com</li><li>Use at least 8 characters for the password</li><li>Enter your CAC registration number</li><li>Choose what your company does</li></ul>
+</div>
+</sc-if>
+
+<section style="padding: 22px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E3E5EA; display: flex; flex-direction: column; gap: 14px">
+<h2 style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600">Your details</h2>
+<div style="display: flex; flex-wrap: wrap; gap: 14px">
+<label style="flex: 1 1 220px; display: flex; flex-direction: column; gap: 4px; font-weight: 600">Full name<input type="text" value="{{fName}}" onChange="{{noop}}" autocomplete="name" style="height: 46px; padding: 0 12px; border: 1px solid #C9CCD4; border-radius: 10px; font: inherit; font-weight: 400"></label>
+<label style="flex: 1 1 220px; display: flex; flex-direction: column; gap: 4px; font-weight: 600">Work email<input type="email" value="{{fEmail}}" onChange="{{noop}}" autocomplete="email" aria-invalid="{{showErrors}}" style="height: 46px; padding: 0 12px; border: {{errBorder}}; border-radius: 10px; font: inherit; font-weight: 400"><sc-if value="{{showErrors}}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; font-weight: 600; color: #B42318">Enter a work email like name@company.com</span></sc-if></label>
+<label style="flex: 1 1 220px; display: flex; flex-direction: column; gap: 4px; font-weight: 600">Business phone<input type="tel" value="{{fPhone}}" onChange="{{noop}}" autocomplete="tel" style="height: 46px; padding: 0 12px; border: 1px solid #C9CCD4; border-radius: 10px; font: inherit; font-weight: 400"></label>
+<label style="flex: 1 1 220px; display: flex; flex-direction: column; gap: 4px; font-weight: 600">Password<input type="password" value="{{fPass}}" onChange="{{noop}}" autocomplete="new-password" aria-invalid="{{showErrors}}" style="height: 46px; padding: 0 12px; border: {{errBorder}}; border-radius: 10px; font: inherit; font-weight: 400"><span style="font-size: 13px; font-weight: {{passWeight}}; color: {{passColor}}">At least 8 characters</span></label>
+</div>
+<p style="margin: 0; font-size: 13px; color: #4B4F5C">Your login email is never shown to shoppers or other companies.</p>
+</section>
+
+<section aria-labelledby="co-h" style="position: relative; overflow: hidden; padding: 24px; border-radius: 18px; background: linear-gradient(160deg, #FFF8EC 0%, #FFEFD9 100%); border: 1px solid #F1D2A2; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 6px 22px rgba(199,106,30,0.10)">
+<span aria-hidden="true" style="position: absolute; right: -40px; top: -40px; width: 160px; height: 160px; border-radius: 50%; background: radial-gradient(circle, rgba(246,185,59,0.35), rgba(246,185,59,0) 70%)"></span>
+<div style="position: relative; display: flex; align-items: center; gap: 12px">
+<span aria-hidden="true" style="flex: none; width: 44px; height: 44px; border-radius: 12px; background: #F6B93B; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(246,185,59,0.45)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16143D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V8l7-4 7 4v13M9 21v-6h6v6"></path></svg></span>
+<div><h2 id="co-h" style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 600; color: #3B1F06">Your company</h2><p style="margin: 0; font-size: 13px; color: #7A4A1E">The business FoodLens will review</p></div>
+</div>
+<div style="position: relative; display: flex; flex-wrap: wrap; gap: 14px">
+<label style="flex: 2 1 260px; display: flex; flex-direction: column; gap: 4px; font-weight: 600; color: #3B1F06">Registered company name<input type="text" value="{{fCompany}}" onChange="{{noop}}" style="height: 48px; padding: 0 12px; border: 1px solid #E2C49A; border-radius: 10px; background: #FFFFFF; font: inherit; font-weight: 400; color: #2A2F3A"></label>
+<label style="flex: 1 1 180px; display: flex; flex-direction: column; gap: 4px; font-weight: 600; color: #3B1F06">CAC number<input type="text" value="{{fCac}}" onChange="{{noop}}" placeholder="RC 1234567" aria-invalid="{{showErrors}}" style="height: 48px; padding: 0 12px; border: {{errBorderWarm}}; border-radius: 10px; background: #FFFFFF; font-family: 'IBM Plex Mono', monospace; font-weight: 400"></label>
+</div>
+<fieldset style="position: relative; margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0">
+<legend style="float: left; width: 100%; padding: 0; margin-bottom: 4px; font-weight: 600; color: #3B1F06">What does your company do?</legend>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px">
+<sc-for list="{{types}}" as="t" hint-placeholder-count="2">
+<label style="position: relative; display: flex; flex-direction: column; gap: 10px; padding: 18px; border-radius: 14px; border: {{t.border}}; background: #FFFFFF; box-shadow: {{t.shadow}}; cursor: pointer">
+<span style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+<span aria-hidden="true" style="width: 48px; height: 48px; border-radius: 12px; background: {{t.iconBg}}; display: inline-flex; align-items: center; justify-content: center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="{{t.iconFg}}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="{{t.icon}}"></path></svg></span>
+<input type="radio" name="ctype" checked="{{t.on}}" onChange="{{t.pick}}" aria-label="{{t.title}}" style="width: 22px; height: 22px; margin: 0; accent-color: #C76A1E">
+</span>
+<span style="font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: 600; color: #3B1F06">{{t.title}}</span>
+<span style="font-size: 13px; color: #6B4A2B">{{t.hint}}</span>
+</label>
+</sc-for>
+</div>
+</fieldset>
+<sc-if value="{{showSells}}" hint-placeholder-val="{{ true }}">
+<div style="position: relative; display: flex; flex-direction: column; gap: 6px"><span style="font-weight: 600; color: #3B1F06">What do you make?</span>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 14px"><span style="padding: 6px 14px; border-radius: 999px; background: #8F430B; color: #FFFFFF; font-weight: 600">Tomato products ✓</span><span style="padding: 6px 14px; border-radius: 999px; background: #8F430B; color: #FFFFFF; font-weight: 600">Seasoning ✓</span><span style="padding: 6px 14px; border-radius: 999px; border: 1px solid #E2C49A; background: #FFFFFF; color: #3B1F06">Drinks &amp; water</span><span style="padding: 6px 14px; border-radius: 999px; border: 1px solid #E2C49A; background: #FFFFFF; color: #3B1F06">Grains &amp; flour</span><span style="padding: 6px 14px; border-radius: 999px; border: 1px solid #E2C49A; background: #FFFFFF; color: #3B1F06">Oils</span><span style="padding: 6px 14px; border-radius: 999px; border: 1px solid #E2C49A; background: #FFFFFF; color: #3B1F06">Baby food</span></div></div>
+</sc-if>
+<sc-if value="{{showBuys}}" hint-placeholder-val="{{ false }}">
+<label style="position: relative; display: flex; flex-direction: column; gap: 4px; font-weight: 600; color: #3B1F06">Regions you buy for<select style="height: 48px; padding: 0 10px; border: 1px solid #E2C49A; border-radius: 10px; background: #FFFFFF; font: inherit; font-weight: 400"><option>North-West (Kano, Kaduna…)</option><option>South-East</option><option>South-West</option><option>FCT</option></select></label>
+</sc-if>
+<div style="position: relative; display: flex; flex-wrap: wrap; gap: 14px">
+<label style="flex: 2 1 260px; display: flex; flex-direction: column; gap: 4px; font-weight: 600; color: #3B1F06">Business address<input type="text" value="{{fAddr}}" onChange="{{noop}}" style="height: 48px; padding: 0 12px; border: 1px solid #E2C49A; border-radius: 10px; background: #FFFFFF; font: inherit; font-weight: 400"></label>
+<label style="flex: 1 1 160px; display: flex; flex-direction: column; gap: 4px; font-weight: 600; color: #3B1F06">State<select style="height: 48px; padding: 0 10px; border: 1px solid #E2C49A; border-radius: 10px; background: #FFFFFF; font: inherit; font-weight: 400"><option>Lagos</option><option>Kano</option><option>Anambra</option><option>Enugu</option></select></label>
+</div>
+</section>
+
+<section aria-labelledby="next-h" style="position: relative; overflow: hidden; padding: 26px 24px; border-radius: 18px; background: linear-gradient(135deg, #1F1D5C 0%, #2E2A82 100%); color: #E6E5F7; box-shadow: 0 10px 28px rgba(31,29,92,0.28)">
+<span aria-hidden="true" style="position: absolute; right: -30px; bottom: -50px; width: 180px; height: 180px; border-radius: 50%; border: 22px solid rgba(246,185,59,0.16)"></span>
+<p style="position: relative; margin: 0 0 4px; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #F6B93B">WHAT HAPPENS NEXT</p>
+<h2 id="next-h" style="position: relative; margin: 0 0 18px; font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 600; color: #FFFFFF">You’re 3 steps from your workspace</h2>
+<ol style="position: relative; list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px">
+<li style="padding: 14px; border-radius: 14px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12)"><span aria-hidden="true" style="display: inline-flex; width: 32px; height: 32px; border-radius: 50%; background: #F6B93B; color: #16143D; align-items: center; justify-content: center; font-family: 'Poppins', sans-serif; font-weight: 700">1</span><b style="display: block; margin: 8px 0 2px; color: #FFFFFF">Create your account</b><span style="font-size: 13px">Today, in about 3 minutes</span></li>
+<li style="padding: 14px; border-radius: 14px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12)"><span aria-hidden="true" style="display: inline-flex; width: 32px; height: 32px; border-radius: 50%; background: #F6B93B; color: #16143D; align-items: center; justify-content: center; font-family: 'Poppins', sans-serif; font-weight: 700">2</span><b style="display: block; margin: 8px 0 2px; color: #FFFFFF">FoodLens checks your company</b><span style="font-size: 13px">Usually within 2 working days. Look around while you wait.</span></li>
+<li style="padding: 14px; border-radius: 14px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12)"><span aria-hidden="true" style="display: inline-flex; width: 32px; height: 32px; border-radius: 50%; background: #F6B93B; color: #16143D; align-items: center; justify-content: center; font-family: 'Poppins', sans-serif; font-weight: 700">3</span><b style="display: block; margin: 8px 0 2px; color: #FFFFFF">{{nextStep3}}</b><span style="font-size: 13px">{{nextStep3Help}}</span></li>
+</ol>
+</section>
+
+<label style="display: flex; gap: 10px; align-items: flex-start; font-size: 14px"><input type="checkbox" checked="{{agreed}}" onChange="{{toggleAgree}}" style="flex: none; width: 20px; height: 20px; margin: 1px 0 0; accent-color: #1B7A45"><span>I confirm these details are correct and agree to the FoodLens business terms, including the rule that announcements must not claim safety or regulator approval.</span></label>
+<button type="button" onClick="{{submit}}" style="min-height: 54px; border: 0; border-radius: 999px; background: #1B7A45; color: #FFFFFF; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600; cursor: pointer">Create account and send for review</button>
+</sc-if>
+
+<!-- LOGIN -->
+<sc-if value="{{isLogin}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 28px; border-radius: 18px; background: #FFFFFF; border: 1px solid #E3E5EA; display: flex; flex-direction: column; gap: 16px">
+<div>
+<h1 style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 28px; font-weight: 700">Log in</h1>
+<p style="margin: 4px 0 0; color: #3A3F4B">For manufacturers and wholesalers.</p>
+</div>
+<sc-if value="{{loginError}}" hint-placeholder-val="{{ false }}">
+<p role="alert" style="display: flex; gap: 8px; margin: 0; padding: 12px 14px; border-radius: 10px; background: #FDECEA; color: #8C1D16; font-size: 14px; font-weight: 600"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B42318" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" style="flex: none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v6M12 16.5h.01"></path></svg>That email and password don’t match an account. Check them and try again.</p>
+</sc-if>
+<label style="display: flex; flex-direction: column; gap: 4px; font-weight: 600">Work email<input type="email" value="tolu.adebayo@demofoods.example" onChange="{{noop}}" autocomplete="email" style="height: 48px; padding: 0 12px; border: {{loginBorder}}; border-radius: 10px; font: inherit; font-weight: 400"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-weight: 600"><span style="display: flex; justify-content: space-between"><span>Password</span><button type="button" onClick="{{goForgot}}" style="padding: 0; border: 0; background: none; color: #145C34; font: inherit; font-weight: 600; text-decoration: underline; cursor: pointer">Forgot password?</button></span>
+<span style="display: flex; gap: 8px"><input type="{{pwType}}" value="demo-pass-123" onChange="{{noop}}" autocomplete="current-password" style="flex: 1; min-width: 0; height: 48px; padding: 0 12px; border: {{loginBorder}}; border-radius: 10px; font: inherit; font-weight: 400"><button type="button" onClick="{{togglePw}}" style="flex: none; min-width: 72px; height: 48px; border: 1px solid #C9CCD4; border-radius: 10px; background: #FFFFFF; font: inherit; font-weight: 600; color: #16143D; cursor: pointer">{{pwLabel}}</button></span></label>
+<a href="Supplier.dc.html" style="display: flex; align-items: center; justify-content: center; min-height: 54px; border-radius: 999px; background: #1B7A45; color: #FFFFFF; text-decoration: none; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600">Log in</a>
+<p style="margin: 0; text-align: center; font-size: 14px">New here? <button type="button" onClick="{{goRegister}}" style="padding: 0; border: 0; background: none; color: #145C34; font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer">Register your company</button></p>
+<p style="margin: 0; padding-top: 12px; border-top: 1px solid #ECEDF1; text-align: center; font-size: 13px; color: #4B4F5C">Demo: log in opens the manufacturer workspace. <a href="Wholesaler.dc.html" style="font-weight: 600">Open the wholesaler workspace</a></p>
+</div>
+</sc-if>
+<!-- FORGOT PASSWORD -->
+<sc-if value="{{isForgot}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 28px; border-radius: 18px; background: #FFFFFF; border: 1px solid #E3E5EA; display: flex; flex-direction: column; gap: 16px">
+<sc-if value="{{forgotForm}}" hint-placeholder-val="{{ true }}">
+<div>
+<h1 style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 28px; font-weight: 700">Reset your password</h1>
+<p style="margin: 4px 0 0; color: #3A3F4B">Enter the work email you registered with. We’ll send a link to choose a new password.</p>
+</div>
+<label style="display: flex; flex-direction: column; gap: 4px; font-weight: 600">Work email<input type="email" value="{{resetEmail}}" onChange="{{onResetEmail}}" autocomplete="email" aria-invalid="{{resetErr}}" style="height: 48px; padding: 0 12px; border: {{resetBorder}}; border-radius: 10px; font: inherit; font-weight: 400"><sc-if value="{{resetErr}}" hint-placeholder-val="{{ false }}"><span role="alert" style="font-size: 13px; font-weight: 600; color: #B42318">Enter a work email like name@company.com</span></sc-if></label>
+<button type="button" onClick="{{sendReset}}" style="min-height: 54px; border: 0; border-radius: 999px; background: #1B7A45; color: #FFFFFF; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600; cursor: pointer">Send reset link</button>
+</sc-if>
+<sc-if value="{{forgotSent}}" hint-placeholder-val="{{ false }}">
+<div role="status">
+<span aria-hidden="true" style="display: inline-flex; width: 56px; height: 56px; border-radius: 50%; background: #E3F4EA; align-items: center; justify-content: center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#145C34" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 7l9 6 9-6"></path></svg></span>
+<h1 style="margin: 12px 0 4px; font-family: 'Poppins', sans-serif; font-size: 26px; font-weight: 700">Check your email</h1>
+<p style="margin: 0; color: #3A3F4B">If <b>{{resetEmail}}</b> has a FoodLens business account, a reset link is on its way. The link works for 30 minutes.</p>
+<p style="margin: 10px 0 0; font-size: 13px; color: #4B4F5C">Demo: no email is sent.</p>
+</div>
+<button type="button" onClick="{{sendReset}}" style="align-self: flex-start; padding: 0; border: 0; background: none; color: #145C34; font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer">Send it again</button>
+</sc-if>
+<p style="margin: 0; padding-top: 12px; border-top: 1px solid #ECEDF1; text-align: center; font-size: 14px"><button type="button" onClick="{{goLogin}}" style="padding: 0; border: 0; background: none; color: #145C34; font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer">Back to log in</button></p>
+</div>
+</sc-if>
+</div>
+</main>
+</div>
+</sc-if>
+
+<!-- ================= REVIEW STATUS ================= -->
+<sc-if value="{{isStatus}}" hint-placeholder-val="{{ false }}">
+<header style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px clamp(16px, 4vw, 40px); background: #16143D; color: #FFFFFF">
+<span style="display: flex; align-items: center; gap: 10px"><svg width="30" height="30" viewBox="0 0 36 36" aria-hidden="true"><circle cx="15" cy="15" r="11" fill="none" stroke="#F6B93B" stroke-width="3.5"></circle><path d="M23 23l9 9" stroke="#F6B93B" stroke-width="4" stroke-linecap="round"></path></svg><span style="font-family: 'Poppins', sans-serif; font-size: 19px"><b>FoodLens</b> <span style="color: #F6B93B">business</span></span></span>
+<span style="display: flex; align-items: center; gap: 14px; font-size: 14px"><span class="ws-hide-sm">{{coName}}</span><button type="button" onClick="{{goLogin}}" style="min-height: 40px; padding: 0 14px; border: 1px solid rgba(255,255,255,0.4); border-radius: 999px; background: transparent; color: #FFFFFF; font: inherit; font-weight: 600; cursor: pointer">Log out</button></span>
+</header>
+<main style="flex: 1; width: 100%; max-width: 760px; margin: 0 auto; box-sizing: border-box; padding: 36px 16px 48px; display: flex; flex-direction: column; gap: 18px">
+<section style="padding: 28px; border-radius: 18px; background: #FFFFFF; border: 1px solid #E3E5EA">
+<span style="display: inline-block; padding: 3px 12px; border-radius: 999px; background: {{stBg}}; color: {{stFg}}; font-size: 13px; font-weight: 700">{{stPill}}</span>
+<h1 style="margin: 12px 0 6px; font-family: 'Poppins', sans-serif; font-size: 26px; font-weight: 700; line-height: 1.25">{{stTitle}}</h1>
+<p style="margin: 0; color: #3A3F4B">{{stText}}</p>
+<sc-if value="{{stHasNote}}" hint-placeholder-val="{{ false }}">
+<div style="margin-top: 16px; padding: 14px 16px; border-radius: 12px; background: {{stNoteBg}}; font-size: 14px"><b style="display: block; margin-bottom: 2px">{{stNoteTitle}}</b>{{stNote}}</div>
+</sc-if>
+<ol style="list-style: none; margin: 22px 0 0; padding: 0; display: flex; flex-direction: column; gap: 12px">
+<sc-for list="{{steps}}" as="s" hint-placeholder-count="3">
+<li style="display: flex; gap: 12px"><span aria-hidden="true" style="flex: none; width: 24px; height: 24px; border-radius: 50%; box-sizing: border-box; border: {{s.ring}}; background: {{s.fill}}; display: inline-flex; align-items: center; justify-content: center; color: #FFFFFF; font-size: 13px; font-weight: 700">{{s.mark}}</span><span><b>{{s.title}}</b><br><span style="font-size: 14px; color: #4B4F5C">{{s.meta}}</span></span></li>
+</sc-for>
+</ol>
+</section>
+<section style="padding: 20px 24px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E3E5EA">
+<h2 style="margin: 0 0 8px; font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: 600">Submitted details</h2>
+<dl style="margin: 0; display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.5fr); font-size: 14px">
+<dt style="padding: 8px 0; border-top: 1px solid #ECEDF1; color: #4B4F5C">Company</dt><dd style="margin: 0; padding: 8px 0; border-top: 1px solid #ECEDF1; font-weight: 600">{{coName}}</dd>
+<dt style="padding: 8px 0; border-top: 1px solid #ECEDF1; color: #4B4F5C">CAC number</dt><dd style="margin: 0; padding: 8px 0; border-top: 1px solid #ECEDF1; font-family: 'IBM Plex Mono', monospace">{{coCac}}</dd>
+<dt style="padding: 8px 0; border-top: 1px solid #ECEDF1; color: #4B4F5C">Type</dt><dd style="margin: 0; padding: 8px 0; border-top: 1px solid #ECEDF1">{{coType}}</dd>
+<dt style="padding: 8px 0; border-top: 1px solid #ECEDF1; color: #4B4F5C">Address</dt><dd style="margin: 0; padding: 8px 0; border-top: 1px solid #ECEDF1">{{coAddr}}</dd>
+</dl>
+</section>
+<div style="display: flex; flex-wrap: wrap; gap: 12px">
+<sc-if value="{{stPrimaryIsWorkspace}}" hint-placeholder-val="{{ true }}"><a href="{{wsHref}}" style="flex: 1 1 240px; display: flex; align-items: center; justify-content: center; min-height: 52px; border-radius: 999px; background: #1B7A45; color: #FFFFFF; text-decoration: none; font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: 600">{{stPrimary}}</a></sc-if>
+<sc-if value="{{stPrimaryIsEdit}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{goRegister}}" style="flex: 1 1 240px; min-height: 52px; border: 0; border-radius: 999px; background: #1B7A45; color: #FFFFFF; font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: 600; cursor: pointer">Update company details</button></sc-if>
+<sc-if value="{{stPrimaryIsContact}}" hint-placeholder-val="{{ false }}"><a href="#contact" style="flex: 1 1 240px; display: flex; align-items: center; justify-content: center; min-height: 52px; border-radius: 999px; background: #16143D; color: #FFFFFF; text-decoration: none; font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: 600">Contact FoodLens</a></sc-if>
+<sc-if value="{{stShowEdit}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{goRegister}}" style="flex: 1 1 200px; min-height: 52px; border: 2px solid #1B7A45; border-radius: 999px; background: #FFFFFF; color: #145C34; font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: 600; cursor: pointer">Edit company details</button></sc-if>
+</div>
+<sc-if value="{{isPending}}" hint-placeholder-val="{{ true }}"><p style="margin: 0; text-align: center; font-size: 13px; color: #4B4F5C">Demo: <button type="button" onClick="{{simApprove}}" style="padding: 0; border: 0; background: none; color: #145C34; font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer">simulate approval</button></p></sc-if>
+</main>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"variant":{"editor":"string","default":"","section":"State"},"screen":{"editor":"enum","options":["register","registerErrors","login","loginError","forgot","forgotSent","pending","changes","approved","suspended"],"default":"register","section":"State"},"$preview":{"width":1440,"height":1650}}'>
+class Component extends DCLogic {
+renderVals() {
+const st = this.state || {};
+const VM = { approvedWholesaler: ['approved', 'buyer'], pendingWholesaler: ['pending', 'buyer'] };
+const vm = VM[this.props.variant];
+const screen = st.screen || (vm ? vm[0] : this.props.variant) || this.props.screen || 'register';
+const reg = screen === 'register' || screen === 'registerErrors';
+const errors = screen === 'registerErrors' && !st.fixed;
+const ctype = st.ctype !== undefined ? st.ctype : (errors ? null : (vm ? vm[1] : 'maker'));
+const buyer = ctype === 'buyer';
+const agreed = st.agreed !== undefined ? st.agreed : !errors;
+const go = (s) => () => this.setState({ screen: s });
+const typeDefs = [['maker', 'Manufacturer', 'List products, batches and depots. Answer stock requests.'], ['buyer', 'Wholesaler', 'Find suppliers and request stock.']];
+const S = {
+pending: ['Pending FoodLens review', '#FDF5E2', '#7A4F00', 'Your company is waiting for review', 'We’re checking your company details. You can look around your workspace, but you can’t publish anything yet.', '', '', ''],
+changes: ['Changes needed', '#ECEBF7', '#433F8A', 'We need a few changes before we can approve', 'Update your details and send them again. Nothing has been published.', 'Note from the reviewer', 'The CAC number doesn’t match the registered company name. Please check both and resubmit.', '#ECEBF7'],
+approved: ['Approved · demo-reviewed profile', '#E3F4EA', '#145C34', 'Your company profile is approved', 'You can now publish products, batches, locations and announcements. Wholesalers can find your profile.', 'What “reviewed” means', 'A FoodLens demo review of your company details. It is not NAFDAC or SON approval, and shoppers are told so.', '#F5F5F3'],
+suspended: ['Suspended', '#EEEFF2', '#3A3F4B', 'Your company account is suspended', 'Your products and announcements are hidden from shoppers and wholesalers while the account is suspended.', 'Reason', 'Two announcements claimed regulator approval after a warning. Contact FoodLens to discuss next steps.', '#FDECEA']
+};
+const s = S[screen] || S.pending;
+const stepDefs = {
+pending: [['done', 'Details submitted', '20 Oct 2026, 16:40'], ['now', 'Company check', 'In progress · usually 2 working days'], ['todo', 'Decision', 'You’ll see the result here and by email']],
+changes: [['done', 'Details submitted', '20 Oct 2026, 16:40'], ['done', 'Company check', '21 Oct 2026, 10:05'], ['now', 'Waiting for your changes', 'Resubmit to continue']],
+approved: [['done', 'Details submitted', '20 Oct 2026, 16:40'], ['done', 'Company check', '21 Oct 2026, 10:05'], ['done', 'Approved', '21 Oct 2026, 10:12 · by FoodLens']],
+suspended: [['done', 'Approved', '21 Oct 2026'], ['done', 'Warning sent', '2 Nov 2026'], ['now', 'Suspended', '9 Nov 2026 · by FoodLens']]
+}[screen] || [];
+return {
+isAuth: reg || screen === 'login' || screen === 'loginError' || screen === 'forgot' || screen === 'forgotSent',
+isForgot: screen === 'forgot' || screen === 'forgotSent', forgotForm: screen === 'forgot', forgotSent: screen === 'forgotSent', goForgot: go('forgot'),
+resetEmail: st.resetEmail !== undefined ? st.resetEmail : 'tolu.adebayo@demofoods.example', onResetEmail: (e) => this.setState({ resetEmail: e.target.value, resetErr: false }), resetErr: !!st.resetErr, resetBorder: st.resetErr ? '2px solid #B42318' : '1px solid #C9CCD4',
+sendReset: () => { const v = st.resetEmail !== undefined ? st.resetEmail : 'tolu.adebayo@demofoods.example'; if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) { this.setState({ resetErr: true }); return; } this.setState({ screen: 'forgotSent' }); },
+coName: buyer ? 'Arewa Grainline' : 'Demo Foods Nigeria Ltd', coCac: buyer ? 'RC 7654321' : 'RC 1234567', coType: buyer ? 'Wholesaler' : 'Manufacturer', coAddr: buyer ? '14 Murtala Mohammed Way, Sabon Gari, Kano' : '12 Demo Industrial Ave, Ikeja, Lagos', wsHref: buyer ? 'Wholesaler.dc.html' : 'Supplier.dc.html',
+isRegister: reg,
+isLogin: screen === 'login' || screen === 'loginError',
+loginError: screen === 'loginError' && !st.pwFixed,
+loginBorder: screen === 'loginError' ? '2px solid #B42318' : '1px solid #C9CCD4',
+isStatus: !!S[screen],
+isPending: screen === 'pending',
+showErrors: errors,
+errBorder: errors ? '2px solid #B42318' : '1px solid #C9CCD4',
+passWeight: errors ? '700' : '400', passColor: errors ? '#B42318' : '#4B4F5C',
+fName: errors ? 'Tolu Adebayo' : 'Tolu Adebayo', fEmail: errors ? 'tolu.adebayo@' : 'tolu.adebayo@demofoods.example', fPhone: '+234 801 000 0000', fPass: errors ? 'demo' : 'demo-pass-123',
+fCompany: 'Demo Foods Nigeria Ltd', fCac: errors ? '' : 'RC 1234567', fAddr: '12 Demo Industrial Ave, Ikeja',
+noop: () => {},
+types: typeDefs.map(([id, t, h]) => ({ title: t, hint: h, on: ctype === id, icon: {"maker": "M3 21V10l5 3V10l5 3V6h4l1 15H3zM17 6V3", "buyer": "M1 7h13v10H1zM14 10h4l3 3v4h-7M5.5 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM17.5 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"}[id], iconBg: ctype === id ? '#F6B93B' : '#FFF1DC', iconFg: ctype === id ? '#16143D' : '#8F430B', border: ctype === id ? '2px solid #C76A1E' : (errors ? '2px solid #B42318' : '1px solid #EBD3B0'), shadow: ctype === id ? '0 6px 18px rgba(199,106,30,0.22)' : '0 1px 4px rgba(59,31,6,0.06)', pick: () => this.setState({ ctype: id }) })),
+showSells: ctype === 'maker',
+showBuys: ctype === 'buyer', nextStep3: ctype === 'buyer' ? 'Find suppliers and request stock' : 'Publish your products', nextStep3Help: ctype === 'buyer' ? 'Browse reviewed manufacturers in your regions.' : 'List products, batches and depots for buyers and shoppers.', errBorderWarm: errors ? '2px solid #B42318' : '1px solid #E2C49A',
+agreed: agreed,
+toggleAgree: () => this.setState({ agreed: !agreed }),
+submit: () => { if (errors || !ctype || !agreed) { this.setState({ screen: 'registerErrors', fixed: false }); return; } this.setState({ screen: 'pending' }); },
+goLogin: go('login'), goRegister: () => this.setState({ screen: 'register', fixed: true }),
+pwType: st.showPw ? 'text' : 'password', pwLabel: st.showPw ? 'Hide' : 'Show', togglePw: () => this.setState({ showPw: !st.showPw }),
+stPill: s[0], stBg: s[1], stFg: s[2], stTitle: s[3], stText: s[4], stHasNote: !!s[5], stNoteTitle: s[5], stNote: s[6], stNoteBg: s[7],
+steps: stepDefs.map(([k, t, m]) => ({ title: t, meta: m, mark: k === 'done' ? '✓' : '', ring: k === 'done' ? '0' : (k === 'now' ? '3px solid #F6B93B' : '2px solid #C9CCD4'), fill: k === 'done' ? '#1B7A45' : '#FFFFFF' })),
+stPrimaryIsWorkspace: screen === 'pending' || screen === 'approved',
+stPrimary: screen === 'approved' ? 'Go to your workspace' : 'Look around (read-only)',
+stPrimaryIsEdit: screen === 'changes',
+stPrimaryIsContact: screen === 'suspended',
+stShowEdit: screen === 'pending',
+simApprove: go('approved')
+};
+}
+}
+</script>
+</body>
+</html>

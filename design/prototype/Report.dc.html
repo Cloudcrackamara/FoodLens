@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FoodLens report a product concern</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&amp;family=Open+Sans:wght@400;600;700&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap">
+<style>
+body{margin:0}
+@keyframes fl-spin{to{transform:rotate(360deg)}}
+.fl-spin{animation:fl-spin .9s linear infinite}
+@media (prefers-reduced-motion: reduce){.fl-spin{animation:none}}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-direction: column; background: #F5F5F3; color: #16143D; font-family: 'Open Sans', system-ui, sans-serif; font-size: 16px; line-height: 1.5">
+
+<div style="background: #F6B93B; color: #1F1D5C; text-align: center; padding: 6px 16px; font-family: 'Poppins', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase">Demo data · not an official NAFDAC or SON service</div>
+
+<header style="display: flex; align-items: center; gap: 4px; padding: 8px 12px; background: #FFFFFF; border-bottom: 1px solid #ECEDF1">
+<a href="Result.dc.html" aria-label="Back to the product result" style="width: 44px; height: 44px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #16143D">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>
+</a>
+<p style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600">Report a concern</p>
+</header>
+
+<!-- ============ FORM ============ -->
+<sc-if value="{{showForm}}" hint-placeholder-val="{{ true }}">
+<main style="flex: 1; width: 100%; max-width: 1040px; margin: 0 auto; box-sizing: border-box; padding: 20px 16px 32px; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px">
+
+<div style="flex: 1.6 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+
+<div>
+<h1 style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 25px; font-weight: 700; line-height: 1.25">Report a product concern</h1>
+<p style="margin: 6px 0 0; color: #3A3F4B">Tell us what looks wrong. You don’t need an account, and it takes about two minutes.</p>
+</div>
+
+<sc-if value="{{isFailed}}" hint-placeholder-val="{{ false }}">
+<div role="alert" style="display: flex; gap: 12px; padding: 16px; border-radius: 14px; background: #FDECEA; border: 1px solid #F3B8B2; color: #6E1A13">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#B42318" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" style="flex: none; margin-top: 1px"><path d="M2 8.5a15 15 0 0 1 20 0M5.5 12a10 10 0 0 1 13 0M9 15.5a5 5 0 0 1 6 0M12 19h.01M3 3l18 18"></path></svg>
+<div><p style="margin: 0; font-weight: 700">We couldn’t send your report</p><p style="margin: 2px 0 0; font-size: 15px">Check your connection and try again. Your answers and photos are still here.</p></div>
+</div>
+</sc-if>
+
+<sc-if value="{{hasErrors}}" hint-placeholder-val="{{ false }}">
+<div role="alert" style="padding: 16px; border-radius: 14px; background: #FFFFFF; border: 2px solid #B42318">
+<p style="margin: 0 0 6px; font-weight: 700; color: #8C1D16">Fix {{errorCount}} before sending</p>
+<ul style="margin: 0; padding-left: 20px; font-size: 15px">
+<sc-if value="{{catErr}}" hint-placeholder-val="{{ true }}"><li><a href="#cat" style="color: #8C1D16">Choose what the concern is about</a></li></sc-if>
+<sc-if value="{{descErr}}" hint-placeholder-val="{{ true }}"><li><a href="#desc" style="color: #8C1D16">Describe the concern in at least 20 characters</a></li></sc-if>
+</ul>
+</div>
+</sc-if>
+
+<!-- product -->
+<section aria-labelledby="prod-h" style="padding: 18px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E3E5EA; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+<h2 id="prod-h" style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600">About the product</h2>
+<span style="font-size: 12px; font-weight: 600; color: #145C34; background: #E3F4EA; padding: 1px 8px; border-radius: 999px">From your check</span>
+</div>
+<label style="display: flex; flex-direction: column; gap: 4px; font-weight: 600; font-size: 15px">Product name <span style="font-weight: 400; font-size: 13px; color: #4B4F5C">If you know it</span>
+<input type="text" value="{{prodName}}" onChange="{{onProd}}" style="height: 48px; padding: 0 14px; border: 1px solid #C9CCD4; border-radius: 12px; font: inherit; font-weight: 400; color: #16143D; background: #FFFFFF"></label>
+<div style="display: flex; flex-wrap: wrap; gap: 12px">
+<label style="flex: 1 1 160px; display: flex; flex-direction: column; gap: 4px; font-weight: 600; font-size: 15px">Registration number
+<input type="text" value="A7-0412L" readonly="" style="height: 48px; padding: 0 14px; border: 1px solid #C9CCD4; border-radius: 12px; font-family: 'IBM Plex Mono', monospace; font-size: 17px; font-weight: 600; color: #16143D; background: #F5F5F3"></label>
+<label style="flex: 1 1 140px; display: flex; flex-direction: column; gap: 4px; font-weight: 600; font-size: 15px">Batch <span style="font-weight: 400; font-size: 13px; color: #4B4F5C">Optional</span>
+<input type="text" value="24B-117" readonly="" style="height: 48px; padding: 0 14px; border: 1px solid #C9CCD4; border-radius: 12px; font-family: 'IBM Plex Mono', monospace; font-size: 17px; color: #16143D; background: #F5F5F3"></label>
+</div>
+<a href="Confirm.dc.html" style="align-self: flex-start; font-size: 14px; font-weight: 600">Wrong number? Change it</a>
+</section>
+
+<!-- category -->
+<fieldset id="cat" style="margin: 0; padding: 18px; border-radius: 16px; background: #FFFFFF; border: {{catBorder}}; display: flex; flex-direction: column; gap: 8px; min-width: 0">
+<legend style="float: left; width: 100%; padding: 0; margin-bottom: 6px; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600">What is the concern about? <span style="font-family: 'Open Sans', sans-serif; font-size: 13px; font-weight: 600; color: #8C1D16">Required</span></legend>
+<sc-if value="{{catErr}}" hint-placeholder-val="{{ false }}"><p style="margin: 0; font-size: 14px; font-weight: 600; color: #B42318">Choose one option.</p></sc-if>
+<sc-for list="{{cats}}" as="c" hint-placeholder-count="4">
+<label style="display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-radius: 12px; border: {{c.border}}; background: {{c.bg}}; cursor: pointer">
+<input type="radio" name="cat" checked="{{c.selected}}" onChange="{{c.pick}}" style="flex: none; width: 22px; height: 22px; margin: 1px 0 0; accent-color: #1B7A45">
+<span><b style="display: block; font-weight: 600">{{c.title}}</b><span style="font-size: 14px; color: #4B4F5C">{{c.hint}}</span></span>
+</label>
+</sc-for>
+</fieldset>
+
+<!-- description -->
+<section style="padding: 18px; border-radius: 16px; background: #FFFFFF; border: {{descBorder}}; display: flex; flex-direction: column; gap: 6px">
+<label id="desc" for="desc-in" style="font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600">Describe what you noticed <span style="font-family: 'Open Sans', sans-serif; font-size: 13px; font-weight: 600; color: #8C1D16">Required</span></label>
+<p style="margin: 0; font-size: 14px; color: #4B4F5C">What looks wrong, and where you bought it, if you remember. Please don’t include names or phone numbers.</p>
+<textarea id="desc-in" value="{{desc}}" onChange="{{onDesc}}" rows="5" maxlength="500" aria-invalid="{{descErr}}" placeholder="e.g. The label says groundnut oil but the number belongs to tomato paste." style="margin-top: 4px; padding: 12px 14px; border: {{descInputBorder}}; border-radius: 12px; font: inherit; color: #16143D; resize: vertical; min-height: 120px"></textarea>
+<div style="display: flex; justify-content: space-between; gap: 8px; font-size: 13px">
+<sc-if value="{{descErr}}" hint-placeholder-val="{{ false }}"><span style="font-weight: 600; color: #B42318">Add a bit more detail (at least 20 characters).</span></sc-if>
+<sc-if value="{{descOk}}" hint-placeholder-val="{{ true }}"><span style="color: #4B4F5C">At least 20 characters</span></sc-if>
+<span style="color: #4B4F5C">{{descCount}} / 500</span>
+</div>
+</section>
+
+<!-- photos -->
+<section aria-labelledby="ph-h" style="padding: 18px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E3E5EA; display: flex; flex-direction: column; gap: 12px">
+<div>
+<h2 id="ph-h" style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600">Photos <span style="font-family: 'Open Sans', sans-serif; font-size: 13px; font-weight: 600; color: #4B4F5C">Optional</span></h2>
+<p style="margin: 4px 0 8px; font-size: 14px; color: #3A3F4B">Photos help moderators understand the concern. Useful shots:</p>
+<div style="display: flex; flex-wrap: wrap; gap: 6px; font-size: 13px; font-weight: 600">
+<span style="padding: 2px 10px; border-radius: 999px; background: #F5F5F3">Front label</span>
+<span style="padding: 2px 10px; border-radius: 999px; background: #F5F5F3">Packaging or seal</span>
+<span style="padding: 2px 10px; border-radius: 999px; background: #F5F5F3">Registration number</span>
+<span style="padding: 2px 10px; border-radius: 999px; background: #F5F5F3">Batch and dates</span>
+</div>
+</div>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px">
+<sc-for list="{{photos}}" as="p" hint-placeholder-count="2">
+<li style="display: flex; gap: 12px; padding: 10px; border-radius: 12px; border: {{p.border}}; background: {{p.bg}}">
+<div style="position: relative; flex: none; width: 76px; height: 76px; border-radius: 10px; overflow: hidden; background: #22279A">
+<img src="/_blob/30b50c2d712709ab5916423dd696349c" alt="{{p.alt}}" style="width: 100%; height: 100%; object-fit: cover; object-position: {{p.pos}}; transform: scale({{p.zoom}}); opacity: {{p.imgOpacity}}">
+<sc-if value="{{p.isUp}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center"><svg class="fl-spin" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"><path d="M12 3a9 9 0 1 0 9 9"></path></svg></span></sc-if>
+</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+<p style="margin: 0; font-weight: 600">{{p.label}}</p>
+<sc-if value="{{p.isDone}}" hint-placeholder-val="{{ true }}">
+<p style="display: flex; align-items: center; gap: 6px; margin: 0; font-size: 14px; color: #145C34; font-weight: 600"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#145C34" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Attached · {{p.size}}</p>
+<div style="display: flex; gap: 8px">
+<button type="button" onClick="{{p.replace}}" style="min-height: 36px; padding: 0 12px; border: 1px solid #C9CCD4; border-radius: 999px; background: #FFFFFF; color: #16143D; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer">Replace</button>
+<button type="button" onClick="{{p.remove}}" style="min-height: 36px; padding: 0 12px; border: 1px solid #C9CCD4; border-radius: 999px; background: #FFFFFF; color: #16143D; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer">Remove</button>
+</div>
+</sc-if>
+<sc-if value="{{p.isUp}}" hint-placeholder-val="{{ false }}">
+<div role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{p.pct}}" aria-label="Upload progress" style="height: 8px; border-radius: 4px; background: #E3E5EA; overflow: hidden"><div style="height: 100%; width: {{p.pct}}%; background: #1B7A45; border-radius: 4px"></div></div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px"><span style="font-size: 14px; color: #3A3F4B">Uploading… {{p.pct}}%</span><button type="button" onClick="{{p.remove}}" style="min-height: 36px; padding: 0 12px; border: 0; background: transparent; color: #16143D; font: inherit; font-size: 14px; font-weight: 600; text-decoration: underline; cursor: pointer">Cancel</button></div>
+</sc-if>
+<sc-if value="{{p.isFail}}" hint-placeholder-val="{{ false }}">
+<p style="margin: 0; font-size: 14px; font-weight: 600; color: #B42318">Upload failed. Check your connection.</p>
+<div style="display: flex; gap: 8px">
+<button type="button" onClick="{{p.retry}}" style="min-height: 36px; padding: 0 12px; border: 0; border-radius: 999px; background: #1B7A45; color: #FFFFFF; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer">Retry</button>
+<button type="button" onClick="{{p.remove}}" style="min-height: 36px; padding: 0 12px; border: 1px solid #C9CCD4; border-radius: 999px; background: #FFFFFF; color: #16143D; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer">Remove</button>
+</div>
+</sc-if>
+</div>
+</li>
+</sc-for>
+</ul>
+<sc-if value="{{canAdd}}" hint-placeholder-val="{{ true }}">
+<button type="button" onClick="{{addPhoto}}" style="display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px; border: 2px dashed #9FD1B3; border-radius: 12px; background: #F4FAF6; color: #145C34; font: inherit; text-align: left; cursor: pointer">
+<span aria-hidden="true" style="flex: none; width: 44px; height: 44px; border-radius: 50%; background: #1B7A45; display: inline-flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5h6l1.5 2H19a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h2.5z"></path><path d="M12 10v6M9 13h6"></path></svg></span>
+<span><b style="display: block; font-weight: 700">Add a photo</b><span style="font-size: 14px; color: #3A3F4B">Take one now or choose from your gallery</span></span>
+</button>
+</sc-if>
+<p style="margin: 0; font-size: 13px; color: #4B4F5C">Up to 4 photos · JPG, PNG or HEIC · 10 MB each. Make sure the text is sharp. Leave out faces, receipts and anything showing where you live.</p>
+</section>
+</div>
+
+<!-- side: privacy + send -->
+<div style="flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+<section aria-labelledby="pv-h" style="padding: 18px; border-radius: 16px; background: #ECEBF7; border: 1px solid #D4D2EE">
+<h2 id="pv-h" style="display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#433F8A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>Your privacy</h2>
+<ul style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 15px; color: #2F2C5E">
+<li>No account needed. We don’t ask for your name, phone number or email.</li>
+<li>Your identity is not shown publicly, and your report is not published.</li>
+<li>Authorised FoodLens moderators review reports and the photos attached to them.</li>
+<li>Photos can show more than you expect. Check them before sending.</li>
+</ul>
+<p style="margin: 10px 0 0; font-size: 13px; color: #433F8A">Like any website, our servers receive basic technical information when you send a report, so we can’t promise complete anonymity.</p>
+</section>
+<div style="padding: 18px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E3E5EA; display: flex; flex-direction: column; gap: 10px">
+<sc-if value="{{notSending}}" hint-placeholder-val="{{ true }}">
+<button type="button" onClick="{{send}}" style="display: flex; align-items: center; justify-content: center; min-height: 56px; border: 0; border-radius: 999px; background: #1B7A45; color: #FFFFFF; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600; cursor: pointer">{{sendLabel}}</button>
+</sc-if>
+<sc-if value="{{isSending}}" hint-placeholder-val="{{ false }}">
+<button type="button" disabled="" aria-busy="true" style="display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 56px; border: 0; border-radius: 999px; background: #E3F4EA; color: #145C34; font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: 600"><svg class="fl-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1B7A45" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9"></path></svg>Sending report…</button>
+</sc-if>
+<a href="Result.dc.html" style="display: flex; align-items: center; justify-content: center; min-height: 44px; color: #16143D; font-size: 15px; font-weight: 600">Cancel and go back</a>
+<p style="margin: 0; font-size: 13px; color: #4B4F5C; text-align: center">Moderators check every report before any action. A report is not a finding about the product.</p>
+</div>
+</div>
+</main>
+</sc-if>
+
+<!-- ============ CONFIRMATION ============ -->
+<sc-if value="{{isDone}}" hint-placeholder-val="{{ false }}">
+<main style="flex: 1; width: 100%; max-width: 560px; margin: 0 auto; box-sizing: border-box; padding: 28px 16px 32px; display: flex; flex-direction: column; gap: 16px">
+<section style="padding: 26px 20px; border-radius: 18px; background: #FFFFFF; border: 1px solid #E3E5EA; text-align: center">
+<span aria-hidden="true" style="width: 64px; height: 64px; border-radius: 50%; background: #E3F4EA; display: inline-flex; align-items: center; justify-content: center"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#1B7A45" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>
+<h1 style="margin: 14px 0 8px; font-family: 'Poppins', sans-serif; font-size: 23px; font-weight: 700; line-height: 1.3">Thank you for helping improve product transparency.</h1>
+<p style="margin: 0; color: #3A3F4B">Your report has been submitted for review. It has not yet been verified.</p>
+</section>
+<section aria-labelledby="ref-h" style="padding: 20px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E3E5EA">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+<h2 id="ref-h" style="margin: 0; font-size: 14px; font-weight: 600; color: #4B4F5C">Report reference</h2>
+<span style="font-size: 12px; font-weight: 700; color: #7A4F00; background: #FDF5E2; padding: 1px 8px; border-radius: 999px">Demo data</span>
+</div>
+<p style="margin: 4px 0 2px; font-family: 'IBM Plex Mono', monospace; font-size: 26px; font-weight: 600; letter-spacing: 0.02em">DEMO-RP-0458</p>
+<p style="margin: 0 0 14px; font-size: 13px; color: #4B4F5C">Save or screenshot this reference. It’s the only way to check on your report.</p>
+<div style="display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 10px; background: #FDF5E2; font-size: 15px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7A4F00" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg><span><b style="color: #7A4F00">Pending moderation.</b> Not reviewed yet.</span></div>
+<ol style="list-style: none; margin: 16px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; font-size: 15px">
+<li style="display: flex; gap: 10px"><span aria-hidden="true" style="flex: none; width: 22px; height: 22px; border-radius: 50%; background: #1B7A45; display: inline-flex; align-items: center; justify-content: center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span><span><b>Submitted</b> · today, 14:32 · 2 photos</span></li>
+<li style="display: flex; gap: 10px"><span aria-hidden="true" style="flex: none; width: 22px; height: 22px; border-radius: 50%; border: 2px solid #F6B93B; box-sizing: border-box"></span><span><b>Moderator review</b> · usually within 3 working days</span></li>
+<li style="display: flex; gap: 10px; color: #4B4F5C"><span aria-hidden="true" style="flex: none; width: 22px; height: 22px; border-radius: 50%; border: 2px solid #C9CCD4; box-sizing: border-box"></span><span><b>Outcome</b> · shown when you check this reference</span></li>
+</ol>
+</section>
+<p style="margin: 0; padding: 0 4px; font-size: 14px; color: #3A3F4B">Your report won’t appear on FoodLens as a claim about this product. Moderators decide what happens next.</p>
+<a href="Result.dc.html" style="display: flex; align-items: center; justify-content: center; min-height: 54px; border-radius: 999px; background: #1B7A45; color: #FFFFFF; text-decoration: none; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600">Return to product result</a>
+<a href="Scan.dc.html" style="display: flex; align-items: center; justify-content: center; min-height: 48px; border-radius: 999px; border: 2px solid #1B7A45; box-sizing: border-box; color: #145C34; text-decoration: none; font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: 600">Check another product</a>
+</main>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"variant":{"editor":"enum","options":["form","photos","invalid","submitting","failed","done"],"default":"form","section":"State"},"$preview":{"width":390,"height":2050}}'>
+class Component extends DCLogic {
+componentDidMount() {
+this._t = setInterval(() => {
+const ps = this._photos();
+if (!ps.some((p) => p.status === 'up' && p.auto)) return;
+this.setState({ photos: ps.map((p) => p.status === 'up' && p.auto ? (p.pct >= 92 ? { ...p, status: 'done', pct: 100 } : { ...p, pct: p.pct + 18 }) : p) });
+}, 450);
+}
+componentWillUnmount() { clearInterval(this._t); clearTimeout(this._s); }
+_v() { return this.props.variant || 'form'; }
+_photos() {
+const st = this.state || {};
+if (st.photos) return st.photos;
+const v = this._v();
+if (v === 'photos') return [
+{ id: 1, kind: 'Front label', status: 'done', pct: 100, size: '1.4 MB', pos: '40% 28%', zoom: 1.6 },
+{ id: 2, kind: 'Registration number', status: 'up', pct: 62, pos: '42% 36%', zoom: 2.6 },
+{ id: 3, kind: 'Batch and dates', status: 'fail', pct: 0, pos: '46% 41%', zoom: 2.4 }
+];
+if (v === 'submitting' || v === 'failed' || v === 'done') return [
+{ id: 1, kind: 'Front label', status: 'done', pct: 100, size: '1.4 MB', pos: '40% 28%', zoom: 1.6 },
+{ id: 2, kind: 'Registration number', status: 'done', pct: 100, size: '0.9 MB', pos: '42% 36%', zoom: 2.6 }
+];
+return [];
+}
+renderVals() {
+const v = this._v();
+const st = this.state || {};
+const filled = v === 'photos' || v === 'submitting' || v === 'failed';
+const stage = st.stage || (v === 'submitting' ? 'sending' : v === 'failed' ? 'failed' : v === 'done' ? 'done' : 'form');
+const cat = st.cat !== undefined ? st.cat : (filled ? 'mismatch' : null);
+const desc = st.desc !== undefined ? st.desc : (filled ? 'The label says groundnut oil, 1 L, but FoodLens shows this number belongs to tomato paste. Bought at a kiosk near Ogbete market on Saturday.' : '');
+const showErrors = st.showErrors !== undefined ? st.showErrors : v === 'invalid';
+const catErr = showErrors && !cat;
+const descErr = showErrors && desc.trim().length < 20;
+const errorCount = (catErr ? 1 : 0) + (descErr ? 1 : 0);
+const defs = [
+{ id: 'mismatch', title: 'Registration details do not match the packaging', hint: 'The number, product or company on the pack differ from the record.' },
+{ id: 'packaging', title: 'Damaged or suspicious packaging', hint: 'Broken seal, reprinted label, signs of tampering.' },
+{ id: 'info', title: 'Missing or unclear product information', hint: 'No number, smudged dates, missing batch.' },
+{ id: 'other', title: 'Other concern', hint: 'Anything else about this product.' }
+];
+const ps = this._photos();
+const setPs = (fn) => this.setState({ photos: fn(this._photos()) });
+const kinds = ['Front label', 'Registration number', 'Batch and dates', 'Packaging or seal'];
+const poses = [['40% 28%', 1.6], ['42% 36%', 2.6], ['46% 41%', 2.4], ['55% 45%', 1.2]];
+return {
+showForm: stage === 'form' || stage === 'sending' || stage === 'failed',
+isDone: stage === 'done',
+isFailed: stage === 'failed',
+isSending: stage === 'sending',
+notSending: stage !== 'sending',
+sendLabel: stage === 'failed' ? 'Try again' : 'Send report',
+hasErrors: errorCount > 0,
+errorCount: errorCount === 1 ? '1 thing' : errorCount + ' things',
+catErr: catErr,
+descErr: descErr,
+descOk: !descErr,
+catBorder: catErr ? '2px solid #B42318' : '1px solid #E3E5EA',
+descBorder: descErr ? '2px solid #B42318' : '1px solid #E3E5EA',
+descInputBorder: descErr ? '2px solid #B42318' : '1px solid #C9CCD4',
+desc: desc,
+descCount: desc.length,
+prodName: st.prod !== undefined ? st.prod : 'Tomato paste, 70 g',
+onProd: (e) => this.setState({ prod: e.target.value }),
+onDesc: (e) => this.setState({ desc: e.target.value }),
+cats: defs.map((d) => ({ ...d, selected: cat === d.id, border: cat === d.id ? '2px solid #1B7A45' : '1px solid #E3E5EA', bg: cat === d.id ? '#F4FAF6' : '#FFFFFF', pick: () => this.setState({ cat: d.id }) })),
+photos: ps.map((p) => ({
+label: p.kind, size: p.size || '1.1 MB', pct: Math.min(99, p.pct), pos: p.pos, zoom: p.zoom,
+alt: 'Photo of the ' + p.kind.toLowerCase(),
+isDone: p.status === 'done', isUp: p.status === 'up', isFail: p.status === 'fail',
+imgOpacity: p.status === 'done' ? 1 : 0.45,
+border: p.status === 'fail' ? '2px solid #B42318' : '1px solid #E3E5EA',
+bg: p.status === 'fail' ? '#FDF4F3' : '#FFFFFF',
+remove: () => setPs((xs) => xs.filter((x) => x.id !== p.id)),
+retry: () => setPs((xs) => xs.map((x) => x.id === p.id ? { ...x, status: 'up', pct: 10, auto: true } : x)),
+replace: () => setPs((xs) => xs.map((x) => x.id === p.id ? { ...x, status: 'up', pct: 10, auto: true } : x))
+})),
+canAdd: ps.length < 4,
+addPhoto: () => setPs((xs) => { const i = xs.length; return xs.concat([{ id: Date.now(), kind: kinds[i % 4], status: 'up', pct: 8, auto: true, size: '1.2 MB', pos: poses[i % 4][0], zoom: poses[i % 4][1] }]); }),
+send: () => {
+if (!cat || desc.trim().length < 20) { this.setState({ showErrors: true }); return; }
+this.setState({ stage: 'sending', showErrors: false });
+clearTimeout(this._s);
+this._s = setTimeout(() => this.setState({ stage: 'done' }), 1400);
+}
+};
+}
+}
+</script>
+</body>
+</html>

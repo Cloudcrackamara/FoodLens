@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FoodLens wholesaler, supplier page</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&amp;family=Open+Sans:wght@400;600;700&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1F5F8F}a:hover{color:#174A70}
+.ws-side{flex:0 0 256px;box-sizing:border-box}
+.ws-menu{display:none}
+.ws-row{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:24px;align-items:start}
+.ws-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
+.ws-hide-sm{display:inline-flex}
+@keyframes ws-pulse{0%,100%{opacity:.5}50%{opacity:1}}
+.ws-skel{animation:ws-pulse 1.4s ease-in-out infinite}
+@media (max-width:1023px){.ws-side{display:none !important}.ws-menu{display:inline-flex}.ws-row{grid-template-columns:minmax(0,1fr)}.ws-pad{padding-left:20px !important;padding-right:20px !important}}
+@media (max-width:640px){.ws-cards{grid-template-columns:minmax(0,1fr);gap:14px}.ws-hide-sm{display:none !important}.ws-pad{padding-left:14px !important;padding-right:14px !important}}
+@media (prefers-reduced-motion: reduce){.ws-skel{animation:none}}
+</style>
+</helmet>
+<div style="width: 100%">
+<dc-import name="Wholesaler" variant="supplier" hint-size="100%,1550px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1550}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
