@@ -71,4 +71,22 @@ export function setForwardedFor(req, options = NO_TUNNEL) {
   delete req.headers["forwarded"];
   delete req.headers["cf-connecting-ip"];
   req.headers["x-forwarded-for"] = address;
+  // Cloudflare's visitor-location headers give the coarse area of a check (D118). They reach the
+  // API only from a trusted cloudflared connection; anyone else could forge a city.
+  if (!fromTrustedTunnel(req, options)) {
+    for (const name of LOCATION_HEADERS) delete req.headers[name];
+  }
+}
+
+const LOCATION_HEADERS = ["cf-ipcity", "cf-region", "cf-region-code", "cf-ipcountry"];
+
+/**
+ * @param {IncomingLike} req
+ * @param {TunnelOptions} options
+ */
+function fromTrustedTunnel(req, options) {
+  return (
+    options.trustCloudflareTunnel &&
+    options.cloudflaredIps.includes(normalizeAddress(req.socket?.remoteAddress))
+  );
 }

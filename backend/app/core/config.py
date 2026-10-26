@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     rate_limit_check_refill_per_second: float = Field(default=1.0, gt=0)
     rate_limit_login_per_minute: int = Field(default=5, ge=1)  # per IP + email
     rate_limit_register_per_hour: int = Field(default=5, ge=1)
+    rate_limit_report_per_hour: int = Field(default=5, ge=1)  # consumer reports (D119)
     # Comma-separated IPs or CIDR ranges never limited, e.g. usability-test machines.
     rate_limit_exempt_ips: str = ""
     # Proxies whose X-Forwarded-For header is trusted (the Next.js server).
@@ -39,6 +40,13 @@ class Settings(BaseSettings):
     # Base URL printed in every QR code and label: {PUBLIC_BASE_URL}/p/{token} (D129, D139).
     # QR codes are permanent once printed, so set it before printing real labels.
     public_base_url: str = "http://localhost:3000"
+
+    # Consumer checks (D115, D118). A sale at or after now - window shows as just sold.
+    just_sold_window_hours: int = Field(default=6, ge=1)
+    # Offline DB-IP Lite city database (.mmdb). Blank skips this step of the area lookup.
+    geoip_db_path: str = ""
+    # Demo only: lets the check page choose a city when no other area source answers.
+    simulate_location_enabled: bool = False
 
     # Wholesale order requests are future work: the routes exist only when true (D127).
     orders_enabled: bool = False

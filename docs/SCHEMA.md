@@ -157,7 +157,7 @@ Append-only consumer check log: `UPDATE` is refused by a trigger **(DB)**; the p
 | `identifier_type` | `QR` (scanned or opened from `/p/{token}`) or `TYPED` (D138). |
 | `unit_id`, `carton_id` | Nullable. Null for invalid identifiers. |
 | `area_id` | Coarse area. Nullable when unknown. |
-| `result` | One of the D115 results. |
+| `result` | One of the D115 results, or `CARTON_CODE` for a recognised carton QR (D148). A `CARTON_CODE` scan has `carton_id` set and `unit_id` null **(DB)**. |
 | `scan_id`, `created_at` | |
 
 The exact column list is `scan_id, identifier_type, unit_id, carton_id, area_id, result, created_at`. There is deliberately **no** IP, user agent, cookie, device ID, GPS, user or session column. A test enforces the exact column list. Rows are deleted after 12 months by `python -m app.jobs.purge` **(service)**.

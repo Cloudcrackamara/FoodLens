@@ -13,6 +13,7 @@ dependencies = [
     "bcrypt>=5.0.0",
     "segno>=1.6.6",
     "fpdf2>=2.8.9",
+    "maxminddb>=2.6",
 ]
 
 [dependency-groups]

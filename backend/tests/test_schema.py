@@ -280,6 +280,18 @@ def test_scan_event_accepts_qr_and_typed(session: Session, identifier_type: Iden
     assert set(IdentifierType) == {"QR", "TYPED"}
 
 
+def test_carton_code_scan_needs_a_carton_and_no_unit(session: Session) -> None:
+    """D148: carton scans are logged apart from pack checks."""
+    with pytest.raises(REJECTED):
+        session.execute(
+            text(
+                "INSERT INTO scan_event (scan_id, identifier_type, result) "
+                "VALUES (:id, 'QR', 'CARTON_CODE')"
+            ),
+            {"id": uuid.uuid4()},
+        )
+
+
 # --- Companies (D105, D106) -------------------------------------------------------------------
 
 

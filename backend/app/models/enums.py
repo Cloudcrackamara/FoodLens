@@ -129,7 +129,7 @@ class IdentifierType(StrEnum):
 
 
 class CheckResult(StrEnum):
-    """One main result per check, in precedence order (D115, D141)."""
+    """One main result per check, in precedence order (D115, D141), plus CARTON_CODE (D148)."""
 
     INVALID_IDENTITY = "INVALID_IDENTITY"
     SUSPICIOUS_ACTIVITY = "SUSPICIOUS_ACTIVITY"
@@ -137,6 +137,8 @@ class CheckResult(StrEnum):
     RECOGNISED_JUST_SOLD = "RECOGNISED_JUST_SOLD"
     RECOGNISED_PREVIOUSLY_SOLD = "RECOGNISED_PREVIOUSLY_SOLD"
     RECOGNISED_NOT_SOLD = "RECOGNISED_NOT_SOLD"
+    # A recognised carton QR. Logged apart, so carton scans never count as pack checks (D148).
+    CARTON_CODE = "CARTON_CODE"
 
 
 class ConcernType(StrEnum):

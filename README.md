@@ -2,7 +2,7 @@
 
 FoodLens is a startup product at the demonstration-prototype stage; the founder's capstone is its first milestone. It is being rebuilt as a unit-level product integrity platform: every pack gets its own QR identity, shops record what happens to it, and consumers check it for free (`docs/PLAN.md`, final design in `docs/DECISIONS.md` D137–D147).
 
-**Status: Phases 1 and 2 are done.** The unit-identity schema exists (units, cartons, lifecycle events, scans, alerts, allocations, POS partners), and the old registration lookup, simulated register and OCR are removed. Manufacturers generate a QR code for every pack and carton, download the one-time label file, release, void and allocate stock (see [Pack codes and labels](#pack-codes-and-labels)). Consumer checks (`/check`, `/p/{token}`) arrive in Phase 3; until then `/check` shows a placeholder. Companies register with type flags (manufacturer, distributor, retailer), manage demo-reviewed catalogue data and appear in the public partner directory. Each phase updates this README for what it changes.
+**Status: Phases 1 to 3 are done.** The unit-identity schema exists (units, cartons, lifecycle events, scans, alerts, allocations, POS partners), and the old registration lookup, simulated register and OCR are removed. Manufacturers generate a QR code for every pack and carton, download the one-time label file, release, void and allocate stock (see [Pack codes and labels](#pack-codes-and-labels)). Anyone can check a pack for free at `/check` (Scan QR or Type code) or by opening the QR link `/p/{code}` (see [Consumer checks](#consumer-checks)). Companies register with type flags (manufacturer, distributor, retailer), manage demo-reviewed catalogue data and appear in the public partner directory. Each phase updates this README for what it changes.
 
 > **DEMO DATA — NOT AN OFFICIAL REGULATOR SERVICE.** All companies, products and codes are fictional. A check is not a laboratory test and not a NAFDAC or SON decision, and no QR system catches every copied code.
 
@@ -81,7 +81,7 @@ Check: `http://localhost:3000/api/health` returns `{"status":"ok"}`.
 
 ## Test on a phone
 
-Phone cameras only work on HTTPS pages (or `localhost`), so a phone cannot use the camera at `http://<computer-IP>:3000`. The QR reader arrives in Phase 3; the tunnel below already works for opening the app on a phone.
+Phone cameras only work on HTTPS pages (or `localhost`), so a phone cannot use the camera at `http://<computer-IP>:3000`. Use the tunnel below to try Scan QR at `/check` from a phone.
 
 ### Test on your phone (iPhone or Android) with a Cloudflare quick tunnel
 
@@ -142,6 +142,18 @@ Each QR encodes `{PUBLIC_BASE_URL}/p/{code}` with error correction level M and a
 
 Try the full flow: create an account at `/register`, register a company, sign in as the seed admin in another browser (or a private window) and approve it at `/admin`, add a location at `/company`, mark it demo-reviewed at `/admin`, then see it at `/suppliers`. The NAFDAC number on a product is shown as printed, as information only; FoodLens never checks it against any register. A FoodLens demo review is never a NAFDAC or SON approval.
 
+## Consumer checks
+
+No account and no cookies. Every result carries `data_mode: "DEMO"` and the disclaimer from the API, and the page shows the **DEMO DATA — NOT AN OFFICIAL REGULATOR SERVICE** banner (D115, D141).
+
+- `/check`: **Scan QR** reads the code with the phone camera, or from a photo when there is no camera. The reader runs in the browser (the built-in `BarcodeDetector`, otherwise the bundled jsQR); no image is uploaded. **Type code** accepts the 26 characters printed under the QR, with spaces or dashes; O, I and L are read as 0, 1 and 1.
+- `/p/{code}`: what any phone camera opens. The page records nothing on load; the browser checks the code with a `POST` after the page mounts, so link previews create no scan (D117).
+- Results, first match wins: `INVALID_IDENTITY`, `SUSPICIOUS_ACTIVITY` (from existing alerts; risk rules arrive in Phase 6), `BATCH_OR_PRODUCT_WARNING` (recall), a carton QR gives `CARTON_CODE` ("check the individual pack"), then `RECOGNISED_JUST_SOLD` (sold within `JUST_SOLD_WINDOW_HOURS`, default 6), `RECOGNISED_PREVIOUSLY_SOLD` or `RECOGNISED_NOT_SOLD`. Only the last 4 characters of the code are shown, and responses contain no internal IDs.
+- **I've bought this** (no sale recorded) shows a note and sends nothing. **Report a concern** sends an anonymous report to the manufacturer and admins (`POST /api/check/report`, 5 per hour per network).
+- A check stores only the coarse area (city). With `SIMULATE_LOCATION_ENABLED=true` (demo only) a city chosen in the picker comes first (D148); otherwise the area comes from Cloudflare's location headers through a trusted tunnel, else the DB-IP Lite file at `GEOIP_DB_PATH`. The IP is discarded (D118). A check never changes a pack's status.
+
+Demo codes to type arrive with the seed scenario in Phase 8 (D145). Until then, generate codes for a batch at `/company` and type one from the label file.
+
 ## Company contact details
 
 On `/company` the company owner can edit the public contact email and phone. Changes apply at once (no review) and are recorded in the audit log with who made them and when (D103). Product and batch details can only be changed through a change notice.
@@ -162,11 +174,12 @@ Requests are limited per network (IP address); no cookies or identifiers are use
 
 | What | Default |
 |---|---|
-| Consumer checks (Phase 3) | burst of 20, then 1 per second (`RATE_LIMIT_CHECK_BURST`, `RATE_LIMIT_CHECK_REFILL_PER_SECOND`) |
+| Consumer checks | burst of 20, then 1 per second (`RATE_LIMIT_CHECK_BURST`, `RATE_LIMIT_CHECK_REFILL_PER_SECOND`) |
 | Login | 5 per minute per IP + email (`RATE_LIMIT_LOGIN_PER_MINUTE`) |
 | Registration | 5 per hour per IP (`RATE_LIMIT_REGISTER_PER_HOUR`) |
+| Consumer concern reports | 5 per hour per IP (`RATE_LIMIT_REPORT_PER_HOUR`) |
 
-For usability-test sessions, list the test machines' IPs or a range in `RATE_LIMIT_EXEMPT_IPS`, e.g. `192.168.1.20,192.168.1.0/24`, and restart the API. Over the limit the API returns 429 with `Retry-After`. See `docs/DECISIONS.md` D39–D45.
+For usability-test sessions, list the test machines' IPs or a range in `RATE_LIMIT_EXEMPT_IPS`, e.g. `192.168.1.20,192.168.1.0/24`, and restart the API. Over the limit the API returns 429 with `Retry-After`. Blocked checks and reports are also counted per city and day in `rate_limit_daily`, with no IP (D144). See `docs/DECISIONS.md` D39–D45.
 
 ## Test and lint
 

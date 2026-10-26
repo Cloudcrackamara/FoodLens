@@ -122,21 +122,21 @@ The earlier plan (Gate and Phases 0–7: foundation, auth, registration lookup, 
 - Risk evaluation is left for Phase 6. Until then `SUSPICIOUS_ACTIVITY` comes only from existing alerts.
 
 **Done when**
-- [ ] Test: each result is reachable, and the precedence order holds.
-- [ ] Test: the just-sold window boundary (exactly at the window is just-sold; one second older is previously-sold).
-- [ ] Test: a consumer check never changes `lifecycle_status` or sale status.
-- [ ] Test: a voided code or one from an unapproved manufacturer gives `INVALID_IDENTITY`; a carton token gives the carton message.
-- [ ] Test: an unknown typed code gives `INVALID_IDENTITY` with the neutral "We couldn't find that code…" copy.
-- [ ] Test: a returned unit gives `RECOGNISED_NOT_SOLD` ("In circulation, not yet sold").
-- [ ] Test: no response contains a `unit_id`, carton ID or other UUID, or more than the last 4 characters of the code.
-- [ ] Test: banned words (D128, D141) appear in no response or frontend copy; `data_mode` is DEMO and the disclaimer is always present.
-- [ ] Test: no IP, cookie or device data is stored; `Set-Cookie` is absent on check responses.
-- [ ] Test: the rate limit gives 429 with `Retry-After`, and increments `rate_limit_daily` for the area.
-- [ ] Frontend tests:
-  - [ ] the banner shows on every result;
-  - [ ] a typed code is normalised before the request;
-  - [ ] no image is sent in any request;
-  - [ ] `/p/[token]` makes no request until it mounts.
+- [x] Test: each result is reachable, and the precedence order holds.
+- [x] Test: the just-sold window boundary (exactly at the window is just-sold; one second older is previously-sold).
+- [x] Test: a consumer check never changes `lifecycle_status` or sale status.
+- [x] Test: a voided code or one from an unapproved manufacturer gives `INVALID_IDENTITY`; a carton token gives the carton message.
+- [x] Test: an unknown typed code gives `INVALID_IDENTITY` with the neutral "We couldn't find that code…" copy.
+- [x] Test: a returned unit gives `RECOGNISED_NOT_SOLD` ("In circulation, not yet sold").
+- [x] Test: no response contains a `unit_id`, carton ID or other UUID, or more than the last 4 characters of the code.
+- [x] Test: banned words (D128, D141) appear in no response or frontend copy; `data_mode` is DEMO and the disclaimer is always present.
+- [x] Test: no IP, cookie or device data is stored; `Set-Cookie` is absent on check responses.
+- [x] Test: the rate limit gives 429 with `Retry-After`, and increments `rate_limit_daily` for the area.
+- [x] Frontend tests:
+  - [x] the banner shows on every result;
+  - [x] a typed code is normalised before the request;
+  - [x] no image is sent in any request;
+  - [x] `/p/[token]` makes no request until it mounts.
 
 ---
 

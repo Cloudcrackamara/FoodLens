@@ -22,6 +22,12 @@ class ScanEvent(CreatedAtMixin, table=True):
     12 months by the purge job."""
 
     __tablename__ = "scan_event"
+    __table_args__ = (
+        CheckConstraint(
+            "result <> 'CARTON_CODE' OR (carton_id IS NOT NULL AND unit_id IS NULL)",
+            name="carton_code_has_carton",
+        ),
+    )
 
     scan_id: uuid.UUID = uuid_pk()
     identifier_type: IdentifierType = Field(sa_type=enum_column(IdentifierType, "identifier_type"))

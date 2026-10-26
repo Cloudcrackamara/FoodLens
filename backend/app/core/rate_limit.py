@@ -81,6 +81,11 @@ class RateLimiters:
                 refill_per_second=settings.rate_limit_register_per_hour / 3600,
                 clock=clock,
             ),
+            "report": TokenBucketLimiter(
+                capacity=settings.rate_limit_report_per_hour,
+                refill_per_second=settings.rate_limit_report_per_hour / 3600,
+                clock=clock,
+            ),
         }
 
     def client_ip(self, request: Request) -> str:
@@ -111,12 +116,19 @@ class RateLimiters:
             )
 
 
+def is_trusted_proxy(request: Request) -> bool:
+    """True when the connection comes from a trusted proxy (the Next.js server)."""
+    limiters: RateLimiters = request.app.state.rate_limiters
+    peer = request.client.host if request.client else ""
+    return in_networks(peer, limiters.trusted_proxies)
+
+
 def enforce_rate_limit(request: Request, name: str, extra_key: str = "") -> None:
     limiters: RateLimiters = request.app.state.rate_limiters
     limiters.enforce(request, name, extra_key)
 
 
 def limit_checks(request: Request) -> None:
-    """Route dependency for public consumer checks (D119):
-    @router.post("/check/qr", dependencies=[Depends(limit_checks)])"""
+    """Route dependency using the consumer check bucket (D119). The check routes themselves
+    call enforce_rate_limit after resolving the area, so a hit is counted per area (D144)."""
     enforce_rate_limit(request, "check")
