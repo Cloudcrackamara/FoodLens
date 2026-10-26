@@ -23,10 +23,10 @@ export default function Home() {
             sold, or recalled.
           </li>
           <li>
-            A copied QR carries the same code. FoodLens spots copies through sale status, places,
-            scan volume and allocation, not by the QR alone.
+            A copied QR carries the same code. FoodLens spots copies by whether the code was sold,
+            where it is checked, how often, and where the stock was sent, not by the QR alone. No
+            QR system catches every copied code.
           </li>
-          <li>No QR system catches every copied code.</li>
           <li>
             It is not a laboratory test, and it is not NAFDAC, SON, or any other regulator&apos;s
             service or decision.
