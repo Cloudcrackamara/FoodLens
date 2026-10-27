@@ -10,7 +10,7 @@ export function SiteHeader() {
   const logout = useLogout();
 
   return (
-    <header className="border-b border-zinc-200 dark:border-zinc-800">
+    <header className="border-b border-divider bg-white">
       <nav
         aria-label="Main"
         className="mx-auto flex w-full max-w-2xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3"
@@ -19,32 +19,32 @@ export function SiteHeader() {
           <Link href="/" className="font-bold">
             FoodLens
           </Link>
-          <Link href="/check" className="text-sm underline">
+          <Link href="/check" className="text-sm font-semibold text-brand-dark underline">
             Check a pack
           </Link>
-          <Link href="/suppliers" className="text-sm underline">
+          <Link href="/suppliers" className="text-sm font-semibold text-brand-dark underline">
             Partners
           </Link>
         </div>
         {isPending ? null : user ? (
           <div className="flex flex-wrap items-center gap-3 text-sm">
             {user.is_admin ? (
-              <Link href="/admin" className="underline">
+              <Link href="/admin" className="font-semibold text-brand-dark underline">
                 Admin
               </Link>
             ) : user.membership ? (
               <>
-                <Link href="/company" className="underline">
+                <Link href="/company" className="font-semibold text-brand-dark underline">
                   My company
                 </Link>
                 {canOrder(user) && (
-                  <Link href="/orders" className="underline">
+                  <Link href="/orders" className="font-semibold text-brand-dark underline">
                     My orders
                   </Link>
                 )}
               </>
             ) : (
-              <Link href="/company/register" className="underline">
+              <Link href="/company/register" className="font-semibold text-brand-dark underline">
                 Register company
               </Link>
             )}
@@ -55,17 +55,17 @@ export function SiteHeader() {
               type="button"
               onClick={() => logout.mutate(undefined, { onSuccess: () => router.push("/") })}
               disabled={logout.isPending}
-              className="underline disabled:opacity-60"
+              className="font-semibold text-brand-dark underline disabled:text-text-subtle"
             >
               Sign out
             </button>
           </div>
         ) : (
           <div className="flex items-center gap-3 text-sm">
-            <Link href="/login" className="underline">
+            <Link href="/login" className="font-semibold text-brand-dark underline">
               Sign in
             </Link>
-            <Link href="/register" className="underline">
+            <Link href="/register" className="font-semibold text-brand-dark underline">
               Create account
             </Link>
           </div>

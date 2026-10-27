@@ -9,8 +9,10 @@ import {
 } from "@/lib/announcements";
 import { useProducts } from "@/lib/catalogue";
 import { formatDate } from "@/lib/format";
+import { buttonClass } from "@/lib/ui";
+import { ErrorPanel } from "@/components/ui/Panels";
 
-const inputClass = "rounded-md border border-zinc-400 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-900";
+const inputClass = "min-h-[46px] rounded-[10px] border border-line-input bg-white px-3 py-2 text-base text-ink";
 
 export function Announcements({ companyId }: { companyId: string }) {
   const products = useProducts(companyId);
@@ -42,25 +44,25 @@ export function Announcements({ companyId }: { companyId: string }) {
 
   return (
     <section aria-labelledby="announcements-heading" className="flex flex-col gap-4">
-      <h2 id="announcements-heading" className="text-lg font-semibold">Announcements</h2>
-      <p className="text-sm text-zinc-700 dark:text-zinc-300">
+      <h2 id="announcements-heading" className="font-heading text-[17px] font-semibold text-ink">Announcements</h2>
+      <p className="text-sm text-text-muted">
         Short messages shown to consumers when they check your product, for example about new
         packaging. They go live straight away, are labelled &quot;Message from the company — not
         reviewed by FoodLens&quot;, and never change product details. You can warn about fake or
         counterfeit versions, but you cannot say the product is &quot;safe&quot; or &quot;unsafe&quot;.
       </p>
 
-      {announcements.isError && <p role="alert">{describeError(announcements.error)}</p>}
+      {announcements.isError && <ErrorPanel>{describeError(announcements.error)}</ErrorPanel>}
       <ul className="flex flex-col gap-2">
         {announcements.data?.map((item) => (
-          <li key={item.announcement_id} aria-label={item.title} className="flex flex-col gap-1 rounded-md border border-zinc-300 p-3 dark:border-zinc-700">
+          <li key={item.announcement_id} aria-label={item.title} className="flex flex-col gap-1 rounded-[10px] border border-line bg-white p-3.5">
             <p className="font-semibold">{item.title}</p>
             <p>{item.message}</p>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="text-sm text-text-subtle">
               {item.product_name} · posted {formatDate(item.created_at.slice(0, 10))} · {item.status === "LIVE" ? "Live" : "Hidden"}
             </p>
             {item.status === "LIVE" && (
-              <button type="button" disabled={withdraw.isPending} onClick={() => withdraw.mutate(item.announcement_id)} className="self-start text-sm underline disabled:opacity-60">
+              <button type="button" disabled={withdraw.isPending} onClick={() => withdraw.mutate(item.announcement_id)} className="self-start text-sm font-semibold text-brand-dark underline disabled:text-text-subtle">
                 Withdraw
               </button>
             )}
@@ -86,9 +88,9 @@ export function Announcements({ companyId }: { companyId: string }) {
           <span className="font-medium">Message</span>
           <textarea value={message} maxLength={500} onChange={(event) => setMessage(event.target.value)} className={inputClass} />
         </label>
-        {problem && <p role="alert" className="text-red-700 dark:text-red-400">{problem}</p>}
-        {postAnnouncement.isError && <p role="alert" className="text-red-700 dark:text-red-400">{describeError(postAnnouncement.error)}</p>}
-        <button type="submit" disabled={postAnnouncement.isPending} className="self-start rounded-md bg-zinc-900 px-4 py-2 font-semibold text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900">
+        {problem && <p role="alert" className="font-semibold text-bad">{problem}</p>}
+        {postAnnouncement.isError && <p role="alert" className="font-semibold text-bad">{describeError(postAnnouncement.error)}</p>}
+        <button type="submit" disabled={postAnnouncement.isPending} className={`self-start ${buttonClass("primary", "sm")}`}>
           Post announcement
         </button>
       </form>

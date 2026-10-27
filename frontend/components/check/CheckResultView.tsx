@@ -2,57 +2,37 @@
 
 import { useState } from "react";
 import { DemoDataBanner } from "@/components/DemoDataBanner";
+import { Card } from "@/components/ui/Card";
+import { StatusCard, type StatusTone } from "@/components/ui/StatusCard";
 import type { CheckResponse, CheckResult } from "@/lib/check";
 import { formatDate } from "@/lib/format";
+import {
+  buttonClass,
+  cardTitleClass,
+  detailListClass,
+  detailTermClass,
+  detailValueClass,
+  helpTextClass,
+  noteClass,
+} from "@/lib/ui";
 import { ReportConcern } from "./ReportConcern";
 
 const PURCHASE_NOTE =
   "No sale recorded yet. Some shops don't record sales on FoodLens yet. This isn't a warning by itself.";
 
-type Tone = { band: string; badge: string; label: string };
+type Tone = { tone: StatusTone; label: string };
 
-const NEUTRAL: Tone = {
-  band: "border-zinc-400 bg-zinc-50 dark:bg-zinc-900",
-  badge: "bg-zinc-700 text-white",
-  label: "Not found",
-};
+const NEUTRAL: Tone = { tone: "neutral", label: "Not found" };
 
+// Tones follow the result mapping in design/README.md.
 const TONES: Record<CheckResult, Tone> = {
-  RECOGNISED_NOT_SOLD: {
-    band: "border-teal-600 bg-teal-50 dark:bg-teal-950/40",
-    badge: "bg-teal-700 text-white",
-    label: "Recorded",
-  },
-  RECOGNISED_JUST_SOLD: {
-    band: "border-teal-600 bg-teal-50 dark:bg-teal-950/40",
-    badge: "bg-teal-700 text-white",
-    label: "Recorded sale",
-  },
-  RECOGNISED_PREVIOUSLY_SOLD: {
-    band: "border-amber-500 bg-amber-50 dark:bg-amber-950/40",
-    badge: "bg-amber-400 text-black",
-    label: "Check with the seller",
-  },
-  BATCH_OR_PRODUCT_WARNING: {
-    band: "border-orange-600 bg-orange-50 dark:bg-orange-950/40",
-    badge: "bg-orange-600 text-white",
-    label: "Recall",
-  },
-  SUSPICIOUS_ACTIVITY: {
-    band: "border-red-600 bg-red-50 dark:bg-red-950/40",
-    badge: "bg-red-700 text-white",
-    label: "Warning",
-  },
-  INVALID_IDENTITY: {
-    band: "border-red-600 bg-red-50 dark:bg-red-950/40",
-    badge: "bg-red-700 text-white",
-    label: "Not recognised",
-  },
-  CARTON_CODE: {
-    band: "border-zinc-500 bg-zinc-50 dark:bg-zinc-900",
-    badge: "bg-zinc-700 text-white",
-    label: "Carton",
-  },
+  RECOGNISED_NOT_SOLD: { tone: "ok", label: "Recorded" },
+  RECOGNISED_JUST_SOLD: { tone: "ok", label: "Recorded sale" },
+  RECOGNISED_PREVIOUSLY_SOLD: { tone: "warn", label: "Check with the seller" },
+  BATCH_OR_PRODUCT_WARNING: { tone: "alert", label: "Recall" },
+  SUSPICIOUS_ACTIVITY: { tone: "bad", label: "Warning" },
+  INVALID_IDENTITY: { tone: "bad", label: "Not recognised" },
+  CARTON_CODE: { tone: "info", label: "Carton" },
 };
 
 function toneFor(result: CheckResponse): Tone {
@@ -84,50 +64,43 @@ type Props = {
  */
 export function CheckResultView({ result, code, simulatedCity, onCheckAnother }: Props) {
   const [noted, setNoted] = useState(false);
-  const tone = toneFor(result);
+  const { tone, label } = toneFor(result);
   const { product, batch } = result;
 
   return (
-    <article aria-labelledby="check-result-title" className="flex flex-col gap-4">
+    <article aria-labelledby="check-result-title" className="flex flex-col gap-3">
       <DemoDataBanner />
 
-      <section className={`rounded-xl border-l-8 p-4 ${tone.band}`}>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide ${tone.badge}`}>
-            {tone.label}
-          </span>
-          {result.code_last4 && (
-            <span className="font-mono text-sm text-zinc-700 dark:text-zinc-300">
-              Code ending {result.code_last4}
-            </span>
-          )}
-        </div>
-        <h2 id="check-result-title" className="mt-2 text-2xl font-bold leading-tight">
-          {result.title}
-        </h2>
-        <p className="mt-2 text-base">{result.message}</p>
-        {result.tip && <p className="mt-3 rounded-md bg-white/70 p-3 text-sm font-medium dark:bg-black/30">{result.tip}</p>}
+      <StatusCard tone={tone} label={label} title={result.title} titleId="check-result-title">
+        {result.code_last4 && (
+          <p className="font-mono text-sm">
+            Code ending {result.code_last4}
+          </p>
+        )}
+        <p className="mt-1.5">{result.message}</p>
+        {result.tip && <p className={`mt-3 font-semibold ${noteClass}`}>{result.tip}</p>}
         {result.advice && <p className="mt-3 text-sm">{result.advice}</p>}
-      </section>
+      </StatusCard>
 
       {result.warnings.length > 0 && (
-        <section aria-label="Warnings" className="rounded-xl border border-orange-500 p-4">
-          <h3 className="font-semibold">Warnings</h3>
-          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
+        <Card aria-label="Warnings">
+          <h3 className={cardTitleClass}>Warnings</h3>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-[15px] text-text">
             {result.warnings.map((warning) => (
               <li key={warning}>{warning}</li>
             ))}
           </ul>
-        </section>
+        </Card>
       )}
 
       {result.possible_patterns.length > 0 && (
-        <section aria-label="Possible patterns" className="rounded-xl border border-red-500 p-4">
-          <h3 className="font-semibold">Possible patterns</h3>
-          <p className="text-xs text-zinc-600 dark:text-zinc-400">
+        // Takes the place of the board's compare panel, with its red border (ResultMismatch).
+        <section aria-label="Possible patterns" className="rounded-[16px] border-2 border-bad-line bg-white p-5">
+          <h3 className={cardTitleClass}>Possible patterns</h3>
+          <p className={helpTextClass}>
             Patterns FoodLens noticed in the records. They are signals, not findings about this pack.
           </p>
-          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-[15px] text-text">
             {result.possible_patterns.map((pattern) => (
               <li key={pattern}>{pattern}</li>
             ))}
@@ -136,40 +109,36 @@ export function CheckResultView({ result, code, simulatedCity, onCheckAnother }:
       )}
 
       {result.can_note_purchase && (
-        <section className="rounded-xl border border-zinc-300 p-4 dark:border-zinc-700">
+        <Card>
           {noted ? (
-            <p role="status" className="text-sm">
+            <p role="status" className="text-sm text-text">
               {PURCHASE_NOTE}
             </p>
           ) : (
-            <button
-              type="button"
-              onClick={() => setNoted(true)}
-              className="min-h-12 w-full rounded-lg border border-zinc-900 px-4 text-base font-semibold dark:border-zinc-100"
-            >
+            <button type="button" onClick={() => setNoted(true)} className={`w-full ${buttonClass("secondary", "md")}`}>
               I&apos;ve bought this
             </button>
           )}
-        </section>
+        </Card>
       )}
 
       {product && (
-        <section aria-label="Product" className="rounded-xl border border-zinc-300 p-4 dark:border-zinc-700">
-          <h3 className="text-lg font-semibold">
+        <Card aria-label="Product">
+          <h3 className={`${cardTitleClass} mb-3`}>
             {product.name}
             {product.size ? <span className="font-normal"> · {product.size}</span> : null}
           </h3>
-          <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
-            <dt className="text-zinc-600 dark:text-zinc-400">Brand</dt>
-            <dd>{product.brand}</dd>
-            <dt className="text-zinc-600 dark:text-zinc-400">Manufacturer</dt>
-            <dd>{product.manufacturer_name}</dd>
+          <dl className={detailListClass}>
+            <dt className={detailTermClass}>Brand</dt>
+            <dd className={detailValueClass}>{product.brand}</dd>
+            <dt className={detailTermClass}>Manufacturer</dt>
+            <dd className={detailValueClass}>{product.manufacturer_name}</dd>
             {batch && (
               <>
-                <dt className="text-zinc-600 dark:text-zinc-400">Batch</dt>
-                <dd>{batch.batch_number}</dd>
-                <dt className="text-zinc-600 dark:text-zinc-400">Expiry</dt>
-                <dd className={batch.expired ? "font-semibold text-orange-700 dark:text-orange-400" : ""}>
+                <dt className={detailTermClass}>Batch</dt>
+                <dd className={`${detailValueClass} font-mono`}>{batch.batch_number}</dd>
+                <dt className={detailTermClass}>Expiry</dt>
+                <dd className={`${detailValueClass}${batch.expired ? " text-warn" : ""}`}>
                   {formatDate(batch.expiry_date)}
                   {batch.expired ? " (passed)" : ""}
                 </dd>
@@ -177,67 +146,71 @@ export function CheckResultView({ result, code, simulatedCity, onCheckAnother }:
             )}
             {product.registration_number && (
               <>
-                <dt className="text-zinc-600 dark:text-zinc-400">NAFDAC number (as printed)</dt>
-                <dd>
-                  {product.registration_number}
-                  <span className="block text-xs text-zinc-600 dark:text-zinc-400">
+                <dt className={detailTermClass}>NAFDAC number (as printed)</dt>
+                <dd className={detailValueClass}>
+                  <span className="font-mono">{product.registration_number}</span>
+                  <span className="block text-xs font-normal text-text-subtle">
                     Information from the manufacturer. FoodLens does not check it with NAFDAC.
                   </span>
                 </dd>
               </>
             )}
           </dl>
-        </section>
+        </Card>
       )}
 
       {result.recorded_facts.length > 0 && (
-        <section aria-label="Recorded facts" className="rounded-xl border border-zinc-300 p-4 dark:border-zinc-700">
-          <h3 className="font-semibold">Recorded facts</h3>
-          <p className="text-xs text-zinc-600 dark:text-zinc-400">
-            What companies have recorded for this code, oldest first.
-          </p>
-          <ol className="mt-2 space-y-2 border-l-2 border-zinc-300 pl-4 text-sm dark:border-zinc-700">
+        <Card aria-label="Recorded facts">
+          <h3 className={cardTitleClass}>Recorded facts</h3>
+          <p className={helpTextClass}>What companies have recorded for this code, oldest first.</p>
+          <ol className="mt-3 space-y-2 border-l-2 border-line pl-4 text-[15px] text-text">
             {result.recorded_facts.map((fact, index) => (
               <li key={`${index}-${fact}`}>{fact}</li>
             ))}
           </ol>
-        </section>
+        </Card>
       )}
 
-      {result.notices.map((notice) => (
-        <section
-          key={`${notice.posted_at}-${notice.title}`}
-          aria-label={notice.kind === "RECALL" ? "Recall" : "Company notice"}
-          className="rounded-xl border border-zinc-300 p-4 dark:border-zinc-700"
-        >
-          <p className="text-xs font-semibold uppercase tracking-wide text-zinc-600 dark:text-zinc-400">
-            {notice.label}
-          </p>
-          <h3 className="mt-1 font-semibold">
-            {notice.kind === "RECALL" ? "Recall: " : ""}
-            {notice.title}
-          </h3>
-          <p className="mt-1 whitespace-pre-line text-sm">{notice.message}</p>
-          <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">Posted {formatInstant(notice.posted_at)}</p>
-        </section>
-      ))}
+      {result.notices.map((notice) =>
+        notice.kind === "RECALL" ? (
+          // A recall is a solid alert card, not the dashed company-message card (design/README.md).
+          <section
+            key={`${notice.posted_at}-${notice.title}`}
+            aria-label="Recall"
+            className="rounded-[16px] bg-alert-bg px-5 pt-[18px] pb-5"
+          >
+            <p className="text-[13px] font-semibold text-alert">{notice.label}</p>
+            <h3 className="mt-1 font-heading text-base font-semibold text-ink">Recall: {notice.title}</h3>
+            <p className="mt-1 whitespace-pre-line text-[15px] text-text">{notice.message}</p>
+            <p className="mt-0.5 text-[13px] text-[#4B4F5C]">Posted {formatInstant(notice.posted_at)}</p>
+          </section>
+        ) : (
+          // Company message card (Result.dc.html).
+          <section
+            key={`${notice.posted_at}-${notice.title}`}
+            aria-label="Company notice"
+            className="rounded-[16px] border border-dashed border-[#B9BCC6] bg-white px-5 pt-[18px] pb-5"
+          >
+            <p className="text-[13px] text-[#4B4F5C]">{notice.label}</p>
+            <h3 className="mt-1 text-[15px] font-bold text-ink">{notice.title}</h3>
+            <p className="mt-1 whitespace-pre-line text-[15px] text-text">{notice.message}</p>
+            <p className="mt-0.5 text-[13px] text-[#4B4F5C]">Posted {formatInstant(notice.posted_at)}</p>
+          </section>
+        ),
+      )}
 
       {result.can_report && (
         <ReportConcern code={code} result={result.result} simulatedCity={simulatedCity ?? null} />
       )}
 
-      <section aria-label="What a check shows" className="rounded-xl bg-zinc-100 p-4 text-sm dark:bg-zinc-900">
-        <h3 className="font-semibold">What this check can and cannot show</h3>
-        <p className="mt-1">{result.copy_help}</p>
-        <p className="mt-2 text-xs text-zinc-700 dark:text-zinc-300">{result.disclaimer}</p>
-      </section>
+      <Card aria-label="What a check shows">
+        <h3 className={cardTitleClass}>What this check can and cannot show</h3>
+        <p className="mt-1 text-[15px] text-text">{result.copy_help}</p>
+        <p className={`mt-3 ${noteClass}`}>{result.disclaimer}</p>
+      </Card>
 
       {onCheckAnother && (
-        <button
-          type="button"
-          onClick={onCheckAnother}
-          className="min-h-12 w-full rounded-lg bg-zinc-900 px-4 text-base font-semibold text-white dark:bg-zinc-100 dark:text-zinc-900"
-        >
+        <button type="button" onClick={onCheckAnother} className={`w-full ${buttonClass("primary", "lg")}`}>
           Check another pack
         </button>
       )}

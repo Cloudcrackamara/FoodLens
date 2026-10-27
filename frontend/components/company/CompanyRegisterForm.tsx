@@ -5,6 +5,7 @@ import { useState, type FormEvent } from "react";
 import { FormField } from "@/components/auth/FormField";
 import { describeError } from "@/lib/api";
 import { fieldErrors } from "@/lib/auth";
+import { buttonClass } from "@/lib/ui";
 import {
   companyRegisterFormSchema,
   companyTypeFlags,
@@ -59,7 +60,7 @@ export function CompanyRegisterForm() {
           </label>
         ))}
         {errors.company_types && (
-          <p id="company_types-error" className="text-sm text-red-700 dark:text-red-400">
+          <p id="company_types-error" className="text-sm font-semibold text-bad">
             {errors.company_types}
           </p>
         )}
@@ -87,9 +88,9 @@ export function CompanyRegisterForm() {
         error={errors.contact_phone}
         onChange={set("contact_phone")}
       />
-      <fieldset className="flex flex-col gap-4 rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
+      <fieldset className="flex flex-col gap-4 rounded-[12px] bg-white p-6 shadow-card">
         <legend className="px-1 font-semibold">Business details you claim</legend>
-        <p className="text-sm text-zinc-700 dark:text-zinc-300">
+        <p className="text-sm text-text-muted">
           FoodLens records these as claims. They are not verified and are not shown in the public
           directory.
         </p>
@@ -116,14 +117,14 @@ export function CompanyRegisterForm() {
         />
       </fieldset>
       {registerCompany.isError && (
-        <p role="alert" className="text-red-700 dark:text-red-400">
+        <p role="alert" className="font-semibold text-bad">
           {describeError(registerCompany.error)}
         </p>
       )}
       <button
         type="submit"
         disabled={registerCompany.isPending}
-        className="rounded-md bg-zinc-900 px-4 py-2 font-semibold text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
+        className={buttonClass("primary", "sm")}
       >
         {registerCompany.isPending ? "Submitting…" : "Submit for FoodLens review"}
       </button>

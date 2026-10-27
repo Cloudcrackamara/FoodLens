@@ -1,6 +1,7 @@
 "use client";
 
 import { useDemoCities } from "@/lib/check";
+import { inputClass } from "@/lib/ui";
 
 type Props = { value: string; onChange: (city: string) => void };
 
@@ -12,12 +13,12 @@ export function DemoCityPicker({ value, onChange }: Props) {
   const cities = useDemoCities();
   if (!cities.data?.length) return null;
   return (
-    <label className="flex flex-col gap-1 rounded-lg border border-dashed border-amber-500 p-3 text-sm">
-      <span className="font-medium">Demo: check as if from</span>
+    <label className="flex flex-col gap-1 rounded-[10px] border border-dashed border-[#B9BCC6] bg-cream p-3.5 text-sm">
+      <span className="font-semibold text-ink">Demo: check as if from</span>
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="min-h-11 rounded-md border border-zinc-400 bg-transparent px-2 text-base"
+        className={inputClass}
       >
         <option value="">Use my real area</option>
         {cities.data.map((city) => (

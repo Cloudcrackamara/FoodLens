@@ -10,28 +10,28 @@ export function SupplierCard({ supplier, linked = false }: { supplier: Supplier;
   return (
     <li
       aria-label={supplier.display_name}
-      className="flex flex-col gap-3 rounded-md border border-zinc-300 p-4 dark:border-zinc-700"
+      className="flex flex-col gap-3 rounded-[12px] bg-white p-6 shadow-card"
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <h2 className="text-lg font-semibold">
+          <h2 className="font-heading text-[17px] font-semibold text-ink">
             {linked ? (
-              <Link href={`/suppliers/${supplier.company_id}`} className="underline">
+              <Link href={`/suppliers/${supplier.company_id}`} className="font-semibold text-brand-dark underline">
                 {supplier.display_name}
               </Link>
             ) : (
               supplier.display_name
             )}
           </h2>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="text-sm text-text-subtle">
             {companyTypeLabel(supplier)}
           </p>
         </div>
-        <span className="rounded-full border border-zinc-500 px-3 py-1 text-xs font-semibold">
+        <span className="inline-flex items-center rounded-full bg-neutral-bg px-2.5 py-0.5 text-sm font-bold text-neutral">
           {supplier.badge}
         </span>
       </div>
-      <p className="text-sm text-zinc-700 dark:text-zinc-300">{supplier.badge_note}</p>
+      <p className="text-sm text-text-muted">{supplier.badge_note}</p>
 
       <div>
         <h3 className="font-medium">Demo-reviewed locations</h3>
@@ -41,7 +41,7 @@ export function SupplierCard({ supplier, linked = false }: { supplier: Supplier;
               <span className="font-medium">{location.name}</span>: {location.address},{" "}
               {location.area}
               {location.reviewed_at && (
-                <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                <span className="text-sm text-text-subtle">
                   {" "}
                   · reviewed {formatDate(location.reviewed_at.slice(0, 10))}
                 </span>
@@ -86,12 +86,12 @@ export function SupplierDirectory() {
           type="search"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          className="rounded-md border border-zinc-400 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-900"
+          className="min-h-[46px] rounded-[10px] border border-line-input bg-white px-3 text-base text-ink"
         />
       </label>
 
       {suppliers.isError && (
-        <p role="alert" className="text-red-700 dark:text-red-400">
+        <p role="alert" className="font-semibold text-bad">
           {describeError(suppliers.error)}
         </p>
       )}

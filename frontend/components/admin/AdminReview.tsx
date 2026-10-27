@@ -32,6 +32,8 @@ import {
   type AdminAnnouncement,
 } from "@/lib/announcements";
 import { formatDate } from "@/lib/format";
+import { buttonClass } from "@/lib/ui";
+import { ErrorPanel, LoadingPanel } from "@/components/ui/Panels";
 
 const companyActions: Record<CompanyStatus, CompanyDecision[]> = {
   PENDING_REVIEW: ["APPROVE", "REJECT"],
@@ -58,7 +60,7 @@ function CompanyRow({ company }: { company: AdminCompany }) {
   const actions = companyActions[company.review_status];
 
   return (
-    <li aria-label={company.display_name} className="flex flex-col gap-2 rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
+    <li aria-label={company.display_name} className="flex flex-col gap-2 rounded-[12px] bg-white p-6 shadow-card">
       <div>
         <h3 className="font-semibold">{company.display_name}</h3>
         <p className="text-sm">{companyTypeLabel(company)} · {companyStatusLabels[company.review_status]}</p>
@@ -76,7 +78,7 @@ function CompanyRow({ company }: { company: AdminCompany }) {
         <div className="flex flex-col gap-2">
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium">Review note (optional)</span>
-            <input value={note} onChange={(event) => setNote(event.target.value)} className="rounded-md border border-zinc-400 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-900" />
+            <input value={note} onChange={(event) => setNote(event.target.value)} className="min-h-[46px] rounded-[10px] border border-line-input bg-white px-3 text-base text-ink" />
           </label>
           <div className="flex flex-wrap gap-2">
             {actions.map((action) => (
@@ -85,7 +87,7 @@ function CompanyRow({ company }: { company: AdminCompany }) {
                 type="button"
                 disabled={decide.isPending}
                 onClick={() => decide.mutate({ companyId: company.company_id, decision: action, note })}
-                className="rounded-md border border-zinc-600 px-3 py-1 font-medium disabled:opacity-60"
+                className={buttonClass("secondary", "sm")}
               >
                 {actionLabels[action]}
               </button>
@@ -93,7 +95,7 @@ function CompanyRow({ company }: { company: AdminCompany }) {
           </div>
         </div>
       )}
-      {decide.isError && <p role="alert" className="text-red-700 dark:text-red-400">{describeError(decide.error)}</p>}
+      {decide.isError && <p role="alert" className="font-semibold text-bad">{describeError(decide.error)}</p>}
     </li>
   );
 }
@@ -104,7 +106,7 @@ function LocationRow({ location }: { location: AdminLocation }) {
   const pending = location.review_status === "PENDING_REVIEW";
 
   return (
-    <li aria-label={location.name} className="flex flex-col gap-2 rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
+    <li aria-label={location.name} className="flex flex-col gap-2 rounded-[12px] bg-white p-6 shadow-card">
       <div>
         <h3 className="font-semibold">{location.name}</h3>
         <p className="text-sm">{location.company_display_name} ({companyStatusLabels[location.company_review_status]}) · {locationStatusLabels[location.review_status]}</p>
@@ -115,19 +117,19 @@ function LocationRow({ location }: { location: AdminLocation }) {
         <div className="flex flex-col gap-2">
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium">Review note (optional)</span>
-            <input value={note} onChange={(event) => setNote(event.target.value)} className="rounded-md border border-zinc-400 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-900" />
+            <input value={note} onChange={(event) => setNote(event.target.value)} className="min-h-[46px] rounded-[10px] border border-line-input bg-white px-3 text-base text-ink" />
           </label>
           <div className="flex flex-wrap gap-2">
-            <button type="button" disabled={decide.isPending} onClick={() => decide.mutate({ locationId: location.location_id, decision: "APPROVE", note })} className="rounded-md border border-zinc-600 px-3 py-1 font-medium disabled:opacity-60">
+            <button type="button" disabled={decide.isPending} onClick={() => decide.mutate({ locationId: location.location_id, decision: "APPROVE", note })} className={buttonClass("secondary", "sm")}>
               Mark demo-reviewed
             </button>
-            <button type="button" disabled={decide.isPending} onClick={() => decide.mutate({ locationId: location.location_id, decision: "REJECT", note })} className="rounded-md border border-zinc-600 px-3 py-1 font-medium disabled:opacity-60">
+            <button type="button" disabled={decide.isPending} onClick={() => decide.mutate({ locationId: location.location_id, decision: "REJECT", note })} className={buttonClass("secondary", "sm")}>
               Reject
             </button>
           </div>
         </div>
       )}
-      {decide.isError && <p role="alert" className="text-red-700 dark:text-red-400">{describeError(decide.error)}</p>}
+      {decide.isError && <p role="alert" className="font-semibold text-bad">{describeError(decide.error)}</p>}
     </li>
   );
 }
@@ -146,7 +148,7 @@ function NoticeRow({ notice }: { notice: AdminNotice }) {
   const actions = noticeActions[notice.review_status];
 
   return (
-    <li aria-label={`Notice for ${target}`} className="flex flex-col gap-2 rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
+    <li aria-label={`Notice for ${target}`} className="flex flex-col gap-2 rounded-[12px] bg-white p-6 shadow-card">
       <div>
         <h3 className="font-semibold">{target} ({notice.product_code})</h3>
         <p className="text-sm">
@@ -160,7 +162,7 @@ function NoticeRow({ notice }: { notice: AdminNotice }) {
       {notice.attachments.length > 0 && (
         <ul className="text-sm">
           {notice.attachments.map((a) => (
-            <li key={a.attachment_id}><a className="underline" href={`/api/admin/attachments/${a.attachment_id}`}>{a.original_filename}</a></li>
+            <li key={a.attachment_id}><a className="font-semibold text-brand-dark underline" href={`/api/admin/attachments/${a.attachment_id}`}>{a.original_filename}</a></li>
           ))}
         </ul>
       )}
@@ -169,18 +171,18 @@ function NoticeRow({ notice }: { notice: AdminNotice }) {
         <div className="flex flex-col gap-2">
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium">Review note (required to request clarification)</span>
-            <input value={note} onChange={(event) => setNote(event.target.value)} className="rounded-md border border-zinc-400 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-900" />
+            <input value={note} onChange={(event) => setNote(event.target.value)} className="min-h-[46px] rounded-[10px] border border-line-input bg-white px-3 text-base text-ink" />
           </label>
           <div className="flex flex-wrap gap-2">
             {actions.map(([decision, label]) => (
-              <button key={decision} type="button" disabled={decide.isPending} onClick={() => decide.mutate({ noticeId: notice.notice_id, decision, note })} className="rounded-md border border-zinc-600 px-3 py-1 font-medium disabled:opacity-60">
+              <button key={decision} type="button" disabled={decide.isPending} onClick={() => decide.mutate({ noticeId: notice.notice_id, decision, note })} className={buttonClass("secondary", "sm")}>
                 {label}
               </button>
             ))}
           </div>
         </div>
       )}
-      {decide.isError && <p role="alert" className="text-red-700 dark:text-red-400">{describeError(decide.error)}</p>}
+      {decide.isError && <p role="alert" className="font-semibold text-bad">{describeError(decide.error)}</p>}
     </li>
   );
 }
@@ -189,7 +191,7 @@ function AnnouncementRow({ item }: { item: AdminAnnouncement }) {
   const hide = useHideAnnouncement();
   const [reason, setReason] = useState("");
   return (
-    <li aria-label={item.title} className="flex flex-col gap-2 rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
+    <li aria-label={item.title} className="flex flex-col gap-2 rounded-[12px] bg-white p-6 shadow-card">
       <div>
         <h3 className="font-semibold">{item.title}</h3>
         <p>{item.message}</p>
@@ -200,12 +202,12 @@ function AnnouncementRow({ item }: { item: AdminAnnouncement }) {
       </div>
       <label className="flex flex-col gap-1 text-sm">
         <span className="font-medium">Reason (optional)</span>
-        <input value={reason} onChange={(event) => setReason(event.target.value)} className="rounded-md border border-zinc-400 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-900" />
+        <input value={reason} onChange={(event) => setReason(event.target.value)} className="min-h-[46px] rounded-[10px] border border-line-input bg-white px-3 text-base text-ink" />
       </label>
-      <button type="button" disabled={hide.isPending} onClick={() => hide.mutate({ announcementId: item.announcement_id, reason })} className="self-start rounded-md border border-zinc-600 px-3 py-1 font-medium disabled:opacity-60">
+      <button type="button" disabled={hide.isPending} onClick={() => hide.mutate({ announcementId: item.announcement_id, reason })} className={`self-start ${buttonClass("secondary", "sm")}`}>
         Hide announcement
       </button>
-      {hide.isError && <p role="alert" className="text-red-700 dark:text-red-400">{describeError(hide.error)}</p>}
+      {hide.isError && <p role="alert" className="font-semibold text-bad">{describeError(hide.error)}</p>}
     </li>
   );
 }
@@ -221,22 +223,22 @@ export function AdminReview() {
   const announcements = useLiveAnnouncements();
   const openNotices = notices.data?.filter((n) => n.review_status === "PENDING_REVIEW" || n.review_status === "CLARIFICATION_REQUESTED");
 
-  if (isPending) return <p>Loading…</p>;
+  if (isPending) return <LoadingPanel />;
   if (!user?.is_admin) return <p role="alert">Admin access required.</p>;
 
   return (
     <div className="flex flex-col gap-8">
       <section aria-labelledby="companies-heading" className="flex flex-col gap-3">
-        <h2 id="companies-heading" className="text-xl font-bold">Companies</h2>
+        <h2 id="companies-heading" className="font-heading text-[17px] font-semibold text-ink">Companies</h2>
         <label className="flex flex-col gap-1 text-sm sm:w-64">
           <span className="font-medium">Show</span>
-          <select value={companyFilter} onChange={(event) => setCompanyFilter(event.target.value as CompanyStatus | "ALL")} className="rounded-md border border-zinc-400 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-900">
+          <select value={companyFilter} onChange={(event) => setCompanyFilter(event.target.value as CompanyStatus | "ALL")} className="min-h-[46px] rounded-[10px] border border-line-input bg-white px-3 text-base text-ink">
             {companyFilters.map((value) => (
               <option key={value} value={value}>{value === "ALL" ? "All companies" : companyStatusLabels[value]}</option>
             ))}
           </select>
         </label>
-        {companies.isError && <p role="alert">{describeError(companies.error)}</p>}
+        {companies.isError && <ErrorPanel>{describeError(companies.error)}</ErrorPanel>}
         {companies.data?.length === 0 && <p>No companies in this list.</p>}
         <ul className="flex flex-col gap-3">
           {companies.data?.map((company) => <CompanyRow key={company.company_id} company={company} />)}
@@ -244,8 +246,8 @@ export function AdminReview() {
       </section>
 
       <section aria-labelledby="locations-heading" className="flex flex-col gap-3">
-        <h2 id="locations-heading" className="text-xl font-bold">Supplier locations awaiting review</h2>
-        {locations.isError && <p role="alert">{describeError(locations.error)}</p>}
+        <h2 id="locations-heading" className="font-heading text-[17px] font-semibold text-ink">Supplier locations awaiting review</h2>
+        {locations.isError && <ErrorPanel>{describeError(locations.error)}</ErrorPanel>}
         {locations.data?.length === 0 && <p>No locations awaiting review.</p>}
         <ul className="flex flex-col gap-3">
           {locations.data?.map((location) => <LocationRow key={location.location_id} location={location} />)}
@@ -254,9 +256,9 @@ export function AdminReview() {
 
 
       <section aria-labelledby="notices-heading" className="flex flex-col gap-3">
-        <h2 id="notices-heading" className="text-xl font-bold">Change notices</h2>
-        <p className="text-sm text-zinc-700 dark:text-zinc-300">Approving applies every change at once and keeps the previous values for audit.</p>
-        {notices.isError && <p role="alert">{describeError(notices.error)}</p>}
+        <h2 id="notices-heading" className="font-heading text-[17px] font-semibold text-ink">Change notices</h2>
+        <p className="text-sm text-text-muted">Approving applies every change at once and keeps the previous values for audit.</p>
+        {notices.isError && <ErrorPanel>{describeError(notices.error)}</ErrorPanel>}
         {openNotices?.length === 0 && <p>No open change notices.</p>}
         <ul className="flex flex-col gap-3">
           {openNotices?.map((notice) => <NoticeRow key={notice.notice_id} notice={notice} />)}
@@ -264,9 +266,9 @@ export function AdminReview() {
       </section>
 
       <section aria-labelledby="announcements-heading" className="flex flex-col gap-3">
-        <h2 id="announcements-heading" className="text-xl font-bold">Live announcements</h2>
-        <p className="text-sm text-zinc-700 dark:text-zinc-300">Company messages go live without review. Hide any that are misleading.</p>
-        {announcements.isError && <p role="alert">{describeError(announcements.error)}</p>}
+        <h2 id="announcements-heading" className="font-heading text-[17px] font-semibold text-ink">Live announcements</h2>
+        <p className="text-sm text-text-muted">Company messages go live without review. Hide any that are misleading.</p>
+        {announcements.isError && <ErrorPanel>{describeError(announcements.error)}</ErrorPanel>}
         {announcements.data?.length === 0 && <p>No live announcements.</p>}
         <ul className="flex flex-col gap-3">
           {announcements.data?.map((item) => <AnnouncementRow key={item.announcement_id} item={item} />)}

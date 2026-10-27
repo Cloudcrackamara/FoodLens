@@ -205,3 +205,13 @@ Problems met while building FoodLens, what caused them, and how they were resolv
 | # | Area | Challenge | Cause | Resolution | Status |
 |---|---|---|---|---|---|
 | 119 | Wording | The approved UI design contains text that breaks CLAUDE.md: "Na original o!", a "NOT A SAFETY TEST" chip, the NAFDAC/SON banner and the registration-lookup result copy. | The prototype was drawn for the earlier registration lookup. | `design/README.md` lists the text never to copy and maps each check result to a board for layout only. The founder chose replacements: the home tagline "Check am before you buy!" and the chip "NOT A LAB TEST". "It is not a safety test" stays blocked. | Decision |
+
+## 2026-10-26: Design foundation (tokens and shared components)
+
+| # | Area | Challenge | Cause | Resolution | Status |
+|---|---|---|---|---|---|
+| 120 | Design | The design has no dark theme, but every component had `dark:` classes. | The app started from the Next.js template. | The founder chose light only. All `dark:` classes were removed with the token swap. | Decision |
+| 121 | Design | The recall result (`BATCH_OR_PRODUCT_WARNING`) has no board, so its status card border was not specified. | The prototype predates recalls. | The founder chose the alert background (`--color-alert-bg`) with no border. Icon: the warning triangle from `ResultMismatch`; body text: `--color-text`. | Decision |
+| 122 | Design | The design has no clock icon for the amber status card; its icon is a calendar for "expired". | The amber board showed an expired registration. | Used the clock from the board's own "Expired" pill, so no shape was invented. | Resolved |
+| 123 | Tooling | The founder asked for Playwright screenshots, but Playwright is not a project dependency and `npx playwright` wanted a browser revision that is not installed. | Only the Chromium browser build (`chromium-1243`) was installed on this machine. | Installed `playwright@1.64.1` in a throwaway scratch folder and launched the installed Chromium with `executablePath`. Check results came from the frontend test fixtures through request interception, since the seed has no raw codes. Nothing was added to the project. | Workaround |
+| 124 | Tooling | Scripted class swaps failed with "missing" on strings that were visibly in the file. | Some files have CRLF line endings, so multi-line search strings did not match. | The edit script normalises to LF, edits, then restores CRLF. | Resolved |

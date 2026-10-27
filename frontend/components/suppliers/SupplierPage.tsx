@@ -9,6 +9,8 @@ import { useSupplier, type SupplierDetail } from "@/lib/companies";
 import { ordersEnabled } from "@/lib/features";
 import { usePlaceOrder, type OrderRequest } from "@/lib/orders";
 import { SupplierCard } from "./SupplierDirectory";
+import { buttonClass } from "@/lib/ui";
+import { EmptyPanel, ErrorPanel, LoadingPanel } from "@/components/ui/Panels";
 
 type LineDraft = { quantity: string; unit: string };
 
@@ -66,17 +68,17 @@ export function OrderRequestForm({
 
   if (placeOrder.isSuccess) {
     return (
-      <p role="status" className="rounded-md border border-zinc-400 p-4">
+      <p role="status" className="rounded-[12px] bg-white p-6 shadow-card">
         Order request sent to {supplier.display_name}. Track it in{" "}
-        <Link href="/orders" className="underline">My orders</Link>.
+        <Link href="/orders" className="font-semibold text-brand-dark underline">My orders</Link>.
       </p>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate aria-label="Request an order" className="flex flex-col gap-4 rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
-      <h2 className="text-lg font-semibold">Request an order</h2>
-      <p className="text-sm text-zinc-700 dark:text-zinc-300">
+    <form onSubmit={handleSubmit} noValidate aria-label="Request an order" className="flex flex-col gap-4 rounded-[12px] bg-white p-6 shadow-card">
+      <h2 className="font-heading text-[17px] font-semibold text-ink">Request an order</h2>
+      <p className="text-sm text-text-muted">
         This is a request only. The supplier accepts or declines it; FoodLens takes no payment.
       </p>
       <fieldset className="flex flex-col gap-2">
@@ -88,13 +90,13 @@ export function OrderRequestForm({
               Quantity
               <input aria-label={`Quantity of ${product.name}`} inputMode="decimal" value={lines[product.product_id]?.quantity ?? ""}
                 onChange={(e) => setLine(product.product_id, { quantity: e.target.value })}
-                className="w-24 rounded-md border border-zinc-400 px-2 py-1 dark:border-zinc-600 dark:bg-zinc-900" />
+                className="w-24 min-h-[46px] rounded-[10px] border border-line-input bg-white px-3 text-base text-ink" />
             </label>
             <label className="flex flex-col text-sm">
               Unit
               <input aria-label={`Unit for ${product.name}`} value={lines[product.product_id]?.unit ?? "carton"}
                 onChange={(e) => setLine(product.product_id, { unit: e.target.value })}
-                className="w-28 rounded-md border border-zinc-400 px-2 py-1 dark:border-zinc-600 dark:bg-zinc-900" />
+                className="w-28 min-h-[46px] rounded-[10px] border border-line-input bg-white px-3 text-base text-ink" />
             </label>
           </div>
         ))}
@@ -108,7 +110,7 @@ export function OrderRequestForm({
         </label>
         {method === "PICKUP" && (
           <select aria-label="Pickup location" value={locationId} onChange={(e) => setLocationId(e.target.value)}
-            className="rounded-md border border-zinc-400 px-2 py-2 dark:border-zinc-600 dark:bg-zinc-900">
+            className="min-h-[46px] rounded-[10px] border border-line-input bg-white px-3 text-base text-ink">
             {supplier.locations.map((location) => (
               <option key={location.location_id} value={location.location_id}>
                 {location.name} ({location.area})
@@ -122,23 +124,23 @@ export function OrderRequestForm({
         </label>
         {method === "DELIVERY" && (
           <textarea aria-label="Delivery address or notes" value={delivery} maxLength={500} onChange={(e) => setDelivery(e.target.value)}
-            className="rounded-md border border-zinc-400 px-2 py-2 dark:border-zinc-600 dark:bg-zinc-900" />
+            className="min-h-[46px] rounded-[10px] border border-line-input bg-white px-3 text-base text-ink" />
         )}
       </fieldset>
 
       <label className="flex flex-col gap-1">
         <span className="font-medium">Note to the supplier (optional)</span>
         <textarea value={note} maxLength={500} onChange={(e) => setNote(e.target.value)}
-          className="rounded-md border border-zinc-400 px-2 py-2 dark:border-zinc-600 dark:bg-zinc-900" />
+          className="min-h-[46px] rounded-[10px] border border-line-input bg-white px-3 text-base text-ink" />
       </label>
 
       {(problem || placeOrder.isError) && (
-        <p role="alert" className="text-red-700 dark:text-red-400">
+        <p role="alert" className="font-semibold text-bad">
           {problem ?? (placeOrder.error ? describeError(placeOrder.error) : null)}
         </p>
       )}
       <button type="submit" disabled={placeOrder.isPending}
-        className="rounded-md bg-zinc-900 px-4 py-2 font-semibold text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900">
+        className={buttonClass("primary", "sm")}>
         {placeOrder.isPending ? "Sending…" : "Send order request"}
       </button>
     </form>
@@ -150,9 +152,9 @@ export function SupplierPage({ companyId }: { companyId: string }) {
   const { data: user } = useCurrentUser();
 
   if (supplier.isError) {
-    return <p role="alert">{describeError(supplier.error)}</p>;
+    return <ErrorPanel>{describeError(supplier.error)}</ErrorPanel>;
   }
-  if (!supplier.data) return <p>Loading…</p>;
+  if (!supplier.data) return <LoadingPanel />;
   const data = supplier.data;
   const buyerCompanyId = user?.membership?.company_id;
   const ownCompany = buyerCompanyId === data.company_id;
@@ -164,15 +166,15 @@ export function SupplierPage({ companyId }: { companyId: string }) {
       </ul>
 
       <section aria-labelledby="products-heading" className="flex flex-col gap-3">
-        <h2 id="products-heading" className="text-lg font-semibold">Products</h2>
+        <h2 id="products-heading" className="font-heading text-[17px] font-semibold text-ink">Products</h2>
         <DemoDataBanner />
-        <p className="text-sm text-zinc-700 dark:text-zinc-300">{data.disclaimer}</p>
+        <p className="text-sm text-text-muted">{data.disclaimer}</p>
         {data.products.length === 0 ? (
-          <p>No published products yet.</p>
+          <EmptyPanel title="No published products yet." />
         ) : (
           <ul className="flex flex-col gap-2">
             {data.products.map((product) => (
-              <li key={product.product_id} aria-label={product.name} className="rounded-md border border-zinc-200 p-3 dark:border-zinc-800">
+              <li key={product.product_id} aria-label={product.name} className="rounded-[10px] border border-line bg-white p-3.5">
                 <p className="font-medium">{product.name}</p>
                 <p className="text-sm">
                   {product.brand} · {product.category}
@@ -194,7 +196,7 @@ export function SupplierPage({ companyId }: { companyId: string }) {
         !ownCompany && (
           <p className="text-sm">
             Members of FoodLens-approved distributor companies can request orders here.{" "}
-            {!user && <Link href="/login" className="underline">Sign in</Link>}
+            {!user && <Link href="/login" className="font-semibold text-brand-dark underline">Sign in</Link>}
           </p>
         )
       )}

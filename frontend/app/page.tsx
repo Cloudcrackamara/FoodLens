@@ -1,23 +1,25 @@
 import Link from "next/link";
+import { Card } from "@/components/ui/Card";
+import { buttonClass, cardTitleClass } from "@/lib/ui";
 
 export default function Home() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-12">
-      <h1 className="text-3xl font-bold">FoodLens</h1>
-      <p className="text-lg">
+      <h1 className="font-heading text-3xl font-bold">FoodLens</h1>
+      <p className="text-lg text-text">
         Every pack gets its own QR code, issued by the manufacturer. Anyone can check a pack for
         free, with no account, to see what has been recorded for that code: whether it is in
         circulation or sold, where, and any recall.
       </p>
       <Link
         href="/check"
-        className="self-start rounded-md bg-zinc-900 px-5 py-3 text-lg font-semibold text-white dark:bg-zinc-100 dark:text-zinc-900"
+        className={`self-start ${buttonClass("primary", "lg")}`}
       >
         Check a pack
       </Link>
-      <section className="rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
-        <h2 className="mb-2 font-semibold">What a check can and cannot tell you</h2>
-        <ul className="list-disc space-y-1 pl-5">
+      <Card>
+        <h2 className={`${cardTitleClass} mb-2`}>What a check can and cannot tell you</h2>
+        <ul className="list-disc space-y-1 pl-5 text-text">
           <li>
             It shows recorded facts about the code: issued by the manufacturer, in circulation,
             sold, or recalled.
@@ -32,8 +34,8 @@ export default function Home() {
             service or decision.
           </li>
         </ul>
-      </section>
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+      </Card>
+      <p className="text-sm text-text-subtle">
         Demonstration prototype. All companies, products, and codes shown are fictional.
       </p>
     </main>

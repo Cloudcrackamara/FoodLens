@@ -10,7 +10,9 @@ import {
   useCheck,
   type IdentifierType,
 } from "@/lib/check";
+import { InlineError } from "@/components/ui/Panels";
 import type { QrDecoder } from "@/lib/qr";
+import { buttonClass, codeInputClass, helpTextClass, tabClass } from "@/lib/ui";
 import { CheckResultView } from "./CheckResultView";
 import { DemoCityPicker } from "./DemoCityPicker";
 import { ScanQr } from "./ScanQr";
@@ -63,7 +65,7 @@ export function CheckPack({ decoder }: { decoder?: QrDecoder }) {
 
   return (
     <div className="flex flex-col gap-5">
-      <div role="tablist" aria-label="How to check" className="grid grid-cols-2 gap-1 rounded-xl bg-zinc-200 p-1 dark:bg-zinc-800">
+      <div role="tablist" aria-label="How to check" className="grid grid-cols-2 gap-2">
         {(
           [
             ["scan", "Scan QR"],
@@ -76,9 +78,7 @@ export function CheckPack({ decoder }: { decoder?: QrDecoder }) {
             role="tab"
             aria-selected={mode === value}
             onClick={() => setMode(value)}
-            className={`min-h-12 rounded-lg text-base font-semibold ${
-              mode === value ? "bg-white shadow dark:bg-zinc-950" : "text-zinc-700 dark:text-zinc-300"
-            }`}
+            className={tabClass(mode === value)}
           >
             {label}
           </button>
@@ -87,22 +87,22 @@ export function CheckPack({ decoder }: { decoder?: QrDecoder }) {
 
       {mode === "scan" ? (
         <div role="tabpanel" aria-label="Scan QR" className="flex flex-col gap-3">
-          <p>Point your camera at the QR code on the pack. You can also use a photo of it.</p>
+          <p className="text-text">Point your camera at the QR code on the pack. You can also use a photo of it.</p>
           <button
             type="button"
             onClick={() => setScanning(true)}
             disabled={check.isPending}
-            className="min-h-14 rounded-xl bg-zinc-900 px-5 text-lg font-semibold text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
+            className={buttonClass("primary", "lg")}
           >
             {check.isPending ? "Checking…" : "Open the camera"}
           </button>
-          <p className="text-xs text-zinc-600 dark:text-zinc-400">
+          <p className={helpTextClass}>
             Your photo is read on your phone and never uploaded. Only the pack code is sent to check it.
           </p>
         </div>
       ) : (
         <form role="tabpanel" aria-label="Type code" onSubmit={submitTyped} className="flex flex-col gap-3">
-          <label htmlFor="typed-code" className="font-medium">
+          <label htmlFor="typed-code" className="font-semibold text-ink">
             The code printed under the QR
           </label>
           <input
@@ -116,9 +116,9 @@ export function CheckPack({ decoder }: { decoder?: QrDecoder }) {
             maxLength={40}
             placeholder="7Q2M 8KD3 XH4N …"
             aria-describedby="typed-code-help"
-            className="min-h-14 rounded-xl border border-zinc-400 bg-transparent px-4 font-mono text-lg uppercase tracking-wider"
+            className={`${codeInputClass} uppercase`}
           />
-          <p id="typed-code-help" className="text-xs text-zinc-600 dark:text-zinc-400">
+          <p id="typed-code-help" className={helpTextClass}>
             Spaces and dashes are fine, and O, I and L are read as 0, 1 and 1.
             {normalised && (
               <>
@@ -129,14 +129,12 @@ export function CheckPack({ decoder }: { decoder?: QrDecoder }) {
             )}
           </p>
           {typedProblem && (
-            <p role="alert" className="text-sm text-red-700 dark:text-red-400">
-              {typedProblem}
-            </p>
+            <InlineError className="text-sm">{typedProblem}</InlineError>
           )}
           <button
             type="submit"
             disabled={check.isPending || !typed.trim()}
-            className="min-h-14 rounded-xl bg-zinc-900 px-5 text-lg font-semibold text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
+            className={buttonClass("primary", "lg")}
           >
             {check.isPending ? "Checking…" : "Check this code"}
           </button>
@@ -146,9 +144,7 @@ export function CheckPack({ decoder }: { decoder?: QrDecoder }) {
       <DemoCityPicker value={city} onChange={setCity} />
 
       {check.isError && (
-        <p role="alert" className="text-red-700 dark:text-red-400">
-          {describeError(check.error)}
-        </p>
+        <InlineError>{describeError(check.error)}</InlineError>
       )}
 
       {scanning && (

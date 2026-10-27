@@ -40,15 +40,15 @@ export function FormField({
         onChange={(event) => onChange(event.target.value)}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy || undefined}
-        className="rounded-md border border-zinc-400 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-900"
+        className="min-h-[46px] rounded-[10px] border border-line-input bg-white px-3 text-base text-ink"
       />
       {hint && (
-        <p id={`${id}-hint`} className="text-sm text-zinc-600 dark:text-zinc-400">
+        <p id={`${id}-hint`} className="text-sm text-text-subtle">
           {hint}
         </p>
       )}
       {error && (
-        <p id={`${id}-error`} className="text-sm text-red-700 dark:text-red-400">
+        <p id={`${id}-error`} className="text-sm font-semibold text-bad">
           {error}
         </p>
       )}

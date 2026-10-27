@@ -1,26 +1,67 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* Design tokens from design/README.md. Light theme only, as in the design. */
+@theme {
+  --font-heading: var(--font-poppins), system-ui, sans-serif;
+  --font-sans: var(--font-open-sans), system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  /* brand */
+  --color-brand: #1B7A45;        /* primary buttons, active nav */
+  --color-brand-dark: #145C34;   /* links, text on green tints */
+  --color-brand-tint: #E3F4EA;
+  --color-ink: #16143D;          /* headings, sidebars, scan screen */
+  --color-ink-2: #1F1D5C;        /* hero and feature panels, text on yellow */
+  --color-sun: #F6B93B;          /* demo banner, accents, step numbers */
+  --color-cream: #FAF8F3;        /* business workspace background */
+  --color-paper: #F5F5F3;        /* consumer background */
+  --color-sky: #24689C;          /* retailer / buyer accent */
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  /* text and lines */
+  --color-text: #2A2F3A;
+  --color-text-muted: #3A3F4B;
+  --color-text-subtle: #5F6472;
+  --color-line-input: #C9CCD4;
+  --color-line: #E3E5EA;
+  --color-divider: #ECEDF1;
+
+  /* state pills: background / text */
+  --color-ok-bg: #E3F4EA;      --color-ok: #145C34;
+  --color-warn-bg: #FDF1DC;    --color-warn: #8A4100;
+  --color-neutral-bg: #EEEFF2; --color-neutral: #3A3F4B;
+  --color-bad-bg: #FDECEA;     --color-bad: #8C1D16;  --color-bad-line: #B42318;
+  --color-pending-bg: #FDF5E2; --color-pending: #7A4F00;
+  --color-info-bg: #ECEBF7;    --color-info: #433F8A;
+  --color-new-bg: #E3EFF8;     --color-new: #1F5F8F;
+  --color-alert-bg: #FDEFE4;   --color-alert: #8F430B;
+
+  --shadow-card: 0 1px 12px rgba(20, 22, 40, 0.07);
+  --shadow-menu: 0 10px 30px rgba(20, 22, 40, 0.18);
+
+  /* skeleton pulse (design/prototype/Supplier.dc.html) */
+  --animate-skeleton: ws-pulse 1.4s ease-in-out infinite;
+
+  @keyframes ws-pulse {
+    0%,
+    100% {
+      opacity: 0.5;
+    }
+    50% {
+      opacity: 1;
+    }
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-skeleton {
+    animation: none;
+  }
 }

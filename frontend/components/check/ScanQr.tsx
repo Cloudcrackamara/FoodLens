@@ -132,21 +132,21 @@ export function ScanQr({ onCode, onCancel, onTypeInstead, decoder: injected }: P
       role="dialog"
       aria-modal="true"
       aria-label="Scan QR"
-      className="fixed inset-0 z-50 flex flex-col bg-zinc-950 text-white"
+      className="fixed inset-0 z-50 flex flex-col bg-ink text-white"
     >
       <div className="flex items-center justify-between px-4 py-3">
-        <h2 className="text-lg font-semibold">Scan the QR on the pack</h2>
+        <h2 className="font-heading text-[17px] font-semibold">Scan the QR on the pack</h2>
         <button
           type="button"
           onClick={onCancel}
-          className="min-h-11 rounded-md px-3 text-sm font-medium underline underline-offset-4"
+          className="min-h-11 rounded-full px-3 text-sm font-semibold underline underline-offset-4"
         >
           Close
         </button>
       </div>
 
       {cameraState !== "unavailable" ? (
-        <div className="relative mx-auto aspect-[3/4] w-full max-w-md flex-1 overflow-hidden bg-black sm:rounded-xl">
+        <div className="relative mx-auto aspect-[3/4] w-full max-w-[440px] flex-1 overflow-hidden bg-black sm:rounded-[20px]">
           <video
             ref={videoRef}
             playsInline
@@ -163,18 +163,18 @@ export function ScanQr({ onCode, onCancel, onTypeInstead, decoder: injected }: P
           </p>
         </div>
       ) : (
-        <p className="mx-auto w-full max-w-md px-4 py-6 text-base">
+        <p className="mx-auto w-full max-w-[440px] px-4 py-6 text-base">
           {denied ? CAMERA_DENIED : CAMERA_UNAVAILABLE}
         </p>
       )}
 
-      <div className="mx-auto flex w-full max-w-md flex-col gap-3 px-4 py-4">
+      <div className="mx-auto flex w-full max-w-[440px] flex-col gap-3 px-4 py-4">
         {problem && (
-          <p role="alert" className="rounded-md bg-amber-300 px-3 py-2 text-sm font-medium text-black">
+          <p role="alert" className="rounded-[10px] bg-sun px-3 py-2 text-sm font-semibold text-ink-2">
             {problem}
           </p>
         )}
-        <label className="flex min-h-12 cursor-pointer items-center justify-center rounded-lg border border-white/40 px-4 text-base font-medium">
+        <label className="flex min-h-12 cursor-pointer items-center justify-center rounded-full border-2 border-white px-5 font-heading text-base font-semibold">
           {busy ? "Reading the photo…" : "Use a photo instead"}
           <input
             type="file"
@@ -189,7 +189,7 @@ export function ScanQr({ onCode, onCancel, onTypeInstead, decoder: injected }: P
         <button
           type="button"
           onClick={onTypeInstead}
-          className="min-h-12 rounded-lg px-4 text-base font-medium underline underline-offset-4"
+          className="min-h-12 rounded-full px-4 font-heading text-base font-semibold underline underline-offset-4"
         >
           Type the code instead
         </button>

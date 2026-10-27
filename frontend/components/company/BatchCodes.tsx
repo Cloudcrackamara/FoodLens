@@ -5,6 +5,7 @@ import { FormField } from "@/components/auth/FormField";
 import { describeError } from "@/lib/api";
 import { fieldErrors, useCurrentUser } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
+import { buttonClass } from "@/lib/ui";
 import {
   MIN_QR_MM,
   generateFormSchema,
@@ -22,20 +23,20 @@ import {
   type BatchUnits,
   type GenerateForm,
 } from "@/lib/units";
+import { EmptyPanel, LoadingPanel } from "@/components/ui/Panels";
 
-const buttonClass =
-  "self-start rounded-md bg-zinc-900 px-4 py-2 font-semibold text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900";
-const inputClass = "rounded-md border border-zinc-400 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-900";
-const sectionClass = "flex flex-col gap-3 rounded-md border border-zinc-300 p-4 dark:border-zinc-700";
+const submitClass = `self-start ${buttonClass("primary", "sm")}`;
+const inputClass = "min-h-[46px] rounded-[10px] border border-line-input bg-white px-3 py-2 text-base text-ink";
+const sectionClass = "flex flex-col gap-3 rounded-[12px] bg-white p-6 shadow-card";
 
 function ErrorText({ error }: { error: Error | null }) {
-  return error ? <p role="alert" className="text-red-700 dark:text-red-400">{describeError(error)}</p> : null;
+  return error ? <p role="alert" className="font-semibold text-bad">{describeError(error)}</p> : null;
 }
 
 function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
     <section aria-labelledby={id} className={sectionClass}>
-      <h2 id={id} className="text-lg font-semibold">{title}</h2>
+      <h2 id={id} className="font-heading text-[17px] font-semibold text-ink">{title}</h2>
       {children}
     </section>
   );
@@ -67,7 +68,7 @@ function GenerateLabels({ companyId, batchId }: { companyId: string; batchId: st
 
   return (
     <form onSubmit={onSubmit} noValidate aria-label="Generate codes and labels" className="flex flex-col gap-3">
-      <div role="note" className="rounded-md border-2 border-amber-600 p-3 text-sm">
+      <div role="note" className="rounded-[10px] bg-warn-bg p-3 text-sm text-warn">
         <p className="font-semibold">The label file holds every raw code.</p>
         <p>
           FoodLens keeps only a fingerprint of each code and cannot download this file again. Keep
@@ -79,7 +80,7 @@ function GenerateLabels({ companyId, batchId }: { companyId: string; batchId: st
       <FormField id="units_per_carton" label="Packs per carton (optional)" value={form.units_per_carton} error={errors.units_per_carton} hint="Leave empty for loose packs. Each carton gets its own code." onChange={set("units_per_carton")} />
       <FormField id="qr_size_mm" label="QR size in mm" value={String(form.qr_size_mm)} error={errors.qr_size_mm} hint={`${MIN_QR_MM} mm or more scans best on most phones.`} onChange={set("qr_size_mm")} />
       {small && (
-        <p role="status" className="text-sm text-amber-800 dark:text-amber-300">
+        <p role="status" className="text-sm font-semibold text-warn">
           QR codes smaller than {MIN_QR_MM} mm may not scan reliably on every phone.
         </p>
       )}
@@ -90,7 +91,7 @@ function GenerateLabels({ companyId, batchId }: { companyId: string; batchId: st
           {generate.data.warning && ` ${generate.data.warning}`}
         </p>
       )}
-      <button type="submit" disabled={generate.isPending} className={buttonClass}>
+      <button type="submit" disabled={generate.isPending} className={submitClass}>
         {generate.isPending ? "Making codes and labels… (up to a minute for 2,000 packs)" : "Generate and download labels"}
       </button>
     </form>
@@ -107,7 +108,7 @@ function ReleaseUnits({ companyId, batchId, data }: { companyId: string; batchId
     <div className="flex flex-col gap-3">
       <p className="text-sm">Release packs once they leave your factory. Released packs cannot be voided; use a recall instead.</p>
       <div className="flex flex-wrap gap-3">
-        <button type="button" disabled={release.isPending || !data.units.ISSUED} className={buttonClass} onClick={() => release.mutate({ carton_ref: null })}>
+        <button type="button" disabled={release.isPending || !data.units.ISSUED} className={submitClass} onClick={() => release.mutate({ carton_ref: null })}>
           Release all unreleased packs
         </button>
         {unreleased.length > 0 && (
@@ -117,7 +118,7 @@ function ReleaseUnits({ companyId, batchId, data }: { companyId: string; batchId
               <option value="">Choose…</option>
               {unreleased.map((c) => <option key={c.carton_ref} value={c.carton_ref}>{c.carton_ref}</option>)}
             </select>
-            <button type="button" disabled={!cartonRef || release.isPending} className={buttonClass} onClick={() => release.mutate({ carton_ref: cartonRef }, { onSuccess: () => setCartonRef("") })}>
+            <button type="button" disabled={!cartonRef || release.isPending} className={submitClass} onClick={() => release.mutate({ carton_ref: cartonRef }, { onSuccess: () => setCartonRef("") })}>
               Release carton
             </button>
           </span>
@@ -195,10 +196,10 @@ function VoidUnits({ companyId, batchId }: { companyId: string; batchId: string 
         </label>
       )}
       <FormField id="void-reason" label="Reason" value={reason} onChange={setReason} />
-      {problem && <p role="alert" className="text-red-700 dark:text-red-400">{problem}</p>}
+      {problem && <p role="alert" className="font-semibold text-bad">{problem}</p>}
       <ErrorText error={voidUnits.error} />
       {voidUnits.isSuccess && <p role="status" className="text-sm">Voided {voidUnits.data.units} packs.</p>}
-      <button type="submit" disabled={voidUnits.isPending} className={buttonClass}>Void packs</button>
+      <button type="submit" disabled={voidUnits.isPending} className={submitClass}>Void packs</button>
     </form>
   );
 }
@@ -245,10 +246,10 @@ function Allocations({ companyId, batchId }: { companyId: string; batchId: strin
     <div className="flex flex-col gap-4">
       <p className="text-sm">Plan where this batch should go. Allocations are a plan: packs found outside them are noted in the timeline, never alerted one by one.</p>
       <ErrorText error={allocations.error} />
-      {allocations.data?.length === 0 && <p className="text-sm">No allocations yet.</p>}
+      {allocations.data?.length === 0 && <EmptyPanel title="No allocations yet." />}
       <ul className="flex flex-col gap-2">
         {allocations.data?.map((a) => (
-          <li key={a.allocation_id} aria-label={`Allocation to ${a.destination_area.city}`} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-zinc-200 p-3 text-sm dark:border-zinc-800">
+          <li key={a.allocation_id} aria-label={`Allocation to ${a.destination_area.city}`} className="flex flex-wrap items-center justify-between gap-2 rounded-[10px] border border-line bg-white p-3.5 text-sm">
             <span>
               {a.quantity} packs to {a.destination_company ? `${a.destination_company.display_name}, ` : ""}
               {a.destination_area.city}, {a.destination_area.state}
@@ -256,7 +257,7 @@ function Allocations({ companyId, batchId }: { companyId: string; batchId: strin
               {a.carton_refs.length > 0 && ` · cartons ${a.carton_refs.join(", ")}`}
               {a.units_listed > 0 && ` · ${a.units_listed} single packs`}
             </span>
-            <button type="button" className="underline" disabled={remove.isPending} onClick={() => remove.mutate(a.allocation_id)}>Remove</button>
+            <button type="button" className="font-semibold text-brand-dark underline" disabled={remove.isPending} onClick={() => remove.mutate(a.allocation_id)}>Remove</button>
           </li>
         ))}
       </ul>
@@ -294,9 +295,9 @@ function Allocations({ companyId, batchId }: { companyId: string; batchId: strin
             <textarea value={list} onChange={(e) => setList(e.target.value)} rows={3} className={inputClass} autoCapitalize="characters" spellCheck={false} />
           </label>
         )}
-        {problem && <p role="alert" className="text-red-700 dark:text-red-400">{problem}</p>}
+        {problem && <p role="alert" className="font-semibold text-bad">{problem}</p>}
         <ErrorText error={create.error} />
-        <button type="submit" disabled={create.isPending} className={buttonClass}>Add allocation</button>
+        <button type="submit" disabled={create.isPending} className={submitClass}>Add allocation</button>
       </form>
     </div>
   );
@@ -306,7 +307,7 @@ function Allocations({ companyId, batchId }: { companyId: string; batchId: strin
 
 export function BatchCodes({ companyId, batchId, isOwner }: { companyId: string; batchId: string; isOwner: boolean }) {
   const units = useBatchUnits(companyId, batchId);
-  if (units.isPending) return <p>Loading…</p>;
+  if (units.isPending) return <LoadingPanel />;
   if (units.isError) return <ErrorText error={units.error} />;
   const data = units.data;
   const total = Object.values(data.units).reduce((sum, n) => sum + n, 0);
@@ -314,7 +315,7 @@ export function BatchCodes({ companyId, batchId, isOwner }: { companyId: string;
   return (
     <div className="flex flex-col gap-6">
       <section aria-labelledby="batch-heading">
-        <h1 id="batch-heading" className="text-2xl font-bold">{data.product_name} · batch {data.batch_number}</h1>
+        <h1 id="batch-heading" className="font-heading text-[22px] font-semibold text-ink">{data.product_name} · batch {data.batch_number}</h1>
         <p className="text-sm">Expires {formatDate(data.expiry_date)}</p>
         <p className="mt-2">{total} packs: {countsText(data.units)}</p>
         {data.released_at && <p className="text-sm">Every pack in this batch has been released.</p>}
@@ -352,7 +353,7 @@ export function BatchCodes({ companyId, batchId, isOwner }: { companyId: string;
  *  enforces the same rules (D106). */
 export function MemberBatchCodes({ batchId }: { batchId: string }) {
   const { data: user, isPending } = useCurrentUser();
-  if (isPending) return <p>Loading…</p>;
+  if (isPending) return <LoadingPanel />;
   const membership = user?.membership;
   if (!membership) return <p>Sign in as a member of the manufacturer to manage this batch.</p>;
   return (

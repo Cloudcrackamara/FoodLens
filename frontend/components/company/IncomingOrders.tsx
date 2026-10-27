@@ -5,6 +5,8 @@ import { OrderCard } from "@/components/orders/OrderCard";
 import { describeError } from "@/lib/api";
 import { useProducts } from "@/lib/catalogue";
 import { useOrderAction, useOrders, type Order } from "@/lib/orders";
+import { buttonClass } from "@/lib/ui";
+import { EmptyPanel, ErrorPanel } from "@/components/ui/Panels";
 
 type Mode = "idle" | "decline" | "reply" | "fulfil";
 
@@ -36,14 +38,14 @@ function SellerActions({ order, companyId }: { order: Order; companyId: string }
         {order.status === "REQUESTED" && (
           <>
             <button type="button" disabled={action.isPending} onClick={() => run({ orderId: id, action: "accept" })}
-              className="rounded-md bg-zinc-900 px-3 py-1 font-semibold text-white dark:bg-zinc-100 dark:text-zinc-900">Accept</button>
-            <button type="button" onClick={() => setMode("decline")} className="rounded-md border border-zinc-600 px-3 py-1">Decline</button>
+              className={buttonClass("primary", "sm")}>Accept</button>
+            <button type="button" onClick={() => setMode("decline")} className={buttonClass("secondary", "sm")}>Decline</button>
           </>
         )}
         {order.status === "ACCEPTED" && (
-          <button type="button" onClick={() => setMode("fulfil")} className="rounded-md bg-zinc-900 px-3 py-1 font-semibold text-white dark:bg-zinc-100 dark:text-zinc-900">Mark fulfilled</button>
+          <button type="button" onClick={() => setMode("fulfil")} className={buttonClass("primary", "sm")}>Mark fulfilled</button>
         )}
-        {canReply && <button type="button" onClick={() => setMode("reply")} className="rounded-md border border-zinc-600 px-3 py-1">Reply</button>}
+        {canReply && <button type="button" onClick={() => setMode("reply")} className={buttonClass("secondary", "sm")}>Reply</button>}
       </div>
 
       {(mode === "decline" || mode === "reply") && (
@@ -51,17 +53,17 @@ function SellerActions({ order, companyId }: { order: Order; companyId: string }
           <label className="flex flex-col gap-1 text-sm">
             {mode === "decline" ? "Reason (optional)" : "Message to the buyer"}
             <textarea value={text} maxLength={500} onChange={(e) => setText(e.target.value)}
-              className="rounded-md border border-zinc-400 px-2 py-1 dark:border-zinc-600 dark:bg-zinc-900" />
+              className="min-h-[46px] rounded-[10px] border border-line-input bg-white px-3 text-base text-ink" />
           </label>
           <div className="flex gap-2 text-sm">
             <button type="button" disabled={action.isPending || (mode === "reply" && !text.trim())}
               onClick={() => run(mode === "decline"
                 ? { orderId: id, action: "decline", reason: text.trim() || null }
                 : { orderId: id, action: "reply", message: text.trim() })}
-              className="rounded-md bg-zinc-900 px-3 py-1 font-semibold text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900">
+              className={buttonClass("primary", "sm")}>
               {mode === "decline" ? "Confirm decline" : "Send reply"}
             </button>
-            <button type="button" onClick={() => setMode("idle")} className="underline">Back</button>
+            <button type="button" onClick={() => setMode("idle")} className="font-semibold text-brand-dark underline">Back</button>
           </div>
         </div>
       )}
@@ -75,7 +77,7 @@ function SellerActions({ order, companyId }: { order: Order; companyId: string }
               <div key={line.line_id}>
                 <p>{line.product_name}</p>
                 {batches.length === 0 ? (
-                  <p className="text-zinc-600 dark:text-zinc-400">No batches recorded for this product.</p>
+                  <p className="text-text-subtle">No batches recorded for this product.</p>
                 ) : (
                   batches.map((batch) => (
                     <label key={batch.batch_id} className="mr-3 inline-flex items-center gap-1">
@@ -97,14 +99,14 @@ function SellerActions({ order, companyId }: { order: Order; companyId: string }
                   .filter(([, ids]) => ids.length > 0)
                   .map(([line_id, batch_ids]) => ({ line_id, batch_ids })),
               })}
-              className="rounded-md bg-zinc-900 px-3 py-1 font-semibold text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900">
+              className={buttonClass("primary", "sm")}>
               Confirm fulfilled
             </button>
-            <button type="button" onClick={() => setMode("idle")} className="underline">Back</button>
+            <button type="button" onClick={() => setMode("idle")} className="font-semibold text-brand-dark underline">Back</button>
           </div>
         </fieldset>
       )}
-      {action.isError && <p role="alert" className="text-red-700 dark:text-red-400">{describeError(action.error)}</p>}
+      {action.isError && <p role="alert" className="font-semibold text-bad">{describeError(action.error)}</p>}
     </div>
   );
 }
@@ -115,12 +117,12 @@ export function IncomingOrders({ companyId }: { companyId: string }) {
 
   return (
     <section aria-labelledby="incoming-orders-heading" className="flex flex-col gap-3">
-      <h2 id="incoming-orders-heading" className="text-lg font-semibold">Incoming orders</h2>
-      <p className="text-sm text-zinc-700 dark:text-zinc-300">
+      <h2 id="incoming-orders-heading" className="font-heading text-[17px] font-semibold text-ink">Incoming orders</h2>
+      <p className="text-sm text-text-muted">
         Order requests from wholesalers. FoodLens takes no payment; arrange that with the buyer.
       </p>
-      {orders.isError && <p role="alert">{describeError(orders.error)}</p>}
-      {orders.data?.length === 0 && <p>No order requests yet.</p>}
+      {orders.isError && <ErrorPanel>{describeError(orders.error)}</ErrorPanel>}
+      {orders.data?.length === 0 && <EmptyPanel title="No order requests yet." />}
       {orders.data && orders.data.length > 0 && (
         <ul className="flex flex-col gap-3">
           {orders.data.map((order) => (
