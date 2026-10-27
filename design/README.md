@@ -11,11 +11,48 @@ This folder holds the approved FoodLens UI design. Use it to make the app look a
 | `screens/*.png` | 103 screenshots, one per prototype board, full page | The visual source of truth. Open the matching screenshot before building or restyling a screen. |
 | `prototype/*.dc.html` | The prototype source for each board | Read it for exact spacing, colours, radii, SVG icons and component structure. It is template HTML (`{{holes}}`, `<sc-if>`, `<sc-for>`, a `renderVals()` script), not runnable app code. Port the markup to React and Tailwind; don't import these files. |
 | `prototype/canvas.json` | Board list with titles and sizes | Board titles name the screen and state, e.g. `Result · not found`. |
-| `assets/` | Hero videos and posters, scan-ready animation, scan photo | Copy what you use into `frontend/public/`. |
+| `assets/` | Hero videos and posters, scan-ready animation, scan photo | Copy what you use into `frontend/public/`. Sizes are listed below. |
 
 Wrapper boards (for example `SupOrderAccepted`) just show another board in a set state. The screenshot of the wrapper shows that state.
 
 Screenshots were rendered with Poppins, Open Sans and IBM Plex Mono. In the app, load them with `next/font/google`.
+
+### Asset sizes (checked 26 Oct 2026)
+
+No file is over 10 MB.
+
+| File | Size |
+| --- | --- |
+| `foodlens-hero-16x9.mp4` | 2.74 MB |
+| `foodlens-scan-ready.webp` | 2.09 MB |
+| `foodlens-hero-9x16.mp4` | 0.99 MB |
+| `foodlens-scan-photo.jpg` | 164 KB |
+| `foodlens-hero-16x9-poster.jpg` | 131 KB |
+| `foodlens-hero-9x16-poster.jpg` | 46 KB |
+
+## Approved wording wins
+
+All consumer-facing text currently in the code (`check.py`, `/check`, the scanner, `/p`, the result page, report concern and the home page) was approved by the founder on 26 Oct 2026. Restyling changes markup and classes only, never that text. The prototype's sample text is never used where approved wording exists.
+
+### Design text never to copy
+
+The prototype was written for the registration lookup. This text breaks CLAUDE.md rules and must not reach the app, even when the board's layout is reused:
+
+| Text in the design | Boards | Why not |
+| --- | --- | --- |
+| "Na original o!" | `Main` | Rule 1: "original". Use the tagline **"Check am before you buy!"** instead (founder, 26 Oct 2026). |
+| "Whether the pack in your hand is the original" | `Guide` | Rule 1: "original". |
+| "NOT A SAFETY TEST" chip | `Main` | Safety wording. Use the chip **"NOT A LAB TEST"** instead (founder, 26 Oct 2026). |
+| "It is not a safety test" | `Main` | Safety wording; not approved. Ask the founder before using any form of it. |
+| "Demo data — not an official NAFDAC or SON service" | every consumer board | Rule 2: the banner text is **DEMO DATA — NOT AN OFFICIAL REGULATOR SERVICE**. |
+| "This number matches an active registration", "Active registration", "This registration has expired", "This number is registered to a different product", "We couldn't find this number in the register", "What the register shows", "Agency: NAFDAC (simulated record)", "Your pack vs the register" | `Result`, `ResultExpired`, `ResultMismatch`, `ResultNotFound`, `ResultTablet`, `ResultMismatchDesktop` | Rule 3: `registration_number` is never checked against a register. |
+| "We need the NAFDAC number to check", "Fit the NAFDAC number inside the box", "NAFDAC Reg. No." pack art | `ResultInsufficient`, `Result`, `Scan`, `Confirm*` | Rule 3; checks read the FoodLens QR or code. |
+| "Type the registration number", "NAFDAC or SON registration number", batch field | `Confirm`, `ConfirmTyped` | Rule 3; the typed fallback is the pack's code. |
+| "Food registration checker", "checks the registration number … against a register", "matches an active record" | `Main`, `Mobile` | Rule 3. |
+| "It has not yet been verified" | `Report` | "Verified" wording; keep the current `ReportConcern` text. |
+| "Now NAFDAC approved and 100% safe", "NAFDAC approved and safe for your family" | `Supplier`, `AdminQueue` | Sample of a blocked announcement. Use only as test input for the blocked state, never as content. |
+| "Approved · demo-reviewed profile" and other "Approved" labels | `Accounts`, `Admin*` | Allowed only with the qualifier that it is a FoodLens demo review, not NAFDAC or SON approval (rule 5). |
+| "active registration" in the supplier directory | `Wholesaler`, `Supplier` | Rule 3. Orders are hidden anyway. |
 
 ## Design tokens (Tailwind v4)
 
@@ -83,19 +120,22 @@ The Result boards show the layout to reuse:
 4. A company notice card.
 5. Actions.
 
-The registration states are gone. Map the current `checkResultValues` like this:
+The registration states are gone. `ResultExpired`, `ResultMismatch`, `ResultNotFound`, `ResultInsufficient` and `ConfirmTyped` come from the registration design: reuse their **layout only**, none of their text. Map the current `checkResultValues` like this (agreed with the founder on 26 Oct 2026):
 
-| `result` | Design tone | Prototype board to copy |
-| --- | --- | --- |
-| `RECOGNISED_NOT_SOLD`, `RECOGNISED_JUST_SOLD` | ok (green) | `Result` |
-| `RECOGNISED_PREVIOUSLY_SOLD` | warn (amber) | `ResultExpired` |
-| `BATCH_OR_PRODUCT_WARNING` (recall) | alert (orange) | `ResultExpired` with alert colours |
-| `SUSPICIOUS_ACTIVITY`, `INVALID_IDENTITY` (scanned) | bad (red) | `ResultMismatch` |
-| `INVALID_IDENTITY` (typed, D138) | neutral | `ResultNotFound` |
-| `CARTON_CODE` | neutral | `ResultNotFound` |
-| rate limited | neutral | `ResultLimit` |
+| `result` | Design tone | Board for layout | Notes |
+| --- | --- | --- | --- |
+| `RECOGNISED_NOT_SOLD` | ok (green) | `Result` | Check icon. The details card shows the recorded product, batch and facts, not "What the register shows". |
+| `RECOGNISED_JUST_SOLD` | ok (green) | `Result` | As above. The "I've bought this" button sits below the status card. |
+| `RECOGNISED_PREVIOUSLY_SOLD` | warn (amber) | `ResultExpired` | Clock icon. The advice goes in the grey note box. |
+| `BATCH_OR_PRODUCT_WARNING` (recall) | alert (orange, `--color-alert*`) | No board. `ResultExpired` layout in alert colours | The recall notice is a solid alert-coloured card directly under the status card, not the dashed company-message card. |
+| `SUSPICIOUS_ACTIVITY` | bad (red, solid status card) | `ResultMismatch` | "Possible patterns" takes the compare panel's place, with the red border. |
+| `INVALID_IDENTITY` (scanned) | bad (red) | `ResultMismatch` | No product card. A "What you can do" list. |
+| `INVALID_IDENTITY` (typed, D138) | neutral (grey) | `ResultNotFound` | "What you entered" shows only the last 4 characters. Look-alike tips follow the normalisation (O/0, I/L/1). |
+| `CARTON_CODE` | info (indigo) | `ResultInsufficient` | An instruction, not a failure. The illustration shows where the pack's own QR sits; the main button scans a pack. |
+| rate limited | neutral | `ResultLimit` | Countdown. |
+| typed-code entry | — | `ConfirmTyped` | One code field; no batch field. |
 
-The headlines, labels and help text come from the current `CheckResultView` and CLAUDE.md rule 1, not from the prototype.
+The headlines, labels and help text come from the current `check.py` and `CheckResultView`, which the founder approved, not from the prototype.
 
 ## Screen map
 

@@ -19,7 +19,7 @@ Where to find things:
 - **Phase plan** (phases 1-10, one session and one commit each, then future work): `docs/PLAN.md`.
 - **Schema:** the tables and rules are in `docs/SCHEMA.md`; the diagram is `docs/ERD.mmd`.
 - **Decisions:** `docs/DECISIONS.md`. D104 onwards covers the unit-identity design, geo-batching and returns; D137 onwards is the final design and wins where earlier entries differ. Read the relevant entries before implementing identity, checks, lifecycle events, allocations, returns, POS, or risk rules.
-- **UI design:** `design/README.md`, with screenshots in `design/screens/`. It governs look only; this file and DECISIONS.md win on scope and wording. New screens use this design system from the start.
+- **UI design:** `design/README.md`, with screenshots in `design/screens/`. It governs look only; this file and DECISIONS.md win on scope and wording. New screens use this design system from the start. The design's sample text is never used where approved wording exists. All consumer-facing text currently in the code (check.py, /check, scanner, /p, result page, report concern, home page) was approved by the founder on 26 Oct 2026 and must not change without approval. Media lives in design/assets/.
 - **Challenge log:** `docs/log.md`.
 - **History only:** `docs/HANDOFF.md` and `docs/archive/` describe the earlier registration-lookup design.
 
