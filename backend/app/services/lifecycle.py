@@ -4,7 +4,7 @@ This module is the only writer of `lifecycle_status` and `current_holder_company
 change is written in the same transaction as the event that causes it. Phase 2 covers the
 manufacturer events: ISSUED, RELEASED and VOIDED. Phase 4 adds the merchant events (RECEIVED,
 TRANSFERRED, SOLD, RETURNED, SALE_CORRECTED) with the custody, return and allocation rules.
-POS events and replay arrive in Phase 5.
+Phase 5 adds replay_unit, which POS writes use so late offline events land in occurred_at order.
 """
 
 import uuid
@@ -250,7 +250,7 @@ def find_subject(db: Session, code: str) -> Subject:
     return Subject(carton, units, product, batch, live_recall is not None)
 
 
-def _problem(
+def unit_problem(
     unit: ProductUnit, event: LifecycleEventType, company_id: uuid.UUID, recalled: bool
 ) -> tuple[str, int] | None:
     """Why this unit cannot take this event from this company, or None."""
@@ -292,7 +292,7 @@ def subject_problem(
     problems = [
         p
         for unit in subject.units
-        if (p := _problem(unit, event, company_id, subject.recalled)) is not None
+        if (p := unit_problem(unit, event, company_id, subject.recalled)) is not None
     ]
     if not problems:
         return None
@@ -303,7 +303,7 @@ def subject_problem(
     return carton_problem(len(problems), len(subject.units), first), status_code
 
 
-def _without_transfer(unit: ProductUnit, event: LifecycleEventType, company_id: uuid.UUID) -> bool:
+def without_transfer(unit: ProductUnit, event: LifecycleEventType, company_id: uuid.UUID) -> bool:
     """D113: a receipt or sale with no transfer to this company is allowed but labelled."""
     held = unit.current_holder_company_id == company_id
     status = unit.lifecycle_status
@@ -383,7 +383,7 @@ def _outside_allocation(
     return outside
 
 
-def _standing_sale(db: Session, unit_id: uuid.UUID) -> uuid.UUID | None:
+def standing_sale(db: Session, unit_id: uuid.UUID) -> uuid.UUID | None:
     return db.exec(
         select(LifecycleEvent.event_id)
         .where(
@@ -433,7 +433,7 @@ def record_merchant_event(
     group_id = uuid.uuid4()
     when = occurred_at or utc_now()
     units = subject.units
-    flags = {u.unit_id: _without_transfer(u, event_type, company.company_id) for u in units}
+    flags = {u.unit_id: without_transfer(u, event_type, company.company_id) for u in units}
     if event_type == LifecycleEventType.RECEIVED:
         outside = _outside_allocation(
             db, subject.batch.batch_id, company.company_id, area_id, units
@@ -474,7 +474,7 @@ def record_merchant_event(
         )
     undoing = event_type in (LifecycleEventType.RETURNED, LifecycleEventType.SALE_CORRECTED)
     for unit in units:
-        sale = _standing_sale(db, unit.unit_id) if undoing else None
+        sale = standing_sale(db, unit.unit_id) if undoing else None
         rows.append(
             {
                 "event_id": uuid.uuid4(),
@@ -531,3 +531,51 @@ def record_merchant_event(
 
 def allowed_events(subject: Subject, company_id: uuid.UUID) -> list[LifecycleEventType]:
     return [e for e in MERCHANT_EVENTS if subject_problem(subject, e, company_id) is None]
+
+
+# --- Replay (D112, D151) -------------------------------------------------------------------
+
+
+def replay_unit(db: Session, unit: ProductUnit) -> None:
+    """Derive the unit's status, holder and sold state from all its events in occurred_at order
+    (recorded_at breaks ties), so a late offline event takes its place in the history. A late
+    event older than an existing later event ends with the later event's state (D151)."""
+    events = db.exec(
+        select(LifecycleEvent)
+        .where(LifecycleEvent.unit_id == unit.unit_id)
+        .order_by(LifecycleEvent.occurred_at, LifecycleEvent.recorded_at, LifecycleEvent.created_at)
+    ).all()
+    status, holder = LifecycleStatus.ISSUED, unit.manufacturer_id
+    sold: LifecycleEvent | None = None
+    for event in events:
+        company = event.retailer_company_id or event.actor_company_id
+        match event.event_type:
+            case LifecycleEventType.ISSUED | LifecycleEventType.RELEASED:
+                status, holder = NEW_STATUS[event.event_type], company or holder
+            case LifecycleEventType.VOIDED:
+                status = LifecycleStatus.VOIDED
+            case LifecycleEventType.RECALLED:
+                status = LifecycleStatus.RECALLED
+            case LifecycleEventType.TRANSFERRED:
+                status, holder = LifecycleStatus.IN_TRANSIT, event.to_company_id
+            case LifecycleEventType.RECEIVED:
+                status, holder = LifecycleStatus.IN_STOCK, company
+            case LifecycleEventType.SOLD:
+                status, holder, sold = LifecycleStatus.SOLD, company, event
+            case LifecycleEventType.RETURNED | LifecycleEventType.SALE_CORRECTED:
+                status, holder, sold = LifecycleStatus.IN_STOCK, company, None
+    db.execute(
+        update(ProductUnit)
+        .where(ProductUnit.unit_id == unit.unit_id)
+        .values(
+            lifecycle_status=status,
+            current_holder_company_id=holder,
+            last_sold_at=sold.occurred_at if sold else None,
+            last_sold_area_id=sold.area_id if sold else None,
+            last_sold_company_id=(sold.retailer_company_id or sold.actor_company_id)
+            if sold
+            else None,
+            updated_at=utc_now(),
+        ),
+        execution_options={"synchronize_session": False},
+    )

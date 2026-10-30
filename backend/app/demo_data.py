@@ -13,6 +13,7 @@ from decimal import Decimal
 
 from sqlmodel import Session, select
 
+from app.core.config import Settings
 from app.core.security import hash_password
 from app.models import (
     AppUser,
@@ -20,6 +21,9 @@ from app.models import (
     CompanyMember,
     OrderBatchAllocation,
     OrderLine,
+    PosPartner,
+    PosPartnerRetailer,
+    PosTill,
     Product,
     ProductBatch,
     SupplierLocation,
@@ -34,7 +38,8 @@ from app.models.enums import (
     ProductStatus,
     ReviewStatus,
 )
-from app.services import companies
+from app.services import companies, pos_auth
+from app.services.demo_pos import DEMO_PARTNER_NAME
 
 SEED_NOTE = "Seeded fictional demo record"
 
@@ -326,3 +331,89 @@ def seed_demo_orders(db: Session, password: str | None = None) -> None:
           [("DEMO-PC-0001", "5", "carton"), ("DEMO-PC-0006", "12", "jar")],
           batches={"DEMO-PC-0001": "DEMO-LOT-101"})  # fmt: skip
     db.commit()
+
+
+# --- Demo POS partner and shop (D123, Phase 5) -----------------------------------------------
+
+DEMO_SHOP_EMAIL = "shop@demo.foodlens.invalid"
+DEMO_TILL_REF = "DEMO-TILL-1"
+
+
+def seed_demo_pos(
+    db: Session, settings: Settings, admin: AppUser | None, password: str | None = None
+) -> str:
+    """A demo retailer with an owner account, and the demo POS partner linked to it with one
+    till. The partner is created only when POS_SECRET_KEY is set and an admin account exists. Its
+    signing secret is random and stored encrypted; no API key is issued (the demo till skips the
+    key step, D151). Returns a line for the seed output."""
+    shop = _get_or_create(
+        db,
+        Company,
+        {"claimed_business_identifier": "DEMO-RC-0006"},
+        {
+            "is_manufacturer": False,
+            "is_retailer": True,
+            "display_name": "Demo Corner Shop (fictional)",
+            "contact_email": "contact@demo-rc-0006.example",
+            "claimed_legal_name": "Demo Corner Shop (fictional) Ltd",
+            "claimed_address": "5 Sample Close, Ikeja (fictional)",
+            **_reviewed(CompanyReviewStatus.APPROVED),
+        },
+    )
+    location = _get_or_create(
+        db,
+        SupplierLocation,
+        {"company_id": shop.company_id, "name": "Demo Corner Shop, Ikeja (fictional)"},
+        {
+            "address": "5 Sample Close",
+            "area": "Lagos",
+            "area_id": companies.area_from_text(db, "Lagos").area_id,
+            **_reviewed(ReviewStatus.APPROVED),
+        },
+    )
+    _demo_owner(db, DEMO_SHOP_EMAIL, "Demo Shopkeeper", shop, password)
+    db.commit()
+
+    if not settings.pos_secret_key:
+        return "Demo POS partner skipped: set POS_SECRET_KEY in backend/.env."
+    # The partner records which admin created it; any existing admin will do.
+    admin = admin or db.exec(select(AppUser).where(AppUser.is_admin.is_(True))).first()
+    if admin is None:
+        return "Demo POS partner skipped: it needs an admin account (SEED_ADMIN_EMAIL)."
+    partner = db.exec(select(PosPartner).where(PosPartner.name == DEMO_PARTNER_NAME)).first()
+    if partner is None:
+        partner = PosPartner(
+            name=DEMO_PARTNER_NAME,
+            signing_secret_encrypted=pos_auth.encrypt_secret(
+                settings, pos_auth.new_signing_secret()
+            ),
+            created_by_user_id=admin.user_id,
+        )
+    else:
+        try:
+            pos_auth.decrypt_secret(settings, partner)
+        except pos_auth.PosError:
+            # POS_SECRET_KEY changed since the last seed: give the demo partner a new secret.
+            partner.signing_secret_encrypted = pos_auth.encrypt_secret(
+                settings, pos_auth.new_signing_secret()
+            )
+    db.add(partner)
+    db.flush()
+    _get_or_create(
+        db,
+        PosPartnerRetailer,
+        {"partner_id": partner.partner_id, "retailer_company_id": shop.company_id},
+        {"created_by_user_id": admin.user_id},
+    )
+    _get_or_create(
+        db,
+        PosTill,
+        {
+            "partner_id": partner.partner_id,
+            "retailer_company_id": shop.company_id,
+            "till_ref": DEMO_TILL_REF,
+        },
+        {"location_id": location.location_id},
+    )
+    db.commit()
+    return f"Demo POS partner ready: {DEMO_PARTNER_NAME}, till {DEMO_TILL_REF} at {DEMO_SHOP_EMAIL}"

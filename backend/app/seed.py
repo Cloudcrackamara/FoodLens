@@ -15,6 +15,7 @@ from app.demo_data import (
     DEMO_SELLER_EMAIL,
     seed_demo_data,
     seed_demo_orders,
+    seed_demo_pos,
 )
 from app.models import AppUser
 from app.services.auth import normalize_email
@@ -75,6 +76,9 @@ def main() -> None:
         admin_email = admin.email if admin else None
         seed_demo_data(db)
         seed_demo_orders(db, password)
+        if admin is not None:
+            admin = db.get(AppUser, admin.user_id)
+        pos_line = seed_demo_pos(db, settings, admin, password)
     if admin_email is None:
         print("Seed admin skipped: set SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD in backend/.env.")
     else:
@@ -84,6 +88,7 @@ def main() -> None:
         print(f"Demo order accounts ready: {DEMO_BUYER_EMAIL}, {DEMO_SELLER_EMAIL}")
     else:
         print("Demo order accounts cannot sign in: set SEED_DEMO_PASSWORD in backend/.env.")
+    print(pos_line)
 
 
 if __name__ == "__main__":

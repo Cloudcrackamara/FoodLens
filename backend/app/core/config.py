@@ -48,6 +48,19 @@ class Settings(BaseSettings):
     # Demo only: lets the check page choose a city when no other area source answers.
     simulate_location_enabled: bool = False
 
+    # POS integration (D121-D123, D151). POS_SECRET_KEY is a Fernet key that encrypts partner
+    # signing secrets at rest; blank turns the POS API off (503).
+    pos_secret_key: str = ""
+    pos_max_skew_seconds: int = Field(default=300, ge=1)
+    pos_max_event_age_days: int = Field(default=7, ge=1)
+    pos_max_future_seconds: int = Field(default=300, ge=0)
+    pos_max_units_per_request: int = Field(default=100, ge=1)
+    # Per-partner token bucket (D119).
+    rate_limit_pos_burst: int = Field(default=60, ge=1)
+    rate_limit_pos_refill_per_second: float = Field(default=5.0, gt=0)
+    # Demo only, off by default: the simulated till at /demo/pos (D123).
+    demo_pos_enabled: bool = False
+
     # Wholesale order requests are future work: the routes exist only when true (D127).
     orders_enabled: bool = False
 

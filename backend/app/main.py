@@ -13,12 +13,16 @@ from app.routers import (
     change_notices,
     check,
     companies,
+    demo_pos,
     health,
     merchant,
     orders,
+    pos,
+    pos_admin,
     suppliers,
     units,
 )
+from app.services.pos_auth import PosError
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -47,6 +51,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(units.router)
     app.include_router(merchant.router)
     app.include_router(check.router)
+    app.include_router(pos.router)
+    app.include_router(pos_admin.router)
+    app.add_exception_handler(PosError, pos.pos_error_response)
+    if settings.demo_pos_enabled:
+        app.include_router(demo_pos.router)
     if settings.orders_enabled:
         app.include_router(orders.router)
     return app

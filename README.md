@@ -2,7 +2,7 @@
 
 FoodLens is a startup product at the demonstration-prototype stage; the founder's capstone is its first milestone. It is being rebuilt as a unit-level product integrity platform: every pack gets its own QR identity, shops record what happens to it, and consumers check it for free (`docs/PLAN.md`, final design in `docs/DECISIONS.md` D137–D147).
 
-**Status: Phases 1 to 4 are done.** The unit-identity schema exists (units, cartons, lifecycle events, scans, alerts, allocations, POS partners), and the old registration lookup, simulated register and OCR are removed. Manufacturers generate a QR code for every pack and carton, download the one-time label file, release, void and allocate stock (see [Pack codes and labels](#pack-codes-and-labels)). Approved distributors and retailers record received, transferred, sold, returned and corrected stock at `/merchant` (see [Merchant page](#merchant-page)). Anyone can check a pack for free at `/check` (Scan QR or Type code) or by opening the QR link `/p/{code}` (see [Consumer checks](#consumer-checks)). Companies register with type flags (manufacturer, distributor, retailer), manage demo-reviewed catalogue data and appear in the public partner directory. Each phase updates this README for what it changes.
+**Status: Phases 1 to 5 are done.** The unit-identity schema exists (units, cartons, lifecycle events, scans, alerts, allocations, POS partners), and the old registration lookup, simulated register and OCR are removed. Manufacturers generate a QR code for every pack and carton, download the one-time label file, release, void and allocate stock (see [Pack codes and labels](#pack-codes-and-labels)). Approved distributors and retailers record received, transferred, sold, returned and corrected stock at `/merchant` (see [Merchant page](#merchant-page)), and shop tills record sales after payment through the signed POS API (see [POS integration and the demo till](#pos-integration-and-the-demo-till)). Anyone can check a pack for free at `/check` (Scan QR or Type code) or by opening the QR link `/p/{code}` (see [Consumer checks](#consumer-checks)). Companies register with type flags (manufacturer, distributor, retailer), manage demo-reviewed catalogue data and appear in the public partner directory. Each phase updates this README for what it changes.
 
 > **DEMO DATA — NOT AN OFFICIAL REGULATOR SERVICE.** All companies, products and codes are fictional. A check is not a laboratory test and not a NAFDAC or SON decision, and no QR system catches every copied code.
 
@@ -62,6 +62,7 @@ Sign-ins after seeding:
 | Admin | `SEED_ADMIN_EMAIL` in `backend/.env` | `SEED_ADMIN_PASSWORD` in `backend/.env` |
 | Demo distributor (Demo Market Traders) | `buyer@demo.foodlens.invalid` | `SEED_DEMO_PASSWORD` in `backend/.env` |
 | Demo manufacturer (Demo Harvest Foods) | `seller@demo.foodlens.invalid` | `SEED_DEMO_PASSWORD` in `backend/.env` |
+| Demo retailer (Demo Corner Shop, demo till) | `shop@demo.foodlens.invalid` | `SEED_DEMO_PASSWORD` in `backend/.env` |
 
 The seed creates fictional companies, products, batches and reviewed locations. Demo QR codes arrive with the full scenario in Phase 8 (D145).
 
@@ -163,6 +164,20 @@ Demo codes to type arrive with the seed scenario in Phase 8 (D145). Until then, 
 - Voided, unreleased and recalled packs are refused with a message.
 - `/merchant/team` (owner only): add staff by the email of an existing account with no company, and deactivate them.
 - To try it: sign in as `buyer@demo.foodlens.invalid` (Demo Market Traders, a distributor). The company needs a reviewed location (add one at `/company`, approve it at `/admin`).
+
+## POS integration and the demo till
+
+Shop tills record sales through a signed API at `/api/pos/v1` (`units/lookup`, `sales`, `refunds`, `voids`). The partner guide, with Python and JavaScript signing examples, is [docs/POS_INTEGRATION.md](docs/POS_INTEGRATION.md).
+
+- **Setup:** set `POS_SECRET_KEY` in `backend/.env`. It is a Fernet key that encrypts each partner's signing secret. Generate one with `uv run python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`. Without it the POS API answers 503.
+- **Admin** (`/admin`, POS partners): add a partner (the API key and signing secret are shown once), add or revoke keys, suspend a partner, link approved retailers, and add tills on a retailer's reviewed location.
+- **Demo till** (`/demo/pos`, off by default):
+  1. Set `DEMO_POS_ENABLED=true` in `backend/.env` and `NEXT_PUBLIC_DEMO_POS_ENABLED=true` in `frontend/.env.local`.
+  2. Run the seed. With `POS_SECRET_KEY` set and an admin account in the database, it adds the partner "Demo Till Systems (fictional)", linked to Demo Corner Shop with till `DEMO-TILL-1`.
+  3. Sign in as `shop@demo.foodlens.invalid`, scan or type a pack code, and press **Confirm payment**. A check of that pack then shows "Just sold by Demo Corner Shop (fictional)".
+  4. **Refund** and **Void sale** appear on a sold pack.
+- **How the demo till signs:** the server signs each demo request with the demo partner's secret and runs the same checks as a real till. The browser never sees a key or secret (D123, D151).
+- **No payment data:** FoodLens stores no amounts, card or customer details, only an opaque `payment_reference`.
 
 ## Company contact details
 

@@ -86,7 +86,21 @@ class RateLimiters:
                 refill_per_second=settings.rate_limit_report_per_hour / 3600,
                 clock=clock,
             ),
+            # Keyed by POS partner, not by network (D119).
+            "pos": TokenBucketLimiter(
+                capacity=settings.rate_limit_pos_burst,
+                refill_per_second=settings.rate_limit_pos_refill_per_second,
+                clock=clock,
+            ),
         }
+
+    def retry_after(self, name: str, key: str) -> int | None:
+        """Take one token from `key`'s bucket. Returns None if allowed, else whole seconds to
+        wait. For limits keyed by something other than the client network."""
+        if not self.enabled:
+            return None
+        retry = self.limiters[name].hit(key)
+        return None if retry is None else max(1, math.ceil(retry))
 
     def client_ip(self, request: Request) -> str:
         """The connecting IP, or, when the connection comes from a trusted proxy (the Next.js

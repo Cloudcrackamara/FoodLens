@@ -37,10 +37,13 @@ export function describeError(error: Error): string {
   return error.message;
 }
 
-type FastApiError = { detail?: string | { msg?: string }[] };
+/** FastAPI errors use `detail`; POS and demo-till errors use `error: {code, message}`. */
+type FastApiError = { detail?: string | { msg?: string }[]; error?: { code?: string; message?: string } };
 
 function errorMessage(status: number, payload: unknown): string {
-  const detail = (payload as FastApiError | null)?.detail;
+  const body = payload as FastApiError | null;
+  if (typeof body?.error?.message === "string") return body.error.message;
+  const detail = body?.detail;
   if (typeof detail === "string") return detail;
   if (Array.isArray(detail) && detail[0]?.msg) return detail[0].msg;
   return `Request failed (${status})`;

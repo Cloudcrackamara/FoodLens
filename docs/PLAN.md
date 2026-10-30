@@ -190,16 +190,17 @@ The earlier plan (Gate and Phases 0–7: foundation, auth, registration lookup, 
 - `docs/POS_INTEGRATION.md` with Python and JavaScript signing examples.
 
 **Done when**
-- [ ] Test: unsigned, badly signed, wrong-key and revoked-key requests are rejected; a timestamp more than 300 s off either way is rejected.
-- [ ] Test: replaying a sale is idempotent (the same response, no new events).
-- [ ] Test: a late offline sale (an earlier `occurred_at`) is accepted and the status replays correctly; events older than the maximum age are rejected.
-- [ ] Test: a refund creates RETURNED and puts the unit back IN_STOCK, only for a sale recorded by a retailer linked to this partner; a void creates SALE_CORRECTED with a reason.
-- [ ] Test: lookup never changes any row, and returns no internal identifiers.
-- [ ] Test: an unlinked or unapproved retailer, and an unregistered till, are rejected.
-- [ ] Test: a sale returns a per-unit error list for sold, recalled, voided or unreleased units.
-- [ ] Test: no payment data is stored beyond `payment_reference`; the signing secret is stored encrypted, never in plain text.
-- [ ] Test: the per-partner rate limit.
-- [ ] The signing examples in `POS_INTEGRATION.md` are run against the test API.
+- [x] Test: unsigned, badly signed, wrong-key and revoked-key requests are rejected; a timestamp more than 300 s off either way is rejected.
+- [x] Test: replaying a sale is idempotent (the same response, no new events).
+- [x] Test: a late offline sale (an earlier `occurred_at`) is accepted and the status replays correctly; events older than the maximum age are rejected.
+- [x] Test: a refund creates RETURNED and puts the unit back IN_STOCK, only for a sale recorded by a retailer linked to this partner; a void creates SALE_CORRECTED with a reason.
+- [x] Test: lookup never changes any row, and returns no internal identifiers.
+- [x] Test: an unlinked or unapproved retailer, and an unregistered till, are rejected.
+- [x] Test: a sale returns a per-unit error list for sold, recalled, voided or unreleased units.
+- [x] Test: no payment data is stored beyond `payment_reference`; the signing secret is stored encrypted, never in plain text.
+- [x] Test: the per-partner rate limit.
+- [x] The signing examples in `POS_INTEGRATION.md` are run against the test API.
+- [x] Test: a consumer check after a POS sale shows "Just sold by {retailer}"; the demo till records through the signed path (D151).
 
 ---
 

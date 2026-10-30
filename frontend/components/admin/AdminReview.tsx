@@ -34,6 +34,7 @@ import {
 import { formatDate } from "@/lib/format";
 import { buttonClass } from "@/lib/ui";
 import { ErrorPanel, LoadingPanel } from "@/components/ui/Panels";
+import { PosPartners } from "./PosPartners";
 
 const companyActions: Record<CompanyStatus, CompanyDecision[]> = {
   PENDING_REVIEW: ["APPROVE", "REJECT"],
@@ -274,6 +275,8 @@ export function AdminReview() {
           {announcements.data?.map((item) => <AnnouncementRow key={item.announcement_id} item={item} />)}
         </ul>
       </section>
+
+      <PosPartners />
     </div>
   );
 }
