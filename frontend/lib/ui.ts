@@ -3,9 +3,13 @@
  * design/prototype; don't invent new ones.
  */
 
-export type ButtonVariant = "primary" | "secondary" | "quiet";
-/** lg: consumer primary (54px). md: consumer secondary (48px). sm: workspace (44px). */
-export type ButtonSize = "lg" | "md" | "sm";
+/** danger: the red outline "Report a concern" button of Result.dc.html (mismatch). */
+export type ButtonVariant = "primary" | "secondary" | "quiet" | "danger";
+/**
+ * xl: scan and typed-code screens (56px, Scan.dc.html, Confirm.dc.html). lg: consumer primary
+ * (54px). md: consumer secondary (48px). sm: workspace (44px).
+ */
+export type ButtonSize = "xl" | "lg" | "md" | "sm";
 
 const BUTTON_BASE =
   "inline-flex items-center justify-center gap-2 rounded-full px-5 font-heading font-semibold no-underline " +
@@ -15,9 +19,11 @@ const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
   primary: "bg-brand text-white",
   secondary: "border-2 border-brand bg-white text-brand-dark",
   quiet: "border-2 border-line-input bg-white text-ink",
+  danger: "border-2 border-bad-line bg-white text-bad-line",
 };
 
 const BUTTON_SIZES: Record<ButtonSize, string> = {
+  xl: "min-h-14 text-[17px]",
   lg: "min-h-[54px] text-[17px]",
   md: "min-h-12 text-base",
   sm: "min-h-11 text-base",
@@ -27,6 +33,10 @@ export function buttonClass(variant: ButtonVariant = "primary", size: ButtonSize
   return `${BUTTON_BASE} ${BUTTON_VARIANTS[variant]} ${BUTTON_SIZES[size]}`;
 }
 
+/** A busy primary button with the fl-spin spinner (Confirm.dc.html checking, Report.dc.html sending). */
+export const busyButtonClass =
+  "inline-flex min-h-14 items-center justify-center gap-2.5 rounded-full bg-brand-tint px-5 font-heading text-base font-semibold text-brand-dark";
+
 /** Text inputs and selects (Accounts.dc.html). */
 export const inputClass =
   "min-h-[46px] w-full rounded-[10px] border border-line-input bg-white px-3 text-base text-ink";
@@ -35,9 +45,15 @@ export const inputClass =
 export const textareaClass =
   "w-full rounded-[10px] border border-line-input bg-white px-3 py-2 text-base text-ink";
 
-/** The large code field on the typed-code screen (Confirm.dc.html). */
-export const codeInputClass =
-  "h-14 w-full rounded-[12px] border border-line-input bg-white px-4 font-mono text-[22px] font-semibold tracking-[0.04em] text-ink";
+/**
+ * The large code field on the typed-code screen (Confirm.dc.html): 1px grey border, 2px green
+ * while focused (the board's "typed" state), 2px red on a correction, grey fill while checking.
+ */
+export function codeInputClass(state: "default" | "error" = "default", checking = false): string {
+  const border =
+    state === "error" ? "border-2 border-bad-line" : "border border-line-input focus:border-2 focus:border-brand";
+  return `h-14 w-full rounded-[12px] ${border} ${checking ? "bg-paper" : "bg-white"} px-4 font-mono text-[22px] font-semibold tracking-[0.04em] text-ink outline-none`;
+}
 
 /** Text links on light backgrounds. */
 export const linkClass = "font-semibold text-brand-dark underline";

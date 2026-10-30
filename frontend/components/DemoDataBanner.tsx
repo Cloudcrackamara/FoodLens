@@ -3,8 +3,20 @@ export const DEMO_BANNER_TEXT = "DEMO DATA — NOT AN OFFICIAL REGULATOR SERVICE
 /**
  * Shown on every page and every check result. The backend also returns
  * data_mode "DEMO" and a disclaimer, so neither layer relies on the other.
+ * "compact" is the thin strip of the Scan and Confirm boards; the default is the Result board's.
  */
-export function DemoDataBanner() {
+export function DemoDataBanner({ variant = "default" }: { variant?: "default" | "compact" }) {
+  if (variant === "compact") {
+    return (
+      <div
+        role="note"
+        aria-label="Demo data notice"
+        className="w-full bg-sun px-4 py-1.5 text-center font-heading text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2"
+      >
+        {DEMO_BANNER_TEXT}
+      </div>
+    );
+  }
   return (
     <div
       role="note"

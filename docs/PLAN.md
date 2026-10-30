@@ -342,3 +342,4 @@ Not planned for the prototype (D146):
 - AI risk scoring.
 - Consumer rewards (a phone number only if the consumer opts in).
 - Results in local languages.
+- Photo attachments on concern reports (the Report board has a photo step; the prototype sends text only, so nothing leaves the phone but the description).

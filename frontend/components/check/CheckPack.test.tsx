@@ -38,7 +38,7 @@ describe("Type code", () => {
     const fetchMock = api();
     renderWithQuery(<CheckPack />);
 
-    fireEvent.click(screen.getByRole("tab", { name: "Type code" }));
+    fireEvent.click(screen.getByRole("button", { name: "Type code" }));
     fireEvent.change(screen.getByLabelText("The code printed under the QR"), {
       target: { value: "7q2m-8kd3 xh4n oP1r 5s6t 9vOw ly" },
     });
@@ -55,7 +55,7 @@ describe("Type code", () => {
     const fetchMock = api();
     renderWithQuery(<CheckPack />);
 
-    fireEvent.click(screen.getByRole("tab", { name: "Type code" }));
+    fireEvent.click(screen.getByRole("button", { name: "Type code" }));
     fireEvent.change(screen.getByLabelText("The code printed under the QR"), { target: { value: "7Q2M 8KD3" } });
     fireEvent.click(screen.getByRole("button", { name: "Check this code" }));
 
@@ -63,6 +63,11 @@ describe("Type code", () => {
     expect(checkBodies(fetchMock)).toEqual([]);
   });
 });
+
+/** The hold on the reading step is for motion; these tests are about the camera and the request. */
+function reduceMotion() {
+  vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({ matches: true }));
+}
 
 describe("Scan QR", () => {
   function fakeCamera() {
@@ -76,6 +81,7 @@ describe("Scan QR", () => {
   }
 
   it("checks the code from the QR link, sends no image, and stops the camera", async () => {
+    reduceMotion();
     const camera = fakeCamera();
     const fetchMock = api();
     const decoder: QrDecoder = {
@@ -121,6 +127,7 @@ describe("Scan QR", () => {
   });
 
   it("falls back to a photo without a camera, and sends only the code", async () => {
+    reduceMotion();
     vi.stubGlobal("navigator", { ...navigator, mediaDevices: undefined });
     const fetchMock = api();
     const decoder: QrDecoder = { fromVideo: vi.fn(), fromFile: vi.fn().mockResolvedValue(DEMO_CODE) };
@@ -135,6 +142,57 @@ describe("Scan QR", () => {
     expect(decoder.fromFile).toHaveBeenCalledWith(photo);
     expect(checkBodies(fetchMock)).toEqual([{ code: DEMO_CODE, identifier_type: "QR", simulated_city: null }]);
     expectNoImageSent(fetchMock);
+  });
+});
+
+describe("Reading step", () => {
+  function setup(reducedMotion: boolean) {
+    const stream = { getTracks: () => [{ stop: vi.fn() }] } as unknown as MediaStream;
+    vi.stubGlobal("navigator", { ...navigator, mediaDevices: { getUserMedia: vi.fn().mockResolvedValue(stream) } });
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn().mockReturnValue({ matches: reducedMotion, addEventListener: vi.fn(), removeEventListener: vi.fn() }),
+    );
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue(undefined);
+    Object.defineProperty(HTMLMediaElement.prototype, "readyState", { configurable: true, get: () => 4 });
+    const fetchMock = api();
+    const decoder: QrDecoder = {
+      fromVideo: vi.fn().mockResolvedValue(`https://foodlens.online/p/${DEMO_CODE}`),
+      fromFile: vi.fn(),
+    };
+    renderWithQuery(<CheckPack decoder={decoder} />);
+    fireEvent.click(screen.getByRole("button", { name: "Open the camera" }));
+    return fetchMock;
+  }
+
+  it("shows the three cards and holds the result until they have landed", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const fetchMock = setup(false);
+
+    expect(await screen.findByText("QR code read")).toBeInTheDocument();
+    expect(screen.getByText(/Checking this code/)).toBeInTheDocument();
+    expect(screen.getByText("Code ending", { exact: false })).toHaveTextContent("Code ending 0W1Y");
+
+    // The check has returned, but the result still waits for the cards.
+    await waitFor(() => expect(checkBodies(fetchMock)).toHaveLength(1));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3800);
+    });
+    expect(screen.queryByRole("heading", { level: 2, name: "In circulation, not yet sold" })).not.toBeInTheDocument();
+    expect(screen.getByText("QR code read")).toBeInTheDocument();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(400);
+    });
+    expect(screen.getByRole("heading", { level: 2, name: "In circulation, not yet sold" })).toBeInTheDocument();
+    expect(screen.queryByText("QR code read")).not.toBeInTheDocument();
+  });
+
+  it("does not hold the result under reduced motion", async () => {
+    setup(true);
+
+    expect(await screen.findByRole("heading", { level: 2, name: "In circulation, not yet sold" })).toBeInTheDocument();
+    expect(screen.queryByText("QR code read")).not.toBeInTheDocument();
   });
 });
 
@@ -173,7 +231,7 @@ describe("Scan screen help", () => {
   it.each([
     ["with a camera", () => fakeCameraOn()],
     ["without a camera", () => vi.stubGlobal("navigator", { ...navigator, mediaDevices: undefined })],
-  ])("always offers Type the code instead (%s), which opens the Type code tab", async (_, setup) => {
+  ])("always offers Type the code instead (%s), which opens the Type code screen", async (_, setup) => {
     setup();
     api();
     renderWithQuery(<CheckPack decoder={{ fromVideo: vi.fn().mockResolvedValue(null), fromFile: vi.fn() }} />);
@@ -183,7 +241,7 @@ describe("Scan screen help", () => {
     fireEvent.click(screen.getByRole("button", { name: "Type the code instead" }));
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Type code" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("heading", { level: 1, name: "Type code" })).toBeInTheDocument();
     expect(screen.getByLabelText("The code printed under the QR")).toBeInTheDocument();
   });
 
@@ -212,7 +270,7 @@ describe("Demo location", () => {
     renderWithQuery(<CheckPack />);
 
     fireEvent.change(await screen.findByLabelText("Demo: check as if from"), { target: { value: "Kano" } });
-    fireEvent.click(screen.getByRole("tab", { name: "Type code" }));
+    fireEvent.click(screen.getByRole("button", { name: "Type code" }));
     fireEvent.change(screen.getByLabelText("The code printed under the QR"), { target: { value: DEMO_CODE } });
     fireEvent.click(screen.getByRole("button", { name: "Check this code" }));
 
