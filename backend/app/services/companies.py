@@ -9,9 +9,10 @@ Rules (CLAUDE.md rules 4 and 7, docs/DECISIONS.md D54-D60):
 
 import uuid
 
+from sqlalchemy import func
 from sqlmodel import Session, select
 
-from app.models import AppUser, Company, CompanyMember, SupplierLocation
+from app.models import AppUser, Area, Company, CompanyMember, SupplierLocation
 from app.models.base import utc_now
 from app.models.enums import (
     CompanyReviewStatus,
@@ -308,6 +309,16 @@ def decide_location(
 # --- Supplier locations (company side) ------------------------------------------------------
 
 
+def area_from_text(db: Session, text: str) -> Area | None:
+    """The coarse area for a typed place: the first comma-separated part naming a seeded city,
+    so "Ikeja, Lagos" gives Lagos (D118). None when no part names one."""
+    for part in (piece.strip() for piece in text.split(",")):
+        area = db.exec(select(Area).where(func.lower(Area.city) == part.lower())).first()
+        if area is not None:
+            return area
+    return None
+
+
 def add_location(
     db: Session, member: CompanyMember, data: LocationCreateRequest
 ) -> SupplierLocation:
@@ -331,6 +342,7 @@ def add_location(
         name=data.name,
         address=data.address,
         area=data.area,
+        area_id=area.area_id if (area := area_from_text(db, data.area)) else None,
         contact_member_id=data.contact_member_id,
     )
     db.add(location)

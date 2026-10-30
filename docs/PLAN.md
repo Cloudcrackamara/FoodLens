@@ -161,17 +161,17 @@ The earlier plan (Gate and Phases 0–7: foundation, auth, registration lookup, 
 - Staff management for the owner (D106).
 
 **Done when**
-- [ ] Test: a company can only record events for units it may hold (D113), and the label for a receipt without a transfer is set.
-- [ ] Test: a carton event applies to all of its units and shares a `group_id`.
-- [ ] Test: SALE_CORRECTED needs a reason, keeps the original SOLD event, and puts the unit back IN_STOCK.
-- [ ] Test: RETURNED is accepted only from the company that recorded the SOLD event (others get 403).
-- [ ] Test: RETURNED sets IN_STOCK, clears `last_sold_*`, keeps the SOLD event in the timeline, and the next check shows "In circulation, not yet sold"; the unit can be sold again.
-- [ ] Test: allocation matching follows the order unit, carton, quantity; quantity allocations count down per matched receipt.
-- [ ] Test: a receipt that matches no allocation is noted in the timeline and raises no alert; a batch with no allocations gets no note.
-- [ ] Test: transfer only to approved companies; recalled and voided units are refused.
-- [ ] Test: cross-company access is blocked; unapproved companies are blocked; the client cannot set the status or holder.
-- [ ] Test: the owner adds and deactivates staff; staff cannot manage staff.
-- [ ] Frontend tests: event form payloads, and the carton confirmation.
+- [x] Test: a company can only record events for units it may hold (D113), and the label for a receipt without a transfer is set.
+- [x] Test: a carton event applies to all of its units and shares a `group_id`.
+- [x] Test: SALE_CORRECTED needs a reason, keeps the original SOLD event, and puts the unit back IN_STOCK.
+- [x] Test: RETURNED is accepted only from the company that recorded the SOLD event (others get 403).
+- [x] Test: RETURNED sets IN_STOCK, clears `last_sold_*`, keeps the SOLD event in the timeline, and the next check shows "In circulation, not yet sold"; the unit can be sold again.
+- [x] Test: allocation matching follows the order unit, carton, quantity; quantity allocations count down per matched receipt.
+- [x] Test: a receipt that matches no allocation is noted in the timeline and raises no alert; a batch with no allocations gets no note.
+- [x] Test: transfer only to approved companies; recalled and voided units are refused.
+- [x] Test: cross-company access is blocked; unapproved companies are blocked; the client cannot set the status or holder.
+- [x] Test: the owner adds and deactivates staff; staff cannot manage staff.
+- [x] Frontend tests: event form payloads, and the carton confirmation.
 
 ---
 

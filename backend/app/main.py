@@ -14,6 +14,7 @@ from app.routers import (
     check,
     companies,
     health,
+    merchant,
     orders,
     suppliers,
     units,
@@ -44,6 +45,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(admin.router)
     app.include_router(suppliers.router)
     app.include_router(units.router)
+    app.include_router(merchant.router)
     app.include_router(check.router)
     if settings.orders_enabled:
         app.include_router(orders.router)

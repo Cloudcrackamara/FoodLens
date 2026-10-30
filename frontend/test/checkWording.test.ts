@@ -6,7 +6,19 @@ import { describe, expect, it } from "vitest";
 // FoodLens's own consumer-check copy never uses these words (CLAUDE.md rule 1, D128, D141).
 const BANNED = /\b(original|genuine|authentic|safe|unsafe|fake|adulteration)\b|verified by nafdac/i;
 const root = join(__dirname, "..");
-const checkSources = ["components/check", "app/check", "app/p", "lib/check.ts", "lib/qr.ts", "app/page.tsx"];
+const checkSources = [
+  "components/check",
+  "app/check",
+  "app/p",
+  "lib/check.ts",
+  "lib/qr.ts",
+  "app/page.tsx",
+  // The merchant pages follow the same wording rules.
+  "components/merchant",
+  "components/ui/WorkspaceShell.tsx",
+  "app/merchant",
+  "lib/merchant.ts",
+];
 
 function files(path: string): string[] {
   const full = join(root, path);

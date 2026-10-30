@@ -16,7 +16,6 @@ from sqlmodel import Session, select
 from app.core.security import hash_password
 from app.models import (
     AppUser,
-    Area,
     Company,
     CompanyMember,
     OrderBatchAllocation,
@@ -35,6 +34,7 @@ from app.models.enums import (
     ProductStatus,
     ReviewStatus,
 )
+from app.services import companies
 
 SEED_NOTE = "Seeded fictional demo record"
 
@@ -156,12 +156,7 @@ def seed_demo_data(db: Session, today: date | None = None) -> None:
     # --- Partner directory: only approved locations of approved companies are listed ------
     def location(company_row: Company, name: str, address: str, area: str,
                  status=ReviewStatus.APPROVED) -> None:  # fmt: skip
-        # The first part naming a seeded city is the coarse area: "Ikeja, Lagos" -> Lagos.
-        cities = [part.strip() for part in area.split(",")]
-        area_row = next(
-            (row for c in cities if (row := db.exec(select(Area).where(Area.city == c)).first())),
-            None,
-        )
+        area_row = companies.area_from_text(db, area)
         _get_or_create(
             db,
             SupplierLocation,
@@ -236,6 +231,18 @@ def seed_demo_orders(db: Session, password: str | None = None) -> None:
             "claimed_legal_name": "Demo Market Traders (fictional) Ltd",
             "claimed_address": "Stall 7, Sample Market (fictional)",
             **_reviewed(CompanyReviewStatus.APPROVED),
+        },
+    )
+    # A reviewed location gives the distributor's merchant events their area (D150).
+    _get_or_create(
+        db,
+        SupplierLocation,
+        {"company_id": market.company_id, "name": "Demo Market Traders stall (fictional)"},
+        {
+            "address": "Stall 7, Sample Market",
+            "area": "Lagos",
+            "area_id": companies.area_from_text(db, "Lagos").area_id,
+            **_reviewed(ReviewStatus.APPROVED),
         },
     )
     buyer = _demo_owner(db, DEMO_BUYER_EMAIL, "Demo Buyer", market, password)

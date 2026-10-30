@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { canOrder, useCurrentUser, useLogout } from "@/lib/auth";
+import { canUseMerchant } from "@/lib/merchant";
 
 export function SiteHeader() {
   const router = useRouter();
@@ -37,6 +38,11 @@ export function SiteHeader() {
                 <Link href="/company" className="font-semibold text-brand-dark underline">
                   My company
                 </Link>
+                {canUseMerchant(user) && (
+                  <Link href="/merchant" className="font-semibold text-brand-dark underline">
+                    Record events
+                  </Link>
+                )}
                 {canOrder(user) && (
                   <Link href="/orders" className="font-semibold text-brand-dark underline">
                     My orders

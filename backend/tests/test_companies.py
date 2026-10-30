@@ -252,6 +252,27 @@ def test_approved_company_adds_location_as_pending(client: TestClient, session: 
     assert response.json()["reviewed_at"] is None
 
 
+@pytest.mark.parametrize(
+    ("typed", "city"), [("Ikeja, Lagos", "Lagos"), ("kano", "Kano"), ("Sample Town", None)]
+)
+def test_a_new_location_takes_the_area_of_the_first_seeded_city_it_names(
+    client: TestClient, session: Session, typed: str, city: str | None
+) -> None:
+    user = sign_in(client, session)
+    company = owned_company(session, user)
+
+    response = client.post(
+        f"/api/companies/{company.company_id}/locations", json=LOCATION_BODY | {"area": typed}
+    )
+
+    assert response.status_code == 201
+    location = session.exec(
+        select(SupplierLocation).where(SupplierLocation.company_id == company.company_id)
+    ).one()
+    expected = f.area(session, city).area_id if city else None
+    assert location.area_id == expected
+
+
 def test_pending_company_cannot_add_location(client: TestClient, session: Session) -> None:
     user = sign_in(client, session)
     company = owned_company(session, user, CompanyReviewStatus.PENDING_REVIEW)
