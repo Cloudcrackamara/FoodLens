@@ -216,16 +216,17 @@ The earlier plan (Gate and Phases 0–7: foundation, auth, registration lookup, 
 - The alert workflow (D125).
 
 **Done when**
-- [ ] Test: each of the nine rules fires on its scenario, at its level, with evidence and a plain-words explanation.
-- [ ] Test: rule 1 is LOW alone and MEDIUM when the unit has another open alert or another rule fires on the same event.
-- [ ] Test: rule 9 fires when distinct units observed in an area exceed the allocation by more than `ALLOCATION_OVERAGE_PCT`, counts units allocated elsewhere, treats an unallocated area of an allocated batch as 0, and skips a batch with no allocations.
-- [ ] Test: rule 9 never changes the consumer result and is visible only to the manufacturer and admins.
-- [ ] Test: a sale followed by a valid return is ignored by every rule; a returned unit's later sale and checks raise no alert.
-- [ ] Test: no alert for a buyer rescan (same area, within the window), a return, a void correction, a carton move, or a receipt outside its allocation.
-- [ ] Test: only MEDIUM and HIGH open alerts (excluding rule 9), and RESOLVED_SUSPECTED_COPY, switch the consumer result to SUSPICIOUS_ACTIVITY.
-- [ ] Test: a second trigger appends to the open alert instead of duplicating it.
-- [ ] Test: the evidence snapshot survives the scan purge.
-- [ ] Test: alert status changes record the actor and time; another company cannot read or change them.
+- [x] Test: each of the nine rules fires on its scenario, at its level, with evidence and a plain-words explanation.
+- [x] Test: rule 1 is LOW alone and MEDIUM when the unit has another open alert or another rule fires on the same event.
+- [x] Test: rule 9 fires when distinct units observed in an area exceed the allocation by more than `ALLOCATION_OVERAGE_PCT`, counts units allocated elsewhere, treats an unallocated area of an allocated batch as 0, and skips a batch with no allocations.
+- [x] Test: rule 9 never changes the consumer result and is visible only to the manufacturer and admins.
+- [x] Test: a sale followed by a valid return is ignored by every rule; a returned unit's later sale and checks raise no alert.
+- [x] Test: no alert for a buyer rescan (same area, within the window), a return, a void correction, a carton move, or a receipt outside its allocation.
+- [x] Test: only MEDIUM and HIGH open alerts (excluding rule 9), and RESOLVED_SUSPECTED_COPY, switch the consumer result to SUSPICIOUS_ACTIVITY.
+- [x] Test: a second trigger appends to the open alert instead of duplicating it.
+- [x] Test: the evidence snapshot survives the scan purge.
+- [x] Test: alert status changes record the actor and time; another company cannot read or change them.
+- [x] Frontend tests: alert list, filters, evidence, status and note payloads, empty and error states.
 
 ---
 

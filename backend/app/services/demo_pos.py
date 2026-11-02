@@ -112,7 +112,7 @@ def lookup(
 ) -> PosLookupResponse:
     payload = _base(ctx, till_ref) | {"code": code}
     body = _signed(db, settings, limiters, ctx, payload, PosLookupRequest, now)
-    return pos.lookup(db, ctx.partner, body)
+    return pos.lookup(db, ctx.partner, body, now)
 
 
 def record(

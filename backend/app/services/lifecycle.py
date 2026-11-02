@@ -15,6 +15,7 @@ from datetime import datetime
 from sqlalchemy import func, insert, or_, update
 from sqlmodel import Session, select
 
+from app.core.config import get_settings
 from app.models import (
     AllocationCarton,
     AllocationUnit,
@@ -39,6 +40,7 @@ from app.models.enums import (
     LifecycleStatus,
     ReviewStatus,
 )
+from app.services import risk
 from app.services.identity import token_hash
 
 # Status a unit or carton moves to on each manufacturer event.
@@ -403,6 +405,7 @@ def record_merchant_event(
     to_company_id: uuid.UUID | None = None,
     reason: str | None = None,
     occurred_at: datetime | None = None,
+    thresholds: risk.Thresholds | None = None,
 ) -> MerchantResult:
     """Record one merchant event for a unit or a carton (every unit inside, all or nothing).
     The status, holder, sold state and area are decided here, never by the client."""
@@ -518,6 +521,20 @@ def record_merchant_event(
         db.execute(
             update(Carton).where(Carton.carton_id == subject.carton.carton_id).values(**values),
             execution_options={"synchronize_session": False},
+        )
+    else:
+        # Risk rules run for single packs only: carton moves are never a signal (D152).
+        (unit_row,) = rows
+        risk.on_pack_event(
+            db,
+            thresholds or risk.Thresholds.from_settings(get_settings()),
+            unit=units[0],
+            event_id=unit_row["event_id"],
+            event_type=event_type,
+            company_id=company.company_id,
+            area_id=area_id,
+            at=when,
+            now=utc_now(),
         )
     db.commit()
 

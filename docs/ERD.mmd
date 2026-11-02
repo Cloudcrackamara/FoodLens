@@ -214,6 +214,14 @@ erDiagram
         datetime created_at "purged after 12 months"
     }
 
+    RISK_ALERT_NOTE {
+        uuid note_id PK
+        uuid alert_id FK
+        uuid author_user_id FK
+        text body "not blank"
+        datetime created_at
+    }
+
     RISK_ALERT {
         uuid alert_id PK
         enum rule "R1..R9"
@@ -225,7 +233,6 @@ erDiagram
         uuid area_id FK "required for rule 9"
         jsonb evidence "ids, snapshot, explanation"
         enum status "OPEN, INVESTIGATING, RESOLVED_LEGITIMATE, RESOLVED_SUSPECTED_COPY"
-        text notes "nullable"
         uuid resolved_by_user_id FK "nullable"
         datetime resolved_at "nullable"
         datetime created_at
@@ -407,6 +414,8 @@ erDiagram
     AREA o|--o{ SCAN_EVENT : "coarse area"
     PRODUCT_UNIT o|--o{ RISK_ALERT : "subject of"
     COMPANY o|--o{ RISK_ALERT : "manufacturer sees"
+    RISK_ALERT ||--o{ RISK_ALERT_NOTE : "investigated in"
+    APP_USER ||--o{ RISK_ALERT_NOTE : "writes"
     PRODUCT_UNIT o|--o{ CONSUMER_REPORT : "reported"
     POS_PARTNER ||--o{ POS_PARTNER_KEY : "authenticates with"
     POS_PARTNER ||--o{ POS_PARTNER_RETAILER : "linked to"

@@ -6,11 +6,12 @@ from sqlalchemy import CheckConstraint, DateTime, Index, Text, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field
 
-from app.models.base import TimestampMixin, enum_column, uuid_pk
+from app.models.base import CreatedAtMixin, TimestampMixin, enum_column, uuid_pk
 from app.models.enums import AlertLevel, AlertStatus, RiskRule
 
 _STILL_OPEN = "status IN ('OPEN', 'INVESTIGATING')"
 _RULE_9 = "rule = 'R9_MORE_OBSERVED_THAN_ALLOCATED'"
+_RULE_4 = "rule = 'R4_INVALID_BURST'"
 
 
 class RiskAlert(TimestampMixin, table=True):
@@ -38,6 +39,22 @@ class RiskAlert(TimestampMixin, table=True):
             unique=True,
             postgresql_where=text(f"{_RULE_9} AND {_STILL_OPEN}"),
         ),
+        # Rule 4 has no unit: one open alert per area (D152).
+        Index(
+            "uq_risk_alert_open_rule_area",
+            "rule",
+            "area_id",
+            unique=True,
+            postgresql_where=text(f"{_RULE_4} AND {_STILL_OPEN}"),
+        ),
+        # Rule 8 on a voided carton code: one open alert per carton (D152).
+        Index(
+            "uq_risk_alert_open_rule_carton",
+            "rule",
+            "carton_id",
+            unique=True,
+            postgresql_where=text(f"carton_id IS NOT NULL AND unit_id IS NULL AND {_STILL_OPEN}"),
+        ),
     )
 
     alert_id: uuid.UUID = uuid_pk()
@@ -60,6 +77,18 @@ class RiskAlert(TimestampMixin, table=True):
     status: AlertStatus = Field(
         default=AlertStatus.OPEN, sa_type=enum_column(AlertStatus, "alert_status")
     )
-    notes: str | None = Field(default=None, sa_type=Text)
     resolved_by_user_id: uuid.UUID | None = Field(default=None, foreign_key="app_user.user_id")
     resolved_at: datetime | None = Field(default=None, sa_type=DateTime(timezone=True))
+
+
+class RiskAlertNote(CreatedAtMixin, table=True):
+    """An investigation note on an alert, with its author and time (D125, D152). Append-only
+    through the service: notes are never edited or deleted."""
+
+    __tablename__ = "risk_alert_note"
+    __table_args__ = (CheckConstraint("btrim(body) <> ''", name="body_not_blank"),)
+
+    note_id: uuid.UUID = uuid_pk()
+    alert_id: uuid.UUID = Field(foreign_key="risk_alert.alert_id", index=True)
+    author_user_id: uuid.UUID = Field(foreign_key="app_user.user_id")
+    body: str = Field(sa_type=Text)

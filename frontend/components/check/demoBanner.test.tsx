@@ -130,7 +130,7 @@ describe("site banner", () => {
     home.unmount();
 
     // These pages draw their own banner (consumer header or workspace shell).
-    for (const path of ["/check", "/p/7Q2M", "/merchant", "/demo/pos"]) {
+    for (const path of ["/check", "/p/7Q2M", "/merchant", "/demo/pos", "/company/alerts"]) {
       pathname = path;
       const { unmount } = renderWithQuery(<SiteChrome />);
       expect(banners()).toHaveLength(0);

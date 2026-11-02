@@ -152,6 +152,11 @@ export function CompanyView({ company, isOwner = false }: { company: Company; is
         <p className="mt-2 font-medium">Status: {companyStatusLabels[company.review_status]}</p>
         <p>{statusExplanations[company.review_status]}</p>
         {company.review_note && <p className="mt-1 text-sm">Reviewer note: {company.review_note}</p>}
+        {company.is_manufacturer && (
+          <Link href="/company/alerts" className="mt-3 inline-block font-semibold text-brand-dark underline">
+            Alerts
+          </Link>
+        )}
       </section>
 
       <ContactDetails company={company} isOwner={isOwner} />

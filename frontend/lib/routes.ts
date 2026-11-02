@@ -12,7 +12,7 @@ export function isMerchantPath(pathname: string | null): boolean {
   return pathname === "/merchant" || (pathname?.startsWith("/merchant/") ?? false);
 }
 
-/** The demo till draws its own banner and workspace shell too. */
-export function isDemoTillPath(pathname: string | null): boolean {
-  return pathname === "/demo/pos";
+/** The demo till and the alerts page draw their own banner and workspace shell too. */
+export function isOwnShellPath(pathname: string | null): boolean {
+  return pathname === "/demo/pos" || pathname === "/company/alerts";
 }

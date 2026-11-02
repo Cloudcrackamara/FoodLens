@@ -7,6 +7,7 @@ from app.core.config import Settings, get_settings
 from app.core.rate_limit import RateLimiters
 from app.routers import (
     admin,
+    alerts,
     announcements,
     auth,
     catalogue,
@@ -53,6 +54,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(check.router)
     app.include_router(pos.router)
     app.include_router(pos_admin.router)
+    app.include_router(alerts.router)
     app.add_exception_handler(PosError, pos.pos_error_response)
     if settings.demo_pos_enabled:
         app.include_router(demo_pos.router)

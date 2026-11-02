@@ -172,9 +172,20 @@ The exact column list is `scan_id, identifier_type, unit_id, carton_id, area_id,
 | `unit_id`, `carton_id`, `batch_id`, `area_id` | Nullable subjects. Rule 9 always sets `batch_id` and `area_id` **(DB)**; it never changes a consumer result **(service)**. |
 | `evidence` | JSONB, default `{}`: `{event_ids, scan_ids, snapshot, explanation}`. The snapshot survives the scan purge. |
 | `status` | `OPEN` (default), `INVESTIGATING`, `RESOLVED_LEGITIMATE`, `RESOLVED_SUSPECTED_COPY` (D125). |
-| `notes` | Investigation notes. |
 | `resolved_by_user_id`, `resolved_at` | Set on resolution **(service)**. |
-| Unique | At most one `OPEN`/`INVESTIGATING` alert per `(rule, unit_id)` where `unit_id` is set, and per `(rule, batch_id, area_id)` for rule 9 **(DB, partial unique indexes)**. |
+| Unique | At most one `OPEN`/`INVESTIGATING` alert per `(rule, unit_id)` where `unit_id` is set, per `(rule, batch_id, area_id)` for rule 9, per `(rule, area_id)` for rule 4, and per `(rule, carton_id)` for a carton subject (rule 8 on a voided carton code) **(DB, partial unique indexes)**. |
+
+### `risk_alert_note`
+Investigation notes (D125, D152), added in migration 0009. It replaces the old `risk_alert.notes` text column.
+
+| Column | Notes |
+|---|---|
+| `alert_id` | The alert. |
+| `author_user_id` | A member of the alert's manufacturer, or an admin **(service)**. |
+| `body` | Not blank **(DB)**, at most 1,000 characters **(schema)**. Notes are never edited or deleted. |
+| `created_at` | |
+
+Status changes are recorded in `audit_log` (actor, time, old and new status).
 
 ### `batch_allocation`
 Where the manufacturer plans to send part of a batch (D131, D142). Created by owners and staff of the batch's manufacturer after the units are generated. Allocation is advisory: it feeds a timeline note and rule 9, never a per-unit alert.

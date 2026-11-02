@@ -12,20 +12,21 @@ A recognised carton QR gives CARTON_CODE ("check the individual pack"), or the r
 and its scan is always logged as CARTON_CODE (D148).
 
 A check only appends one scan_event row. It never changes lifecycle_status, the sale columns or
-any other unit data (CLAUDE.md rule 4). Risk rules run here from Phase 6; until then
-SUSPICIOUS_ACTIVITY comes only from existing alerts.
+any other unit data (CLAUDE.md rule 4). The risk rules (services/risk.py) run before the result
+is built, so an alert raised by this check already counts (D116).
 
 Wording: recorded facts and possible patterns are separate lists. FoodLens never says the item
 is original, genuine, authentic, safe or fake, and never mentions regulator verification.
 """
 
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, date, datetime, timedelta, timezone
 
 from sqlalchemy import or_
 from sqlmodel import Session, select
 
+from app.core.config import get_settings
 from app.models import (
     Area,
     Carton,
@@ -58,7 +59,7 @@ from app.schemas.check import (
     CheckResponse,
     CheckSale,
 )
-from app.services import identity
+from app.services import identity, risk
 
 # Nigeria has no daylight saving: West Africa Time is UTC+1 all year.
 WAT = timezone(timedelta(hours=1), "WAT")
@@ -411,18 +412,31 @@ def check_code(
     area: Area | None,
     now: datetime,
     window_hours: int,
+    thresholds: risk.Thresholds | None = None,
 ) -> CheckResponse:
-    """Evaluate a code and append one anonymous scan_event. Changes nothing else."""
+    """Evaluate a code, run the risk rules, and append one anonymous scan_event. Changes no
+    unit, carton or lifecycle data; may open or extend a risk alert."""
     digest = identity.token_hash(code)
     unit = db.exec(select(ProductUnit).where(ProductUnit.qr_token_hash == digest)).first()
     carton = None if unit else db.exec(select(Carton).where(Carton.qr_token_hash == digest)).first()
     subject = unit or carton
     ctx = _context(db, subject.batch_id) if subject else None
     now = now.astimezone(UTC)
+    th = thresholds or replace(
+        risk.Thresholds.from_settings(get_settings()), window_hours=window_hours
+    )
+    # The scan id is chosen first so alerts raised by this check can cite it; the row itself is
+    # written last, once the result is known (scan_event refuses UPDATE).
+    scan_id = uuid.uuid4()
 
-    if subject is None or ctx is None or subject.lifecycle_status == LifecycleStatus.VOIDED:
+    voided = subject is not None and subject.lifecycle_status == LifecycleStatus.VOIDED
+    if subject is None or ctx is None or voided:
+        if voided:
+            risk.on_voided_check(db, unit=unit, carton=carton, scan_id=scan_id, area=area, now=now)
+        risk.on_invalid_check(db, th, scan_id=scan_id, area=area, now=now)
         response = _invalid(identifier_type, code, window_hours)
     elif unit:
+        risk.on_pack_check(db, th, unit=unit, scan_id=scan_id, area=area, now=now)
         response = _check_unit(db, unit, ctx, identifier_type, code, now, window_hours)
     else:
         response = _check_carton(db, carton, ctx, identifier_type, code, now, window_hours)
@@ -436,6 +450,8 @@ def check_code(
     )
     db.add(
         ScanEvent(
+            scan_id=scan_id,
+            created_at=now,
             identifier_type=identifier_type,
             unit_id=unit.unit_id if unit else None,
             carton_id=carton.carton_id if carton else None,

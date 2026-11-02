@@ -14,7 +14,7 @@ from app.models.company import Company, CompanyMember, SupplierLocation
 from app.models.identity import AppUser, UserSession
 from app.models.order import OrderBatchAllocation, OrderLine, WholesaleOrder
 from app.models.pos import PosPartner, PosPartnerKey, PosPartnerRetailer, PosTill
-from app.models.risk import RiskAlert
+from app.models.risk import RiskAlert, RiskAlertNote
 from app.models.scan import ConsumerReport, RateLimitDaily, ScanEvent
 from app.models.unit import Carton, LifecycleEvent, ProductUnit
 
@@ -45,6 +45,7 @@ __all__ = [
     "ProductUnit",
     "RateLimitDaily",
     "RiskAlert",
+    "RiskAlertNote",
     "ScanEvent",
     "SupplierLocation",
     "UserSession",

@@ -48,6 +48,14 @@ class Settings(BaseSettings):
     # Demo only: lets the check page choose a city when no other area source answers.
     simulate_location_enabled: bool = False
 
+    # Risk rules (D143, D152). Changing a default needs the founder's approval.
+    risk_different_area_km: float = Field(default=50, gt=0)  # rule 1
+    risk_travel_min_km: float = Field(default=100, gt=0)  # rule 2
+    risk_max_travel_kmh: float = Field(default=120, gt=0)  # rule 2
+    risk_scan_volume: int = Field(default=10, ge=1)  # rule 3: more than this in 24 hours
+    risk_invalid_burst: int = Field(default=20, ge=1)  # rule 4: at least this in 10 minutes
+    allocation_overage_pct: float = Field(default=10, ge=0)  # rule 9
+
     # POS integration (D121-D123, D151). POS_SECRET_KEY is a Fernet key that encrypts partner
     # signing secrets at rest; blank turns the POS API off (503).
     pos_secret_key: str = ""

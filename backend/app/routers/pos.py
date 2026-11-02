@@ -58,9 +58,9 @@ def _partner(request: Request, db: DbSession, raw: bytes) -> PosPartner:
 
 @router.post("/units/lookup")
 def units_lookup(request: Request, db: DbSession, raw: RawBody) -> PosLookupResponse:
-    """Read-only: product, GTIN, batch, expiry, status and a warning. Changes nothing."""
+    """Product, GTIN, batch, expiry, status and a warning. Changes no pack or event data."""
     partner = _partner(request, db, raw)
-    return pos.lookup(db, partner, parse(PosLookupRequest, raw))
+    return pos.lookup(db, partner, parse(PosLookupRequest, raw), utc_now())
 
 
 @router.post("/sales")

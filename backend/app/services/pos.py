@@ -33,6 +33,7 @@ from app.models import (
     ProductUnit,
     SupplierLocation,
 )
+from app.models.base import utc_now
 from app.models.enums import (
     CompanyReviewStatus,
     EventSource,
@@ -51,7 +52,7 @@ from app.schemas.pos import (
     PosUnitResult,
     PosVoidRequest,
 )
-from app.services import identity, lifecycle
+from app.services import identity, lifecycle, risk
 from app.services.check import _day
 from app.services.pos_auth import PosError
 
@@ -158,9 +159,12 @@ def _unit_warning(unit: ProductUnit, recalled: bool) -> PosMessage | None:
     return None
 
 
-def lookup(db: Session, partner: PosPartner, body: PosLookupRequest) -> PosLookupResponse:
-    """Read-only: never adds, changes or locks a row."""
-    resolve_till(db, partner, body.retailer_id, body.till_id)
+def lookup(
+    db: Session, partner: PosPartner, body: PosLookupRequest, now: datetime | None = None
+) -> PosLookupResponse:
+    """Never changes unit, carton or lifecycle data. A lookup of an unavailable pack may open or
+    extend a rule 5 alert, except for the till's own retailer's standing sale (D152)."""
+    till = resolve_till(db, partner, body.retailer_id, body.till_id)
     try:
         subject = lifecycle.find_subject(db, body.code)
     except lifecycle.MerchantError:
@@ -172,6 +176,13 @@ def lookup(db: Session, partner: PosPartner, body: PosLookupRequest) -> PosLooku
         unit = subject.units[0]
         status = unit.lifecycle_status
         warning = _unit_warning(unit, subject.recalled)
+        if warning is not None:
+            alert = risk.on_pos_refusal(
+                db, unit=unit, retailer=till.retailer, till_ref=till.till.till_ref,
+                attempt="LOOKUP", problem=warning.code, now=now or utc_now(),
+            )  # fmt: skip
+            if alert is not None:
+                db.commit()
     return PosLookupResponse(
         subject=subject.kind,
         code_last4=_last4(body.code),
@@ -237,6 +248,7 @@ def record(
                 group_id=group_id,
                 payment_reference=payment_reference,
                 reason=reason,
+                thresholds=risk.Thresholds.from_settings(settings),
             )
         results.append(
             PosUnitResult(
@@ -269,6 +281,7 @@ def _record_code(
     group_id: uuid.UUID,
     payment_reference: str | None,
     reason: str | None,
+    thresholds: risk.Thresholds,
 ) -> tuple[str, str] | None:
     """Record one pack, or return (error code, message). An existing event with the same
     idempotency key counts as recorded and writes nothing."""
@@ -300,6 +313,11 @@ def _record_code(
     if problem is not None:
         message = problem[0]
         code = _PROBLEM_CODES.get(message, "REFUSED")
+        if event_type == LifecycleEventType.SOLD:
+            risk.on_pos_refusal(
+                db, unit=unit, retailer=till.retailer, till_ref=till.till.till_ref,
+                attempt="SALE", problem=code, now=now,
+            )  # fmt: skip
         return code, _MESSAGES.get(code, message)
 
     sale_id = None
@@ -309,8 +327,9 @@ def _record_code(
         if sale is not None and body.occurred_at < sale.occurred_at:
             return "BEFORE_SALE", MSG_BEFORE_SALE
 
+    event_id = uuid.uuid4()
     statement = insert(LifecycleEvent).values(
-        event_id=uuid.uuid4(),
+        event_id=event_id,
         unit_id=unit.unit_id,
         group_id=group_id,
         event_type=event_type,
@@ -339,4 +358,9 @@ def _record_code(
         )
     )
     lifecycle.replay_unit(db, unit)
+    if event_type == LifecycleEventType.SOLD:
+        risk.on_pack_event(
+            db, thresholds, unit=unit, event_id=event_id, event_type=event_type,
+            company_id=retailer_id, area_id=till.area_id, at=body.occurred_at, now=now,
+        )  # fmt: skip
     return None

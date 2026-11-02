@@ -129,7 +129,7 @@ Pack codes are the 26-character code printed under the QR, or the code read from
 
 ### `POST /units/lookup`
 
-This endpoint is read-only: it never changes anything. Call it when a pack is scanned, before payment.
+This endpoint never changes a pack or its events. Call it when a pack is scanned, before payment. A lookup of a pack that is sold (by another retailer), recalled, unreleased or voided raises an alert for the manufacturer (D152).
 
 ```json
 {
@@ -325,7 +325,7 @@ Each partner has its own token bucket: a burst of `RATE_LIMIT_POS_BURST` request
 
 - **Each event stores:** the pack, the event type, the retailer, your partner account, the till ID, the area of the till's location, `occurred_at`, the time FoodLens recorded it, `transaction_id` and `payment_reference`.
 - **FoodLens never stores:** amounts, card data, customer details, or the cashier's identity.
-- **Lookups** store nothing.
+- **Lookups** store nothing, except an alert for the manufacturer when the pack is unavailable (D152).
 - **Recorded events feed** the consumer check result and the manufacturer's dashboard.
 
 ## 9. Simulated till

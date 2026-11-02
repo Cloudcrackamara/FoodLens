@@ -9,7 +9,7 @@ staff of an approved distributor or retailer.
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from app.core.auth import require_company_member
 from app.core.db import DbSession
@@ -24,7 +24,7 @@ from app.schemas.merchant import (
     LookupResponse,
     MemberRead,
 )
-from app.services import lifecycle, members, merchant
+from app.services import lifecycle, members, merchant, risk
 
 router = APIRouter(prefix="/api/companies/{company_id}", tags=["merchant"])
 
@@ -60,7 +60,7 @@ def lookup(
 
 @router.post("/merchant/events")
 def record_event(
-    company_id: uuid.UUID, body: EventRequest, member: Member, db: DbSession
+    company_id: uuid.UUID, body: EventRequest, member: Member, db: DbSession, request: Request
 ) -> EventResponse:
     try:
         result = lifecycle.record_merchant_event(
@@ -70,6 +70,7 @@ def record_event(
             body.event_type,
             to_company_id=body.to_company_id,
             reason=body.reason,
+            thresholds=risk.Thresholds.from_settings(request.app.state.settings),
         )
     except lifecycle.MerchantError as error:
         raise _refuse(error) from None

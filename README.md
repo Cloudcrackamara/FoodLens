@@ -2,7 +2,7 @@
 
 FoodLens is a startup product at the demonstration-prototype stage; the founder's capstone is its first milestone. It is being rebuilt as a unit-level product integrity platform: every pack gets its own QR identity, shops record what happens to it, and consumers check it for free (`docs/PLAN.md`, final design in `docs/DECISIONS.md` D137–D147).
 
-**Status: Phases 1 to 5 are done.** The unit-identity schema exists (units, cartons, lifecycle events, scans, alerts, allocations, POS partners), and the old registration lookup, simulated register and OCR are removed. Manufacturers generate a QR code for every pack and carton, download the one-time label file, release, void and allocate stock (see [Pack codes and labels](#pack-codes-and-labels)). Approved distributors and retailers record received, transferred, sold, returned and corrected stock at `/merchant` (see [Merchant page](#merchant-page)), and shop tills record sales after payment through the signed POS API (see [POS integration and the demo till](#pos-integration-and-the-demo-till)). Anyone can check a pack for free at `/check` (Scan QR or Type code) or by opening the QR link `/p/{code}` (see [Consumer checks](#consumer-checks)). Companies register with type flags (manufacturer, distributor, retailer), manage demo-reviewed catalogue data and appear in the public partner directory. Each phase updates this README for what it changes.
+**Status: Phases 1 to 6 are done.** The unit-identity schema exists (units, cartons, lifecycle events, scans, alerts, allocations, POS partners), and the old registration lookup, simulated register and OCR are removed. Manufacturers generate a QR code for every pack and carton, download the one-time label file, release, void and allocate stock (see [Pack codes and labels](#pack-codes-and-labels)). Approved distributors and retailers record received, transferred, sold, returned and corrected stock at `/merchant` (see [Merchant page](#merchant-page)), and shop tills record sales after payment through the signed POS API (see [POS integration and the demo till](#pos-integration-and-the-demo-till)). Anyone can check a pack for free at `/check` (Scan QR or Type code) or by opening the QR link `/p/{code}` (see [Consumer checks](#consumer-checks)). Companies register with type flags (manufacturer, distributor, retailer), manage demo-reviewed catalogue data and appear in the public partner directory. Each phase updates this README for what it changes.
 
 > **DEMO DATA — NOT AN OFFICIAL REGULATOR SERVICE.** All companies, products and codes are fictional. A check is not a laboratory test and not a NAFDAC or SON decision, and no QR system catches every copied code.
 
@@ -205,6 +205,13 @@ Requests are limited per network (IP address); no cookies or identifiers are use
 | Consumer concern reports | 5 per hour per IP (`RATE_LIMIT_REPORT_PER_HOUR`) |
 
 For usability-test sessions, list the test machines' IPs or a range in `RATE_LIMIT_EXEMPT_IPS`, e.g. `192.168.1.20,192.168.1.0/24`, and restart the API. Over the limit the API returns 429 with `Retry-After`. Blocked checks and reports are also counted per city and day in `rate_limit_daily`, with no IP (D144). See `docs/DECISIONS.md` D39–D45.
+
+## Risk alerts
+
+- Nine deterministic rules (D143, D152) run on every consumer check, single-pack merchant receipt or sale, and POS lookup or sale. Thresholds are in `backend/.env.example` (`RISK_*`, `ALLOCATION_OVERAGE_PCT`).
+- Manufacturers (owners and staff) see their alerts at `/company/alerts`: evidence, status changes and notes. Admins see every alert, including invalid-code bursts, on `/admin`.
+- Only OPEN or INVESTIGATING alerts at MEDIUM or HIGH (never rule 9), or one resolved as a suspected copy, change what a buyer sees. LOW alerts stay on the dashboard.
+- Scan logs older than 12 months: `uv run python -m app.jobs.purge` (from `backend/`). Alert evidence keeps its own snapshot.
 
 ## Test and lint
 

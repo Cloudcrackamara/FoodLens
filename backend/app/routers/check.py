@@ -17,7 +17,7 @@ from app.schemas.check import (
     ReportResponse,
 )
 from app.services import check as check_service
-from app.services import location, rate_limit_counts, reports
+from app.services import location, rate_limit_counts, reports, risk
 from app.services.check import WAT
 
 router = APIRouter(prefix="/api/check", tags=["check"])
@@ -63,6 +63,7 @@ def check_qr(
         area=area,
         now=now,
         window_hours=settings.just_sold_window_hours,
+        thresholds=risk.Thresholds.from_settings(settings),
     )
 
 
