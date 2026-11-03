@@ -50,7 +50,6 @@ export function codeFromQrText(text: string): string | null {
 export const checkResultValues = [
   "INVALID_IDENTITY",
   "SUSPICIOUS_ACTIVITY",
-  "BATCH_OR_PRODUCT_WARNING",
   "RECOGNISED_JUST_SOLD",
   "RECOGNISED_PREVIOUSLY_SOLD",
   "RECOGNISED_NOT_SOLD",
@@ -93,7 +92,6 @@ export const checkResponseSchema = z.object({
   warnings: z.array(z.string()),
   notices: z.array(
     z.object({
-      kind: z.enum(["NOTICE", "RECALL"]),
       title: z.string(),
       message: z.string(),
       posted_at: z.string(),

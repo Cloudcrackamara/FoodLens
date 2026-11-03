@@ -89,7 +89,8 @@ class AnnouncementKind(StrEnum):
 
 
 class LifecycleStatus(StrEnum):
-    """Derived by replaying lifecycle events; written only by services/lifecycle.py."""
+    """Derived by replaying lifecycle events; written only by services/lifecycle.py. RECALLED
+    stays for the database enum but nothing creates it (D155)."""
 
     ISSUED = "ISSUED"
     RELEASED = "RELEASED"

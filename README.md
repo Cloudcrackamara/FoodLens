@@ -125,7 +125,7 @@ On `/company`, each batch has a **Codes, labels and allocations** link (`/compan
 |---|---|---|
 | Generate and download labels | Owner | Up to 2,000 packs per request, optionally in cartons of N. Each pack and carton gets a random 26-character code (128 bits, Crockford Base32). FoodLens stores only the SHA-256 hash of each code and records an `ISSUED` event. The browser downloads a zip once: `labels.pdf`, `units.csv`, `cartons.csv` (columns `batch, carton_ref, token, verification_url`) and `READ-ME-FIRST.txt`. |
 | Release | Owner or staff | The whole batch or one carton moves from "Not released" to "Released" (`RELEASED` events). |
-| Void | Owner | Only before release, with a reason: the whole batch's unreleased packs, listed cartons, or single codes pasted from the CSV. Voided codes stop working; generate new ones to replace them. Released packs need a recall instead. |
+| Void | Owner | Only before release, with a reason: the whole batch's unreleased packs, listed cartons, or single codes pasted from the CSV. Voided codes stop working; generate new ones to replace them. Released packs cannot be voided. |
 | Allocate | Owner or staff | Plan where stock goes: an area, optionally an approved distributor or retailer, by quantity, cartons or single codes. |
 
 Each QR encodes `{PUBLIC_BASE_URL}/p/{code}` with error correction level M and a 4-module quiet zone. The code is printed under it in groups of 4, with "Type the code at <host>/check". QR sizes below 15 mm are allowed with a warning. The page footer names the base URL used. **Set `PUBLIC_BASE_URL` in `backend/.env` before printing real labels: printed codes cannot change.**
@@ -149,7 +149,7 @@ No account and no cookies. Every result carries `data_mode: "DEMO"` and the disc
 
 - `/check`: **Scan QR** reads the code with the phone camera, or from a photo when there is no camera. The reader runs in the browser (the built-in `BarcodeDetector`, otherwise the bundled jsQR); no image is uploaded. **Type code** accepts the 26 characters printed under the QR, with spaces or dashes; O, I and L are read as 0, 1 and 1.
 - `/p/{code}`: what any phone camera opens. The page records nothing on load; the browser checks the code with a `POST` after the page mounts, so link previews create no scan (D117).
-- Results, first match wins: `INVALID_IDENTITY`, `SUSPICIOUS_ACTIVITY` (from existing alerts; risk rules arrive in Phase 6), `BATCH_OR_PRODUCT_WARNING` (recall), a carton QR gives `CARTON_CODE` ("check the individual pack"), then `RECOGNISED_JUST_SOLD` (sold within `JUST_SOLD_WINDOW_HOURS`, default 6), `RECOGNISED_PREVIOUSLY_SOLD` or `RECOGNISED_NOT_SOLD`. Only the last 4 characters of the code are shown, and responses contain no internal IDs.
+- Results, first match wins: `INVALID_IDENTITY`, `SUSPICIOUS_ACTIVITY` (from the risk rules' alerts), a carton QR gives `CARTON_CODE` ("check the individual pack"), then `RECOGNISED_JUST_SOLD` (sold within `JUST_SOLD_WINDOW_HOURS`, default 6), `RECOGNISED_PREVIOUSLY_SOLD` or `RECOGNISED_NOT_SOLD`. An expired batch adds an amber warning to the result. Only the last 4 characters of the code are shown, and responses contain no internal IDs.
 - **I've bought this** (no sale recorded) shows a note and sends nothing. **Report a concern** sends an anonymous report to the manufacturer and admins (`POST /api/check/report`, 5 per hour per network).
 - A check stores only the coarse area (city). With `SIMULATE_LOCATION_ENABLED=true` (demo only) a city chosen in the picker comes first (D148); otherwise the area comes from Cloudflare's location headers through a trusted tunnel, else the DB-IP Lite file at `GEOIP_DB_PATH`. The IP is discarded (D118). A check never changes a pack's status.
 
@@ -161,7 +161,7 @@ Demo codes to type arrive with the seed scenario in Phase 8 (D145). Until then, 
 - The company needs a reviewed location with an area; the event takes that area. The server decides the status and holder.
 - A carton event applies to every pack inside, all or nothing, after a confirmation. Packs can still be handled one by one.
 - Only the company that recorded a sale can return or correct it. A return puts the pack back in stock, so the next consumer check shows "In circulation, not yet sold".
-- Voided, unreleased and recalled packs are refused with a message.
+- Voided and unreleased packs are refused with a message.
 - `/merchant/team` (owner only): add staff by the email of an existing account with no company, and deactivate them.
 - To try it: sign in as `buyer@demo.foodlens.invalid` (Demo Market Traders, a distributor). The company needs a reviewed location (add one at `/company`, approve it at `/admin`).
 

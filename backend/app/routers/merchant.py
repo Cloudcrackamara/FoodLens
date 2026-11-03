@@ -53,7 +53,6 @@ def lookup(
         batch_number=subject.batch.batch_number,
         expiry_date=subject.batch.expiry_date,
         packs=len(subject.units),
-        recalled=subject.recalled,
         **details,
     )
 

@@ -9,7 +9,7 @@ export default function Home() {
       <p className="text-lg text-text">
         Every pack gets its own QR code, issued by the manufacturer. Anyone can check a pack for
         free, with no account, to see what has been recorded for that code: whether it is in
-        circulation or sold, where, and any recall.
+        circulation or sold, and where.
       </p>
       <Link
         href="/check"
@@ -22,7 +22,7 @@ export default function Home() {
         <ul className="list-disc space-y-1 pl-5 text-text">
           <li>
             It shows recorded facts about the code: issued by the manufacturer, in circulation,
-            sold, or recalled.
+            or sold.
           </li>
           <li>
             A copied QR carries the same code. FoodLens spots copies by whether the code was sold,

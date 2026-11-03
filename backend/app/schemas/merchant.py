@@ -42,7 +42,6 @@ class LookupResponse(BaseModel):
     expiry_date: date | None
     packs: int
     status_counts: list[StatusCount]
-    recalled: bool
     you_hold: int
     sold_by_you: int
     allowed_events: list[LifecycleEventType]

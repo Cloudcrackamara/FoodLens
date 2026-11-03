@@ -50,7 +50,6 @@ const STATUS_TONES: Record<string, Tone> = {
   IN_TRANSIT: "new",
   IN_STOCK: "ok",
   SOLD: "neutral",
-  RECALLED: "alert",
   VOIDED: "bad",
 };
 

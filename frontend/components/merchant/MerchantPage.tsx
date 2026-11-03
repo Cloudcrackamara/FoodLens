@@ -28,7 +28,6 @@ const STATUS_TONES: Record<string, Tone> = {
   IN_TRANSIT: "new",
   IN_STOCK: "ok",
   SOLD: "neutral",
-  RECALLED: "alert",
   VOIDED: "bad",
 };
 
@@ -75,7 +74,6 @@ function Summary({ lookup }: { lookup: Lookup }) {
             {carton ? `${packs} ${unitStatusLabels[status]}` : unitStatusLabels[status]}
           </StatusPill>
         ))}
-        {lookup.recalled && <StatusPill tone="alert">Recall in force</StatusPill>}
       </div>
     </Card>
   );

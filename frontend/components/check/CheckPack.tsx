@@ -261,8 +261,8 @@ export function CheckPack({ decoder }: { decoder?: QrDecoder }) {
         </p>
         <ScanHero />
         <p className="m-0 max-w-[440px] text-center text-[#DCDAF0]">
-          See what has been recorded for the code on your pack: who issued it, whether it is in
-          circulation or sold, and any recall. Free, with no account.
+          See what has been recorded for the code on your pack: who issued it, and whether it is in
+          circulation or sold. Free, with no account.
         </p>
       </main>
       <BottomSheet>

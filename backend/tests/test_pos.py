@@ -27,7 +27,6 @@ from app.models import (
     PosPartner,
     PosPartnerKey,
     PosTill,
-    ProductAnnouncement,
     ProductBatch,
     ProductUnit,
     RateLimitDaily,
@@ -35,7 +34,6 @@ from app.models import (
 )
 from app.models.base import utc_now
 from app.models.enums import (
-    AnnouncementKind,
     CompanyReviewStatus,
     EventSource,
     LifecycleEventType,
@@ -618,7 +616,6 @@ def test_occurred_at_needs_a_time_zone(world: World):
 def test_a_sale_returns_a_per_pack_error_list(world: World):
     _, good = world.unit()
     _, sold = world.unit(status=S.SOLD)
-    _, recalled = world.unit(status=S.RECALLED)
     _, voided = world.unit(status=S.VOIDED)
     _, unreleased = world.unit(status=S.ISSUED)
     carton_token = identity.new_token()
@@ -631,20 +628,19 @@ def test_a_sale_returns_a_per_pack_error_list(world: World):
     )
     unknown = identity.new_token()
 
-    response = world.sell(good, sold, recalled, voided, unreleased, carton_token, unknown, good)
+    response = world.sell(good, sold, voided, unreleased, carton_token, unknown, good)
 
     body = response.json()
-    assert body["recorded"] == 1 and body["errors"] == 7
+    assert body["recorded"] == 1 and body["errors"] == 6
     codes = [(u["index"], u["result"], u["error"] and u["error"]["code"]) for u in body["units"]]
     assert codes == [
         (0, "RECORDED", None),
         (1, "ERROR", "ALREADY_SOLD"),
-        (2, "ERROR", "RECALLED"),
-        (3, "ERROR", "VOIDED"),
-        (4, "ERROR", "UNRELEASED"),
-        (5, "ERROR", "CARTON_CODE"),
-        (6, "ERROR", "UNKNOWN_CODE"),
-        (7, "ERROR", "DUPLICATE_IN_REQUEST"),
+        (2, "ERROR", "VOIDED"),
+        (3, "ERROR", "UNRELEASED"),
+        (4, "ERROR", "CARTON_CODE"),
+        (5, "ERROR", "UNKNOWN_CODE"),
+        (6, "ERROR", "DUPLICATE_IN_REQUEST"),
     ]
     messages = {u["error"]["code"]: u["error"]["message"] for u in body["units"] if u["error"]}
     assert (
@@ -653,26 +649,6 @@ def test_a_sale_returns_a_per_pack_error_list(world: World):
     assert messages["CARTON_CODE"] == "This is a carton code. Scan the individual pack."
     assert messages["DUPLICATE_IN_REQUEST"] == "This pack appears more than once in the sale."
     assert messages["UNKNOWN_CODE"] == "No FoodLens code found. Check the code and try again."
-
-
-def test_a_pack_under_a_live_recall_is_refused(world: World):
-    unit, token = world.unit()
-    world.db.add(
-        ProductAnnouncement(
-            product_id=world.batch.product_id,
-            created_by_user_id=world.admin.user_id,
-            kind=AnnouncementKind.RECALL,
-            recall_reason="Demo recall reason",
-            title="Demo recall",
-            message="Demo recall notice for a fictional batch.",
-        )
-    )
-    world.db.flush()
-
-    response = world.sell(token)
-
-    assert response.json()["units"][0]["error"]["code"] == "RECALLED"
-    assert world.refresh(unit).lifecycle_status == S.RELEASED
 
 
 def test_too_many_packs_in_one_request_is_rejected(session: Session, make_client):
@@ -881,7 +857,6 @@ def test_lookup_changes_nothing_and_returns_no_internal_ids(world: World):
 @pytest.mark.parametrize(
     ("status", "code", "message"),
     [
-        (S.RECALLED, "RECALLED", "Covered by a recall from the manufacturer. Don't sell."),
         (S.ISSUED, "UNRELEASED", "Not yet released for sale by the manufacturer. Don't sell."),
         (S.VOIDED, "VOIDED", "This code was voided by the manufacturer. Don't sell."),
     ],

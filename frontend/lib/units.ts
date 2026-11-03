@@ -12,7 +12,6 @@ export const unitStatusLabels: Record<string, string> = {
   IN_TRANSIT: "In transit",
   IN_STOCK: "In stock",
   SOLD: "Sold",
-  RECALLED: "Recalled",
   VOIDED: "Voided",
 };
 

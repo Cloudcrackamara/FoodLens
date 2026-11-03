@@ -63,22 +63,6 @@ export const checkFixtures: Record<string, CheckResponse> = {
     sale: { ...sale, area: "Lagos" },
     can_note_purchase: false,
   },
-  recall: {
-    ...base,
-    result: "BATCH_OR_PRODUCT_WARNING",
-    title: "Recall posted for this product",
-    message: "Demo Harvest Foods has posted a recall that covers this pack.",
-    tip: null,
-    notices: [
-      {
-        kind: "RECALL",
-        title: "Recall of demo lot",
-        message: "Please return this demo lot to the shop.",
-        posted_at: "2026-10-25T09:00:00Z",
-        label: "Message from the company — not reviewed by FoodLens",
-      },
-    ],
-  },
   suspicious: {
     ...base,
     result: "SUSPICIOUS_ACTIVITY",

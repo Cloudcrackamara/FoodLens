@@ -87,8 +87,9 @@ class NoticeAttachment(CreatedAtMixin, table=True):
 
 
 class ProductAnnouncement(TimestampMixin, table=True):
-    """Company notice or recall (D75, D126). Live without review, labelled as not reviewed by
-    FoodLens, never changes product data. Admins may hide it; hiding a recall needs a reason."""
+    """Company notice (D75). Live without review, labelled as not reviewed by FoodLens, never
+    changes product data. Admins may hide it. Recalls were removed from the prototype (D155): the
+    RECALL kind, batch_id and recall_reason stay in the schema, unused, and nothing creates them."""
 
     __tablename__ = "product_announcement"
     __table_args__ = (
@@ -103,7 +104,7 @@ class ProductAnnouncement(TimestampMixin, table=True):
         default=AnnouncementKind.NOTICE, sa_type=enum_column(AnnouncementKind, "announcement_kind")
     )
     product_id: uuid.UUID = Field(foreign_key="product.product_id", index=True)
-    # When set, a recall targets this batch only; it must belong to the product (service).
+    # Unused since D155; it held the batch a recall targeted.
     batch_id: uuid.UUID | None = Field(
         default=None, foreign_key="product_batch.batch_id", index=True
     )

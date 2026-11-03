@@ -666,10 +666,9 @@ def test_rule_5_pos_lookups_and_sale_attempts(session: Session, make_client):
     assert attempt.rule == R.R5_POS_UNAVAILABLE_UNIT
     assert "tried to sell this pack while it was sold." in attempt.evidence["explanation"]
 
-    # Unreleased, recalled and voided packs too.
+    # Unreleased and voided packs too.
     for status, word in (
         (S.ISSUED, "not released"),
-        (S.RECALLED, "recalled"),
         (S.VOIDED, "voided"),
     ):
         unit, token = pos.unit(status=status)

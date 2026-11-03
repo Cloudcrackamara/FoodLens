@@ -6,7 +6,7 @@ Rules:
 - One generation is one transaction: cartons, units and ISSUED events. Raw tokens exist only in
   the returned label file; the database holds their hashes.
 - Release moves ISSUED units (per batch or per carton) to RELEASED.
-- Void is allowed only before release and needs a reason. Released units are recalled instead.
+- Void is allowed only before release and needs a reason.
 """
 
 import uuid
@@ -317,9 +317,7 @@ def void(
         if row.lifecycle_status == LifecycleStatus.VOIDED:
             raise UnitConflictError("Some of these packs are already voided")
         if row.lifecycle_status != LifecycleStatus.ISSUED:
-            raise UnitConflictError(
-                "Released packs cannot be voided. Use a recall for released stock."
-            )
+            raise UnitConflictError("Released packs cannot be voided.")
 
     lifecycle.record_manufacturer_event(
         db,

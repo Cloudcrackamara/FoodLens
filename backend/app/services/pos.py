@@ -56,7 +56,7 @@ from app.services import identity, lifecycle, risk
 from app.services.check import _day
 from app.services.pos_auth import PosError
 
-# Approved wording (2026-10-30). VOIDED, UNRELEASED, RECALLED, NOT_SOLD, NOT_SELLER and
+# Approved wording (2026-10-30). VOIDED, UNRELEASED, NOT_SOLD, NOT_SELLER and
 # UNKNOWN_CODE reuse the merchant messages in services/lifecycle.py.
 MSG_RETAILER_NOT_LINKED = (
     "This retailer is not linked to your POS account, or is not approved on FoodLens."
@@ -71,7 +71,6 @@ MSG_BEFORE_SALE = "The refund time is earlier than the sale."
 MSG_DUPLICATE = "This pack appears more than once in the sale."
 MSG_NEED_REASON = "Give a reason for the void."
 MSG_EVENT_IN_FUTURE = "This event's time is in the future. Check the till clock."
-WARN_RECALLED = "Covered by a recall from the manufacturer. Don't sell."
 WARN_UNRELEASED = "Not yet released for sale by the manufacturer. Don't sell."
 WARN_VOIDED = "This code was voided by the manufacturer. Don't sell."
 
@@ -92,7 +91,6 @@ def warn_sold(day: str) -> str:
 _PROBLEM_CODES = {
     lifecycle.MSG_VOIDED: "VOIDED",
     lifecycle.MSG_UNRELEASED: "UNRELEASED",
-    lifecycle.MSG_RECALLED: "RECALLED",
     lifecycle.MSG_SOLD: "ALREADY_SOLD",
     lifecycle.MSG_NOT_SOLD: "NOT_SOLD",
     lifecycle.MSG_NOT_SELLER: "NOT_SELLER",
@@ -146,14 +144,12 @@ def _last4(code: str) -> str:
     return identity.normalise(code)[-4:]
 
 
-def _unit_warning(unit: ProductUnit, recalled: bool) -> PosMessage | None:
+def _unit_warning(unit: ProductUnit) -> PosMessage | None:
     status = unit.lifecycle_status
     if status == LifecycleStatus.VOIDED:
         return PosMessage(code="VOIDED", message=WARN_VOIDED)
     if status == LifecycleStatus.ISSUED:
         return PosMessage(code="UNRELEASED", message=WARN_UNRELEASED)
-    if recalled or status == LifecycleStatus.RECALLED:
-        return PosMessage(code="RECALLED", message=WARN_RECALLED)
     if status == LifecycleStatus.SOLD and unit.last_sold_at is not None:
         return PosMessage(code="ALREADY_SOLD", message=warn_sold(_day(unit.last_sold_at)))
     return None
@@ -175,7 +171,7 @@ def lookup(
     else:
         unit = subject.units[0]
         status = unit.lifecycle_status
-        warning = _unit_warning(unit, subject.recalled)
+        warning = _unit_warning(unit)
         if warning is not None:
             alert = risk.on_pos_refusal(
                 db, unit=unit, retailer=till.retailer, till_ref=till.till.till_ref,
@@ -309,7 +305,7 @@ def _record_code(
         return None
 
     retailer_id = till.retailer.company_id
-    problem = lifecycle.unit_problem(unit, event_type, retailer_id, subject.recalled)
+    problem = lifecycle.unit_problem(unit, event_type, retailer_id)
     if problem is not None:
         message = problem[0]
         code = _PROBLEM_CODES.get(message, "REFUSED")

@@ -106,7 +106,7 @@ function ReleaseUnits({ companyId, batchId, data }: { companyId: string; batchId
   const unreleased = data.cartons.filter((c) => c.status === "ISSUED");
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-sm">Release packs once they leave your factory. Released packs cannot be voided; use a recall instead.</p>
+      <p className="text-sm">Release packs once they leave your factory. Released packs cannot be voided.</p>
       <div className="flex flex-wrap gap-3">
         <button type="button" disabled={release.isPending || !data.units.ISSUED} className={submitClass} onClick={() => release.mutate({ carton_ref: null })}>
           Release all unreleased packs

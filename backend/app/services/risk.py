@@ -74,7 +74,6 @@ RULE_NAMES = {
 }
 _POS_STATES = {
     "ALREADY_SOLD": "sold",
-    "RECALLED": "recalled",
     "UNRELEASED": "not released",
     "VOIDED": "voided",
 }
@@ -149,7 +148,7 @@ def _undone_sales():
     return returned.union(corrected)
 
 
-def _standing(query):
+def standing_only(query):
     """Limit a lifecycle_event query to events that still count: no undone sales."""
     return query.where(
         or_(
@@ -270,7 +269,7 @@ def _last_sighting(
     )
     if skip_event is not None:
         events = events.where(LifecycleEvent.event_id != skip_event)
-    event = db.exec(_standing(events).order_by(LifecycleEvent.occurred_at.desc())).first()
+    event = db.exec(standing_only(events).order_by(LifecycleEvent.occurred_at.desc())).first()
     options = []
     if scan is not None:
         options.append(
@@ -361,7 +360,7 @@ def _rule9(
         .distinct()
     ).all()
     sold = db.exec(
-        _standing(
+        standing_only(
             select(LifecycleEvent.unit_id)
             .join(ProductUnit, ProductUnit.unit_id == LifecycleEvent.unit_id)
             .where(
@@ -585,7 +584,7 @@ def on_pack_event(
     fired: list[RiskAlert] = []
 
     previous = db.exec(
-        _standing(
+        standing_only(
             select(LifecycleEvent).where(
                 LifecycleEvent.unit_id == unit.unit_id,
                 LifecycleEvent.event_type.in_(
@@ -658,7 +657,7 @@ def on_pos_refusal(
     problem: str,
     now: datetime,
 ) -> RiskAlert | None:
-    """Rule 5: a till looked up or tried to sell a pack that is sold, recalled, unreleased or
+    """Rule 5: a till looked up or tried to sell a pack that is sold, unreleased or
     voided. A lookup of the till's own retailer's standing sale is not a signal (D152)."""
     state = _POS_STATES.get(problem)
     if state is None:

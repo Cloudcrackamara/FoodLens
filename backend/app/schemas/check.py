@@ -60,7 +60,6 @@ class CheckSale(BaseModel):
 
 
 class CheckNotice(BaseModel):
-    kind: Literal["NOTICE", "RECALL"]
     title: str
     message: str
     posted_at: datetime

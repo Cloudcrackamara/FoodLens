@@ -12,7 +12,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
 
-from sqlalchemy import func, insert, or_, update
+from sqlalchemy import func, insert, update
 from sqlmodel import Session, select
 
 from app.core.config import get_settings
@@ -25,15 +25,12 @@ from app.models import (
     CompanyMember,
     LifecycleEvent,
     Product,
-    ProductAnnouncement,
     ProductBatch,
     ProductUnit,
     SupplierLocation,
 )
 from app.models.base import utc_now
 from app.models.enums import (
-    AnnouncementKind,
-    AnnouncementStatus,
     CompanyReviewStatus,
     EventSource,
     LifecycleEventType,
@@ -139,7 +136,6 @@ MSG_VOIDED = "This code was voided by the manufacturer, so it can't be recorded.
 MSG_UNRELEASED = (
     "The manufacturer has not released this code for sale yet, so it can't be recorded."
 )
-MSG_RECALLED = "This pack is covered by a recall, so it can't be recorded."
 MSG_SOLD = "This pack is already recorded as sold."
 MSG_IN_STOCK = "Your company already has this pack in stock."
 MSG_NOT_HOLDER = "Only the company holding this pack in stock can transfer it."
@@ -174,7 +170,6 @@ class Subject:
     units: list[ProductUnit]
     product: Product
     batch: ProductBatch
-    recalled: bool
 
     @property
     def kind(self) -> str:
@@ -238,22 +233,11 @@ def find_subject(db: Session, code: str) -> Subject:
         raise MerchantError(MSG_UNKNOWN_CODE, 404)
     if manufacturer.review_status != CompanyReviewStatus.APPROVED:
         raise MerchantError(MSG_UNKNOWN_CODE, 404)
-    live_recall = db.exec(
-        select(ProductAnnouncement.announcement_id).where(
-            ProductAnnouncement.product_id == product.product_id,
-            ProductAnnouncement.kind == AnnouncementKind.RECALL,
-            ProductAnnouncement.status == AnnouncementStatus.LIVE,
-            or_(
-                ProductAnnouncement.batch_id.is_(None),
-                ProductAnnouncement.batch_id == batch.batch_id,
-            ),
-        )
-    ).first()
-    return Subject(carton, units, product, batch, live_recall is not None)
+    return Subject(carton, units, product, batch)
 
 
 def unit_problem(
-    unit: ProductUnit, event: LifecycleEventType, company_id: uuid.UUID, recalled: bool
+    unit: ProductUnit, event: LifecycleEventType, company_id: uuid.UUID
 ) -> tuple[str, int] | None:
     """Why this unit cannot take this event from this company, or None."""
     status = unit.lifecycle_status
@@ -262,8 +246,6 @@ def unit_problem(
         return MSG_VOIDED, 409
     if status == LifecycleStatus.ISSUED:
         return MSG_UNRELEASED, 409
-    if recalled or status == LifecycleStatus.RECALLED:
-        return MSG_RECALLED, 409
     match event:
         case LifecycleEventType.RECEIVED:
             if status == LifecycleStatus.SOLD:
@@ -292,9 +274,7 @@ def subject_problem(
     if not subject.units:
         return MSG_NO_PACKS, 409
     problems = [
-        p
-        for unit in subject.units
-        if (p := unit_problem(unit, event, company_id, subject.recalled)) is not None
+        p for unit in subject.units if (p := unit_problem(unit, event, company_id)) is not None
     ]
     if not problems:
         return None
@@ -571,8 +551,6 @@ def replay_unit(db: Session, unit: ProductUnit) -> None:
                 status, holder = NEW_STATUS[event.event_type], company or holder
             case LifecycleEventType.VOIDED:
                 status = LifecycleStatus.VOIDED
-            case LifecycleEventType.RECALLED:
-                status = LifecycleStatus.RECALLED
             case LifecycleEventType.TRANSFERRED:
                 status, holder = LifecycleStatus.IN_TRANSIT, event.to_company_id
             case LifecycleEventType.RECEIVED:

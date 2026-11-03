@@ -20,13 +20,11 @@ from app.models import (
     Company,
     CompanyMember,
     LifecycleEvent,
-    ProductAnnouncement,
     ProductBatch,
     ProductUnit,
     SupplierLocation,
 )
 from app.models.enums import (
-    AnnouncementKind,
     CompanyReviewStatus,
     EventSource,
     LifecycleEventType,
@@ -419,11 +417,10 @@ def test_a_consumer_check_after_a_merchant_sale_shows_just_sold(world: World, ma
             S.ISSUED,
             "The manufacturer has not released this code for sale yet, so it can't be recorded.",
         ),
-        (S.RECALLED, "This pack is covered by a recall, so it can't be recorded."),
     ],
 )
 @pytest.mark.parametrize("event", [E.RECEIVED, E.SOLD, E.RETURNED])
-def test_voided_unreleased_and_recalled_units_are_rejected(world: World, status, message, event):
+def test_voided_and_unreleased_units_are_rejected(world: World, status, message, event):
     shop = world.make_shop()
     unit, token = world.unit(status=status)
     before = count_events(world.db)
@@ -434,30 +431,6 @@ def test_voided_unreleased_and_recalled_units_are_rejected(world: World, status,
     assert refused.json()["detail"] == message
     assert count_events(world.db) == before
     assert world.refresh(unit).lifecycle_status == status
-
-
-def test_a_live_recall_on_the_batch_blocks_every_event(world: World):
-    shop = world.make_shop()
-    _, token = world.unit()
-    product_id = world.batch.product_id
-    world.db.add(
-        ProductAnnouncement(
-            kind=AnnouncementKind.RECALL,
-            product_id=product_id,
-            batch_id=world.batch.batch_id,
-            recall_reason="Packaging fault",
-            title="Batch recall",
-            message="Return this batch to the seller.",
-            created_by_user_id=world.owner.user_id,
-        )
-    )
-    world.db.flush()
-
-    refused = shop.event(token, E.SOLD)
-
-    assert refused.status_code == 409
-    assert refused.json()["detail"] == "This pack is covered by a recall, so it can't be recorded."
-    assert shop.lookup(token).json()["recalled"] is True
 
 
 def test_a_sold_unit_cannot_be_received_sold_or_transferred_again(world: World):

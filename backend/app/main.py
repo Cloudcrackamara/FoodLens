@@ -14,6 +14,7 @@ from app.routers import (
     change_notices,
     check,
     companies,
+    dashboard,
     demo_pos,
     health,
     merchant,
@@ -55,6 +56,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(pos.router)
     app.include_router(pos_admin.router)
     app.include_router(alerts.router)
+    app.include_router(dashboard.router)
     app.add_exception_handler(PosError, pos.pos_error_response)
     if settings.demo_pos_enabled:
         app.include_router(demo_pos.router)

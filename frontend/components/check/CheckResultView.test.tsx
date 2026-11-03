@@ -57,11 +57,38 @@ describe("CheckResultView", () => {
     expect(screen.getByRole("heading", { level: 2, name: "This code may have been copied" })).toBeInTheDocument();
   });
 
-  it("labels company recalls as not reviewed by FoodLens", () => {
-    renderWithQuery(<CheckResultView result={checkFixtures.recall} code={DEMO_CODE} />);
+  it("shows an expiry warning as an amber panel directly under the status card", () => {
+    const warning = "The expiry date of this batch (1 Oct 2026) has passed.";
+    renderWithQuery(<CheckResultView result={{ ...checkFixtures.notSold, warnings: [warning] }} code={DEMO_CODE} />);
 
-    const recall = screen.getByRole("region", { name: "Recall" });
-    expect(within(recall).getByText("Message from the company — not reviewed by FoodLens")).toBeInTheDocument();
+    const panel = screen.getByRole("region", { name: "Warnings" });
+    expect(within(panel).getByText(warning)).toBeInTheDocument();
+    expect(panel).toHaveClass("bg-warn-bg");
+    const status = screen.getByRole("heading", { level: 2 }).closest("section")!;
+    expect(status.nextElementSibling).toBe(panel);
+    // Above the purchase button, so a buyer sees it first.
+    expect(panel.compareDocumentPosition(screen.getByRole("button", { name: "I've bought this" }))).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+  });
+
+  it("shows no warning panel when there is no warning", () => {
+    renderWithQuery(<CheckResultView result={checkFixtures.notSold} code={DEMO_CODE} />);
+
+    expect(screen.queryByRole("region", { name: "Warnings" })).not.toBeInTheDocument();
+  });
+
+  it("labels company notices as not reviewed by FoodLens", () => {
+    const notice = {
+      title: "New packaging",
+      message: "New packaging from March.",
+      posted_at: "2026-10-25T09:00:00Z",
+      label: "Message from the company — not reviewed by FoodLens",
+    };
+    renderWithQuery(<CheckResultView result={{ ...checkFixtures.notSold, notices: [notice] }} code={DEMO_CODE} />);
+
+    expect(screen.getByText("Message from the company — not reviewed by FoodLens")).toBeInTheDocument();
+    expect(screen.getByText("New packaging from March.")).toBeInTheDocument();
   });
 
   it("shows the NAFDAC number as information only", () => {

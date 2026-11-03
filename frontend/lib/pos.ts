@@ -5,7 +5,7 @@ import { apiFetch } from "./api";
 // Mirrors backend/app/schemas/pos.py. The demo till sends only a till and a code; the server
 // builds, signs and records the request (D123, D151), so no key or secret reaches the browser.
 
-const statusSchema = z.enum(["ISSUED", "RELEASED", "IN_TRANSIT", "IN_STOCK", "SOLD", "RECALLED", "VOIDED"]);
+const statusSchema = z.enum(["ISSUED", "RELEASED", "IN_TRANSIT", "IN_STOCK", "SOLD", "VOIDED"]);
 const messageSchema = z.object({ code: z.string(), message: z.string() });
 
 export const posLookupSchema = z.object({

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-export type StatusTone = "ok" | "warn" | "neutral" | "bad" | "info" | "alert";
+export type StatusTone = "ok" | "warn" | "neutral" | "bad" | "info";
 
 type Style = {
   card: string;
@@ -18,8 +18,6 @@ const TRIANGLE = (
 );
 
 // Status sections from Result.dc.html. The warn icon is the clock from the board's "Expired" pill.
-// The alert tone (recall) has no board: alert background with no border (founder, 26 Oct 2026),
-// the warning triangle and the standard text colour.
 const STYLES: Record<StatusTone, Style> = {
   ok: {
     card: "border border-[#BFE0CC] bg-ok-bg",
@@ -81,13 +79,6 @@ const STYLES: Record<StatusTone, Style> = {
       paths: <path d="M9 9.5a3 3 0 1 1 4.2 2.8c-.8.3-1.2 1-1.2 1.8v.6M12 18h.01" />,
     },
   },
-  alert: {
-    card: "bg-alert-bg",
-    circle: "bg-alert",
-    label: "text-alert",
-    body: "text-text",
-    icon: { size: 26, stroke: "#FFFFFF", width: 2.4, paths: TRIANGLE },
-  },
 };
 
 type Props = {
@@ -127,6 +118,40 @@ export function StatusCard({ tone, label, title, titleId, children }: Props) {
         {title}
       </h2>
       {children && <div className={body}>{children}</div>}
+    </section>
+  );
+}
+
+/**
+ * A warning a buyer must not miss, in the warn style of the status card (ResultExpired.dc.html),
+ * directly under it. An expired batch is the only warning today (D155).
+ */
+export function WarningPanel({ label, items }: { label: string; items: string[] }) {
+  const { card, circle, label: labelClass, body, icon } = STYLES.warn;
+  return (
+    <section aria-label={label} className={`flex items-start gap-3 rounded-[16px] px-4 py-3.5 ${card}`}>
+      <span aria-hidden="true" className={`inline-flex size-9 flex-none items-center justify-center rounded-full ${circle}`}>
+        <svg
+          width={20}
+          height={20}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke={icon.stroke}
+          strokeWidth={icon.width}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          {icon.paths}
+        </svg>
+      </span>
+      <div className="min-w-0">
+        <h3 className={`m-0 text-[13px] font-bold uppercase tracking-[0.04em] ${labelClass}`}>{label}</h3>
+        <ul className={`m-0 mt-1 flex list-none flex-col gap-1 p-0 font-semibold ${body}`}>
+          {items.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </div>
     </section>
   );
 }

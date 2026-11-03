@@ -129,7 +129,7 @@ Pack codes are the 26-character code printed under the QR, or the code read from
 
 ### `POST /units/lookup`
 
-This endpoint never changes a pack or its events. Call it when a pack is scanned, before payment. A lookup of a pack that is sold (by another retailer), recalled, unreleased or voided raises an alert for the manufacturer (D152).
+This endpoint never changes a pack or its events. Call it when a pack is scanned, before payment. A lookup of a pack that is sold (by another retailer), unreleased or voided raises an alert for the manufacturer (D152).
 
 ```json
 {
@@ -156,14 +156,13 @@ Response `200`:
 }
 ```
 
-`status` is one of `ISSUED`, `RELEASED`, `IN_TRANSIT`, `IN_STOCK`, `SOLD`, `RECALLED` and `VOIDED`.
+`status` is one of `ISSUED`, `RELEASED`, `IN_TRANSIT`, `IN_STOCK`, `SOLD` and `VOIDED`.
 
 `warning` is `null`, or one of the following. Show it to the cashier.
 
 | `warning.code` | `warning.message` |
 |---|---|
 | `ALREADY_SOLD` | Already recorded as sold on {date}. Don't sell this pack until it's checked. |
-| `RECALLED` | Covered by a recall from the manufacturer. Don't sell. |
 | `UNRELEASED` | Not yet released for sale by the manufacturer. Don't sell. |
 | `VOIDED` | This code was voided by the manufacturer. Don't sell. |
 | `CARTON_CODE` | This is a carton code. Scan the individual pack. |
@@ -307,7 +306,6 @@ Per-pack errors (in `units[].error`, with HTTP 200):
 | `code` | Message |
 |---|---|
 | `ALREADY_SOLD` | This pack is already recorded as sold. Don't complete the sale; set the pack aside and check it. |
-| `RECALLED` | This pack is covered by a recall, so it can't be recorded. |
 | `UNRELEASED` | The manufacturer has not released this code for sale yet, so it can't be recorded. |
 | `VOIDED` | This code was voided by the manufacturer, so it can't be recorded. |
 | `CARTON_CODE` | This is a carton code. Scan the individual pack. |

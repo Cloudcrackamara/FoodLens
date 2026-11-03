@@ -19,7 +19,7 @@ export const eventLabels: Record<MerchantEvent, { title: string; hint: string; d
 
 export const REASON_MAX = 500;
 
-const statusSchema = z.enum(["ISSUED", "RELEASED", "IN_TRANSIT", "IN_STOCK", "SOLD", "RECALLED", "VOIDED"]);
+const statusSchema = z.enum(["ISSUED", "RELEASED", "IN_TRANSIT", "IN_STOCK", "SOLD", "VOIDED"]);
 
 export const lookupSchema = z.object({
   subject: z.enum(["UNIT", "CARTON"]),
@@ -31,7 +31,6 @@ export const lookupSchema = z.object({
   expiry_date: z.string().nullable(),
   packs: z.number(),
   status_counts: z.array(z.object({ status: statusSchema, packs: z.number() })),
-  recalled: z.boolean(),
   you_hold: z.number(),
   sold_by_you: z.number(),
   allowed_events: z.array(z.enum(merchantEvents)),

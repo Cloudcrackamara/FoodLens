@@ -486,7 +486,7 @@ def test_void_after_release_is_refused(maker: Maker, session: Session) -> None:
     whole = maker.client.post(f"{maker.url}/void", json={"reason": "x", "whole_batch": True})
 
     assert by_code.status_code == 409
-    assert "recall" in by_code.json()["detail"]
+    assert by_code.json()["detail"] == "Released packs cannot be voided."
     assert by_carton.status_code == 409
     assert whole.status_code == 409
     assert _statuses(session, maker.batch) == {LifecycleStatus.RELEASED: 2}

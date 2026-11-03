@@ -117,7 +117,7 @@ One packaging level: a carton holds units (D112).
 | `batch_id`, `product_id`, `manufacturer_id` | Denormalised for fast checks. Must agree with each other **(service)**. |
 | `parent_carton_id` | Nullable. The carton must be in the same batch **(service)**. |
 | `qr_token_hash` | `sha256(normalised token)` hex, unique, lowercase hex only **(DB)** (D138). The token is 26 Crockford Base32 characters from `secrets.token_bytes(16)`. |
-| `lifecycle_status` | `ISSUED` (default), `RELEASED`, `IN_TRANSIT`, `IN_STOCK`, `SOLD`, `RECALLED`, `VOIDED`. Derived by replaying events **(service)**. A consumer check never changes it. |
+| `lifecycle_status` | `ISSUED` (default), `RELEASED`, `IN_TRANSIT`, `IN_STOCK`, `SOLD`, `RECALLED` (unused, nothing creates it, D155), `VOIDED`. Derived by replaying events **(service)**. A consumer check never changes it. |
 | `current_holder_company_id` | Derived custody (D113). |
 | `last_sold_at`, `last_sold_area_id`, `last_sold_company_id` | Derived from the latest SOLD event that has not been corrected or returned. Cleared by a SALE_CORRECTED or any valid return (D140). Used for just-sold checks. |
 | `created_at`, `updated_at` | |
@@ -133,7 +133,7 @@ Append-only (D112): `UPDATE` and `DELETE` are refused by a trigger **(DB)**. One
 |---|---|
 | `unit_id`, `carton_id` | Exactly one is set **(DB)**. |
 | `group_id` | Links the rows of a carton or bulk action. |
-| `event_type` | `ISSUED, RELEASED, TRANSFERRED, RECEIVED, SOLD, RETURNED, SALE_CORRECTED, RECALLED, VOIDED`. |
+| `event_type` | `ISSUED, RELEASED, TRANSFERRED, RECEIVED, SOLD, RETURNED, SALE_CORRECTED, RECALLED, VOIDED`. `RECALLED` is unused and nothing creates it (D155). |
 | `source` | `MANUFACTURER, MERCHANT_APP, POS_API, CONSUMER_CHECK, SYSTEM`. |
 | `actor_user_id`, `actor_company_id` | Null for `CONSUMER_CHECK` and POS (the POS actor is the partner plus the retailer). |
 | `retailer_company_id` | For SOLD, RETURNED and SALE_CORRECTED. |
@@ -292,12 +292,12 @@ There is no contact field. An opt-in phone number is future work (D146).
 
 | Column | Notes |
 |---|---|
-| `kind` | `NOTICE` (default) or `RECALL` (D126). Existing rows became `NOTICE` in migration 0006. |
+| `kind` | `NOTICE` (default). `RECALL` is unused: nothing creates it and a check ignores it (D155). Existing rows became `NOTICE` in migration 0006. |
 | `product_id` | Always set. |
-| `batch_id` | Nullable. When set, a recall targets that batch only. It must belong to the product **(service)**. |
-| `recall_reason` | Required and not blank for `RECALL` **(DB check)**. |
+| `batch_id` | Nullable. Unused since D155. |
+| `recall_reason` | Unused since D155. The DB check for `RECALL` rows stays. |
 | `title`, `message` | D75. The D77 and D86 word rules apply. |
-| `status` | `LIVE` or `HIDDEN`. Hiding a recall needs a reason (stored in the audit log); its RECALLED events stay. |
+| `status` | `LIVE` or `HIDDEN`. |
 
 ### `audit_log`
 - Unchanged: append-only history of meaningful changes.

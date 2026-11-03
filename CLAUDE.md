@@ -30,7 +30,7 @@ Where to find things:
    - **A recognised code:** it is described as issued by the manufacturer and recorded as in circulation, sold, and so on. Results state that no QR system catches every copied code.
    - **What a check proves:** help text says plainly that a copied QR carries the same code, and that FoodLens spots copies through sale status, places, scan volume and allocation, not by the QR alone.
    - **Recorded facts and possible patterns:** results label recorded facts as recorded facts and possible patterns as possible patterns.
-   - **Company announcements and recalls:**
+   - **Company announcements:**
      - They may not contain the whole words "safe" or "unsafe".
      - They may not claim NAFDAC/SON approval, registration or certification.
      - They may warn about counterfeit products (D77, D86).
@@ -62,10 +62,10 @@ Where to find things:
    - Changes to published product details (including size, attributes, GTIN and registration number), to batches, or to reviewed locations go through a change notice with structured current and proposed values.
    - While a notice is `PENDING_REVIEW` or `CLARIFICATION_REQUESTED`, published data stays unchanged.
    - Only approval applies the change. It records the old value, new value, approver and time.
-   - **Exception: announcements and recalls.** Approved companies post them live without review.
+   - **Exception: announcements.** Approved companies post them live without review.
      - They are labelled "Message from the company — not reviewed by FoodLens".
      - They never edit product data.
-     - Admins can hide them; hiding a recall needs a reason.
+     - Admins can hide them.
    - Company contact details and private account settings are edited directly, and each edit is logged with actor and time.
 7. **No payment data.**
    - POS calls carry an opaque `payment_reference` and a transaction ID only.
@@ -151,7 +151,7 @@ npm test
 ## Working rules
 
 - Work one phase at a time. Start the next phase only when I ask.
-- These are out of scope: payments, regulator scraping, AI safety scores, ratings and maps. Risk rules stay deterministic and explainable.
+- These are out of scope: payments, regulator scraping, AI safety scores, ratings, maps and product recalls (D155). Risk rules stay deterministic and explainable.
 - Business rules live in backend service modules, not in routers or React components.
 - Client input never sets any of the following:
   - `is_admin`, approval or review status, or lifecycle status;

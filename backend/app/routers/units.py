@@ -17,6 +17,7 @@ from app.core.auth import require_company_member
 from app.core.db import DbSession
 from app.models import Area, CompanyMember
 from app.models.enums import MemberRole
+from app.schemas.dashboard import InventoryRowRead
 from app.schemas.units import (
     AllocationCreateRequest,
     AllocationRead,
@@ -30,6 +31,7 @@ from app.schemas.units import (
 )
 from app.services import allocations as allocation_service
 from app.services import companies as company_service
+from app.services import inventory
 from app.services import units as unit_service
 from app.services.catalogue import NotManufacturerError
 from app.services.identity import IdentityGenerationError
@@ -154,6 +156,14 @@ def _allocation_read(view: allocation_service.AllocationView) -> AllocationRead:
         units_listed=view.units_listed,
         created_at=view.allocation.created_at,
     )
+
+
+@router.get(f"{BATCH}/inventory")
+def batch_inventory(
+    company_id: uuid.UUID, batch_id: uuid.UUID, member: Member, db: DbSession
+) -> list[InventoryRowRead]:
+    rows = _run(lambda: inventory.inventory(db, member, batch_id))
+    return [InventoryRowRead.model_validate(row) for row in rows]
 
 
 @router.get(f"{BATCH}/allocations")

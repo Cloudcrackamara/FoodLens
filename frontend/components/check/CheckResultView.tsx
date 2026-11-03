@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import { DemoDataBanner } from "@/components/DemoDataBanner";
 import { Card } from "@/components/ui/Card";
-import { StatusCard, type StatusTone } from "@/components/ui/StatusCard";
+import { StatusCard, WarningPanel, type StatusTone } from "@/components/ui/StatusCard";
 import type { CheckResponse, CheckResult } from "@/lib/check";
 import { formatDate } from "@/lib/format";
 import {
@@ -30,7 +30,6 @@ const TONES: Record<CheckResult, Tone> = {
   RECOGNISED_NOT_SOLD: { tone: "ok", label: "Recorded" },
   RECOGNISED_JUST_SOLD: { tone: "ok", label: "Recorded sale" },
   RECOGNISED_PREVIOUSLY_SOLD: { tone: "warn", label: "Check with the seller" },
-  BATCH_OR_PRODUCT_WARNING: { tone: "alert", label: "Recall" },
   SUSPICIOUS_ACTIVITY: { tone: "bad", label: "Warning" },
   INVALID_IDENTITY: { tone: "bad", label: "Not recognised" },
   CARTON_CODE: { tone: "info", label: "Carton" },
@@ -75,8 +74,6 @@ export function CheckResultView({ result, code, simulatedCity, onCheckAnother, c
   const [noted, setNoted] = useState(false);
   const { tone, label } = toneFor(result);
   const { product, batch } = result;
-  const recalls = result.notices.filter((notice) => notice.kind === "RECALL");
-  const messages = result.notices.filter((notice) => notice.kind !== "RECALL");
 
   return (
     <article aria-labelledby="check-result-title" className="flex flex-1 flex-col">
@@ -92,19 +89,7 @@ export function CheckResultView({ result, code, simulatedCity, onCheckAnother, c
             {result.advice && <p className="mt-3 mb-0 text-sm">{result.advice}</p>}
           </StatusCard>
 
-          {recalls.map((notice) => (
-            // A recall is a solid alert card directly under the status card (design/README.md).
-            <section
-              key={`${notice.posted_at}-${notice.title}`}
-              aria-label="Recall"
-              className="rounded-[16px] bg-alert-bg px-5 pt-[18px] pb-5"
-            >
-              <p className="m-0 text-[13px] font-semibold text-alert">{notice.label}</p>
-              <h3 className="mt-1 mb-0 font-heading text-base font-semibold text-ink">Recall: {notice.title}</h3>
-              <p className="mt-1 mb-0.5 whitespace-pre-line text-[15px] text-text">{notice.message}</p>
-              <p className="m-0 text-[13px] text-[#4B4F5C]">Posted {formatInstant(notice.posted_at)}</p>
-            </section>
-          ))}
+          {result.warnings.length > 0 && <WarningPanel label="Warnings" items={result.warnings} />}
 
           {result.can_note_purchase &&
             (noted ? (
@@ -121,16 +106,6 @@ export function CheckResultView({ result, code, simulatedCity, onCheckAnother, c
               </button>
             ))}
 
-          {result.warnings.length > 0 && (
-            <Card aria-label="Warnings">
-              <h3 className={`${cardTitleClass} mt-0 mb-2`}>Warnings</h3>
-              <ul className="m-0 flex list-disc flex-col gap-2 pl-5 text-[15px] text-text">
-                {result.warnings.map((warning) => (
-                  <li key={warning}>{warning}</li>
-                ))}
-              </ul>
-            </Card>
-          )}
         </div>
 
         {/* Details column */}
@@ -199,7 +174,7 @@ export function CheckResultView({ result, code, simulatedCity, onCheckAnother, c
             </Card>
           )}
 
-          {messages.map((notice) => (
+          {result.notices.map((notice) => (
             // Company message card (Result.dc.html).
             <section
               key={`${notice.posted_at}-${notice.title}`}

@@ -127,7 +127,7 @@ The registration states are gone. `ResultExpired`, `ResultMismatch`, `ResultNotF
 | `RECOGNISED_NOT_SOLD` | ok (green) | `Result` | Check icon. The details card shows the recorded product, batch and facts, not "What the register shows". |
 | `RECOGNISED_JUST_SOLD` | ok (green) | `Result` | As above. The "I've bought this" button sits below the status card. |
 | `RECOGNISED_PREVIOUSLY_SOLD` | warn (amber) | `ResultExpired` | Clock icon. The advice goes in the grey note box. |
-| `BATCH_OR_PRODUCT_WARNING` (recall) | alert (orange, `--color-alert*`) | No board. `ResultExpired` layout in alert colours | The recall notice is a solid alert-coloured card directly under the status card, not the dashed company-message card. |
+| Expired batch (a warning on any recognised result; recalls were removed, D155) | warn (amber) | `ResultExpired` | The existing expiry warning text in an amber panel directly under the status card. |
 | `SUSPICIOUS_ACTIVITY` | bad (red, solid status card) | `ResultMismatch` | "Possible patterns" takes the compare panel's place, with the red border. |
 | `INVALID_IDENTITY` (scanned) | bad (red) | `ResultMismatch` | No product card. A "What you can do" list. |
 | `INVALID_IDENTITY` (typed, D138) | neutral (grey) | `ResultNotFound` | "What you entered" shows only the last 4 characters. Look-alike tips follow the normalisation (O/0, I/L/1). |
@@ -159,8 +159,7 @@ The headlines, labels and help text come from the current `check.py` and `CheckR
 - the unit timeline;
 - alerts and evidence;
 - allocations and inventory;
-- manufacturer stats;
-- recalls.
+- manufacturer stats.
 
 Build them from the workspace shell, summary cards, list tables, status pills, the timeline component and the decision panel.
 

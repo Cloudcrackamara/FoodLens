@@ -22,7 +22,6 @@ function unit(overrides: Partial<Lookup> = {}): Lookup {
     expiry_date: "2027-06-30",
     packs: 1,
     status_counts: [{ status: "RELEASED", packs: 1 }],
-    recalled: false,
     you_hold: 0,
     sold_by_you: 0,
     allowed_events: ["RECEIVED", "SOLD"],

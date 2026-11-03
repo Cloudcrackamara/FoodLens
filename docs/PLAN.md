@@ -168,7 +168,7 @@ The earlier plan (Gate and Phases 0–7: foundation, auth, registration lookup, 
 - [x] Test: RETURNED sets IN_STOCK, clears `last_sold_*`, keeps the SOLD event in the timeline, and the next check shows "In circulation, not yet sold"; the unit can be sold again.
 - [x] Test: allocation matching follows the order unit, carton, quantity; quantity allocations count down per matched receipt.
 - [x] Test: a receipt that matches no allocation is noted in the timeline and raises no alert; a batch with no allocations gets no note.
-- [x] Test: transfer only to approved companies; recalled and voided units are refused.
+- [x] Test: transfer only to approved companies; voided units are refused.
 - [x] Test: cross-company access is blocked; unapproved companies are blocked; the client cannot set the status or holder.
 - [x] Test: the owner adds and deactivates staff; staff cannot manage staff.
 - [x] Frontend tests: event form payloads, and the carton confirmation.
@@ -196,7 +196,7 @@ The earlier plan (Gate and Phases 0–7: foundation, auth, registration lookup, 
 - [x] Test: a refund creates RETURNED and puts the unit back IN_STOCK, only for a sale recorded by a retailer linked to this partner; a void creates SALE_CORRECTED with a reason.
 - [x] Test: lookup never changes any row, and returns no internal identifiers.
 - [x] Test: an unlinked or unapproved retailer, and an unregistered till, are rejected.
-- [x] Test: a sale returns a per-unit error list for sold, recalled, voided or unreleased units.
+- [x] Test: a sale returns a per-unit error list for sold, voided or unreleased units.
 - [x] Test: no payment data is stored beyond `payment_reference`; the signing secret is stored encrypted, never in plain text.
 - [x] Test: the per-partner rate limit.
 - [x] The signing examples in `POS_INTEGRATION.md` are run against the test API.
@@ -240,7 +240,7 @@ The earlier plan (Gate and Phases 0–7: foundation, auth, registration lookup, 
   - batch allocations and the inventory view per destination: allocated, received, in stock, sold, returned (D142);
   - the unit timeline in plain words;
   - alerts with evidence, status and notes (including rule 9);
-  - recalls and notices;
+  - company notices;
   - partners (derived from transfers and sales, plus POS links);
   - consumer reports.
 - **Manufacturer stats:**
@@ -249,7 +249,6 @@ The earlier plan (Gate and Phases 0–7: foundation, auth, registration lookup, 
   - POS versus merchant-page share;
   - checks by city and by week;
   - hot spots;
-  - recall reach;
   - alerts raised and resolved;
   - time to resolve.
 - **Admin:**
@@ -258,14 +257,15 @@ The earlier plan (Gate and Phases 0–7: foundation, auth, registration lookup, 
   - platform stats;
   - the automated-scanning panel: rate-limit hits and invalid-code bursts by area and day, no IPs;
   - consumer reports.
-- **Recalls** (D126).
+- **Design:** this phase's workspace and admin shells cover the company and admin parts of the deferred design catch-up.
+- **Commits:** two, each after the founder's approval: backend first, then screens.
 
 **Done when**
-- [ ] Test: each stat is correct on a fixed dataset.
-- [ ] Test: the inventory view counts are correct per destination, including a returned unit counted again as in stock.
-- [ ] Test: the automated-scanning panel counts are correct per area and day, and the response holds no IP.
-- [ ] Test: a manufacturer sees only its own units, alerts, reports and stats.
-- [ ] Test: a recall writes RECALLED events for every affected unit; hiding a recall needs a reason.
+- [x] Test: each stat is correct on a fixed dataset.
+- [x] Test: the inventory view counts are correct per destination, including a returned unit counted again as in stock.
+- [x] Test: the automated-scanning panel counts are correct per area and day, and the response holds no IP.
+- [x] Test: a manufacturer sees only its own units, alerts, reports and stats.
+- [x] Test: no route can create a recall, and an old recall row changes nothing (D155).
 - [ ] Frontend tests: the timeline wording, alert actions, and empty states.
 
 ---
@@ -284,7 +284,6 @@ The earlier plan (Gate and Phases 0–7: foundation, auth, registration lookup, 
   - [ ] a POS sale then a buyer rescan (just sold, no alert);
   - [ ] sold in Lagos then scanned in Kano 3 hours later (alert);
   - [ ] a refund then a resale (no alert);
-  - [ ] a recalled batch;
   - [ ] an invalid-code burst;
   - [ ] a voided code scan;
   - [ ] one deliberately unreleased carton;
@@ -344,4 +343,6 @@ Not planned for the prototype (D146):
 - AI risk scoring.
 - Consumer rewards (a phone number only if the consumer opts in).
 - Results in local languages.
+- Product recalls and recall reach (removed from the prototype by the founder, D155).
+- A way to correct a batch released by mistake (recalls were removed from the prototype).
 - Photo attachments on concern reports (the Report board has a photo step; the prototype sends text only, so nothing leaves the phone but the description).

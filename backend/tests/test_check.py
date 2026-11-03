@@ -20,7 +20,6 @@ from app.models import (
     Company,
     ConsumerReport,
     LifecycleEvent,
-    Product,
     ProductAnnouncement,
     ProductBatch,
     ProductUnit,
@@ -42,6 +41,7 @@ from app.models.enums import (
 )
 from app.routers.check import current_time
 from app.schemas.check import COPY_HELP
+from app.services import check as check_service
 from app.services import identity, location
 from tests import factories as f
 
@@ -236,31 +236,24 @@ def test_returned_unit_shows_in_circulation_not_yet_sold(world: World, api):
     assert any(fact.startswith("Recorded as returned") for fact in body["recorded_facts"])
 
 
-def test_recall_for_the_product_or_batch_is_the_main_result(world: World, api):
+def test_an_old_recall_row_is_ignored(world: World, api):
+    """Recalls were removed (D155): an old row changes nothing and is not shown."""
     _, token = world.sold(NOW - timedelta(hours=1))
     world.recall(batch_id=world.batch.batch_id)
 
     body = check(api(), token)
 
-    assert body["result"] == CheckResult.BATCH_OR_PRODUCT_WARNING
-    assert body["title"] == "Recall posted for this product"
-    assert body["notices"][0]["kind"] == "RECALL"
-    assert body["notices"][0]["label"] == "Message from the company — not reviewed by FoodLens"
+    assert body["result"] == CheckResult.RECOGNISED_JUST_SOLD
+    assert body["notices"] == []
+    assert body["warnings"] == []
 
 
-def test_recall_of_another_batch_does_not_apply(world: World, api):
-    product = world.db.get(Product, world.batch.product_id)
-    other_batch = f.make_batch(world.db, product, batch_number="DEMO-LOT-002")
-    world.recall(batch_id=other_batch.batch_id)
-    _, token = world.unit()
+def test_no_result_is_ever_a_batch_or_product_warning(world: World, api):
+    """The enum value stays, unused (D155). An expired batch is a warning line on the result."""
+    _, token = world.unit(lifecycle_status=LifecycleStatus.RELEASED)
 
     assert check(api(), token)["result"] == CheckResult.RECOGNISED_NOT_SOLD
-
-
-def test_recalled_unit_status_gives_the_warning(world: World, api):
-    _, token = world.unit(lifecycle_status=LifecycleStatus.RECALLED)
-
-    assert check(api(), token)["result"] == CheckResult.BATCH_OR_PRODUCT_WARNING
+    assert CheckResult.BATCH_OR_PRODUCT_WARNING not in check_service.TITLES
 
 
 @pytest.mark.parametrize(
@@ -300,21 +293,6 @@ def test_rule_9_alert_is_never_consumer_facing(world: World, api):
     )
 
     assert check(api(), token)["result"] == CheckResult.RECOGNISED_NOT_SOLD
-
-
-def test_suspicious_overrides_a_recall_and_keeps_it_as_a_warning(world: World, api):
-    unit, token = world.unit()
-    world.alert(unit)
-    world.recall()
-
-    body = check(api(), token)
-
-    assert body["result"] == CheckResult.SUSPICIOUS_ACTIVITY
-    assert body["title"] == "This code may have been copied"
-    assert body["possible_patterns"] == [
-        "Checked in places too far apart for the time between checks."
-    ]
-    assert "The manufacturer has posted a recall that covers this pack." in body["warnings"]
 
 
 def test_unknown_scanned_code_is_invalid(api, world):
@@ -375,20 +353,20 @@ def test_carton_code_asks_for_the_individual_pack(world: World, api):
 
 
 def test_carton_scans_are_logged_apart_from_pack_checks(world: World, api):
-    """CARTON_CODE in the scan log, with the carton and no unit, even under a recall (D148)."""
-    plain, recalled = identity.new_token(), identity.new_token()
-    for token in (plain, recalled):
+    """CARTON_CODE in the scan log, with the carton and no unit (D148)."""
+    plain, second = identity.new_token(), identity.new_token()
+    for token in (plain, second):
         f.make_carton(
             world.db, world.batch, world.manufacturer, qr_token_hash=identity.token_hash(token)
         )
     client = api()
 
     check(client, plain)
-    world.recall()
-    body = check(client, recalled)
+    world.recall()  # an old recall row changes nothing (D155)
+    body = check(client, second)
 
-    assert body["result"] == CheckResult.BATCH_OR_PRODUCT_WARNING
-    assert "This is a carton code; check the individual pack." in body["warnings"]
+    assert body["result"] == CheckResult.CARTON_CODE
+    assert body["message"] == "This is a carton code; check the individual pack."
     scans = world.db.exec(select(ScanEvent)).all()
     assert [(s.result, s.unit_id is None, s.carton_id is not None) for s in scans] == [
         (CheckResult.CARTON_CODE, True, True)
@@ -501,7 +479,6 @@ def _all_results(world: World, client: TestClient) -> list[dict]:
         world.sold(NOW - timedelta(hours=1))[1],
         world.sold(NOW - timedelta(days=5))[1],
         world.unit(lifecycle_status=LifecycleStatus.VOIDED)[1],
-        world.unit(lifecycle_status=LifecycleStatus.RECALLED)[1],
         alerted_token,
         carton_token,
         identity.new_token(),
@@ -516,7 +493,8 @@ def _all_results(world: World, client: TestClient) -> list[dict]:
 def test_every_result_is_reachable(world: World, api):
     results = {body["result"] for _, body in _all_results(world, api())}
 
-    assert results == {r.value for r in CheckResult}
+    # BATCH_OR_PRODUCT_WARNING stays in the enum, unused (D155).
+    assert results == {r.value for r in CheckResult} - {CheckResult.BATCH_OR_PRODUCT_WARNING.value}
 
 
 def test_no_internal_identifier_or_full_code_in_any_response(world: World, api):

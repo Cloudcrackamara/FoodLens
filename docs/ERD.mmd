@@ -330,11 +330,11 @@ erDiagram
     PRODUCT_ANNOUNCEMENT {
         uuid announcement_id PK
         uuid product_id FK
-        uuid batch_id FK "nullable, recall target"
-        enum kind "NOTICE, RECALL"
+        uuid batch_id FK "nullable, unused since D155"
+        enum kind "NOTICE; RECALL unused since D155"
         string title
         text message
-        text recall_reason "required for RECALL"
+        text recall_reason "unused since D155"
         string image_storage_key "nullable, unused"
         enum status "LIVE, HIDDEN"
         uuid created_by_user_id FK
@@ -430,7 +430,7 @@ erDiagram
     CHANGE_NOTICE ||--|{ CHANGE_NOTICE_FIELD : "proposes"
     CHANGE_NOTICE ||--o{ NOTICE_ATTACHMENT : "supported by"
     PRODUCT ||--o{ PRODUCT_ANNOUNCEMENT : "announced in"
-    PRODUCT_BATCH o|--o{ PRODUCT_ANNOUNCEMENT : "recall target"
+    PRODUCT_BATCH o|--o{ PRODUCT_ANNOUNCEMENT : "unused since D155"
     APP_USER o|--o{ AUDIT_LOG : "acts in"
     COMPANY ||--o{ WHOLESALE_ORDER : "buys in (hidden)"
     COMPANY ||--o{ WHOLESALE_ORDER : "sells in (hidden)"

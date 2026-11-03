@@ -4,12 +4,12 @@ One main result per check, the first that applies:
   1. INVALID_IDENTITY          unknown code, voided, or from a manufacturer that is not approved
   2. SUSPICIOUS_ACTIVITY       an OPEN/INVESTIGATING MEDIUM or HIGH alert on the unit (rule 9
                                excluded), or one resolved as a suspected copy
-  3. BATCH_OR_PRODUCT_WARNING  an active recall
-  4. RECOGNISED_JUST_SOLD      sold at or after now - JUST_SOLD_WINDOW_HOURS (inclusive)
+  3. RECOGNISED_JUST_SOLD      sold at or after now - JUST_SOLD_WINDOW_HOURS (inclusive)
      RECOGNISED_PREVIOUSLY_SOLD an older sale
      RECOGNISED_NOT_SOLD       no standing sale (a valid return clears it, D140)
-A recognised carton QR gives CARTON_CODE ("check the individual pack"), or the recall warning,
-and its scan is always logged as CARTON_CODE (D148).
+A recognised carton QR gives CARTON_CODE ("check the individual pack"), and its scan is always
+logged as CARTON_CODE (D148). An expired batch adds a warning to the result. Recalls were removed
+from the prototype (D155), so nothing produces BATCH_OR_PRODUCT_WARNING.
 
 A check only appends one scan_event row. It never changes lifecycle_status, the sale columns or
 any other unit data (CLAUDE.md rule 4). The risk rules (services/risk.py) run before the result
@@ -68,7 +68,6 @@ MAX_NOTICES = 5
 TITLES = {
     CheckResult.INVALID_IDENTITY: "Code not recognised",
     CheckResult.SUSPICIOUS_ACTIVITY: "This code may have been copied",
-    CheckResult.BATCH_OR_PRODUCT_WARNING: "Recall posted for this product",
     CheckResult.RECOGNISED_JUST_SOLD: "Just sold",
     CheckResult.RECOGNISED_PREVIOUSLY_SOLD: "Already recorded as sold",
     CheckResult.RECOGNISED_NOT_SOLD: "In circulation, not yet sold",
@@ -101,7 +100,7 @@ PATTERNS = {
     RiskRule.R2_IMPOSSIBLE_TRAVEL: "Checked in places too far apart for the time between checks.",
     RiskRule.R3_SCAN_VOLUME: "Checked many more times than usual within 24 hours.",
     RiskRule.R5_POS_UNAVAILABLE_UNIT: (
-        "A shop till tried to sell this code after it was already sold, recalled or not released."
+        "A shop till tried to sell this code after it was already sold or not released."
     ),
     RiskRule.R6_UNRELEASED_SCANNED: (
         "Checked before the manufacturer recorded it as released for sale."
@@ -145,7 +144,7 @@ def _area_name(db: Session, area_id: uuid.UUID | None) -> str | None:
     return area.city if area else None
 
 
-def _context(db: Session, batch_id: uuid.UUID) -> _Context | None:
+def batch_context(db: Session, batch_id: uuid.UUID) -> _Context | None:
     """Product, batch and manufacturer, or None if the manufacturer is not approved."""
     batch = db.get(ProductBatch, batch_id)
     product = db.get(Product, batch.product_id) if batch else None
@@ -156,24 +155,21 @@ def _context(db: Session, batch_id: uuid.UUID) -> _Context | None:
 
 
 def _live_announcements(db: Session, ctx: _Context) -> list[ProductAnnouncement]:
-    """Live notices for the product, and live recalls for the product or this batch."""
+    """Live company notices for the product. An old recall row is ignored (D155)."""
     return list(
         db.exec(
             select(ProductAnnouncement)
             .where(
                 ProductAnnouncement.product_id == ctx.product.product_id,
                 ProductAnnouncement.status == AnnouncementStatus.LIVE,
-                or_(
-                    ProductAnnouncement.batch_id.is_(None),
-                    ProductAnnouncement.batch_id == ctx.batch.batch_id,
-                ),
+                ProductAnnouncement.kind == AnnouncementKind.NOTICE,
             )
             .order_by(ProductAnnouncement.created_at.desc())
         ).all()
     )
 
 
-def _event_fact(db: Session, event: LifecycleEvent, ctx: _Context) -> str | None:
+def event_fact(db: Session, event: LifecycleEvent, ctx: _Context) -> str | None:
     when = _day(event.occurred_at)
     actor = _company_name(db, event.retailer_company_id or event.actor_company_id) or "a company"
     area = _area_name(db, event.area_id)
@@ -198,8 +194,6 @@ def _event_fact(db: Session, event: LifecycleEvent, ctx: _Context) -> str | None
             return f"Recorded as returned to {actor} on {when}."
         case LifecycleEventType.SALE_CORRECTED:
             return f"Sale corrected by {actor} on {when}; the earlier sale stays in the record."
-        case LifecycleEventType.RECALLED:
-            return f"Recall recorded on {when}."
     return None
 
 
@@ -209,7 +203,7 @@ def _facts(db: Session, ctx: _Context, column, subject_id: uuid.UUID) -> list[st
         .where(column == subject_id)
         .order_by(LifecycleEvent.occurred_at, LifecycleEvent.recorded_at)
     ).all()
-    return [fact for event in events if (fact := _event_fact(db, event, ctx))]
+    return [fact for event in events if (fact := event_fact(db, event, ctx))]
 
 
 def _suspicious_patterns(db: Session, unit: ProductUnit) -> list[str]:
@@ -268,7 +262,7 @@ def _day_from_date(value: date) -> str:
 
 def _notices(rows: list[ProductAnnouncement]) -> list[CheckNotice]:
     return [
-        CheckNotice(kind=a.kind.value, title=a.title, message=a.message, posted_at=a.created_at)
+        CheckNotice(title=a.title, message=a.message, posted_at=a.created_at)
         for a in rows[:MAX_NOTICES]
     ]
 
@@ -293,9 +287,6 @@ def _check_unit(
 ) -> CheckResponse:  # fmt: skip
     base = _base(ctx, now.astimezone(WAT).date())
     announcements = _live_announcements(db, ctx)
-    recalled = unit.lifecycle_status == LifecycleStatus.RECALLED or any(
-        a.kind == AnnouncementKind.RECALL for a in announcements
-    )
     facts = _facts(db, ctx, LifecycleEvent.unit_id, unit.unit_id)
     if unit.lifecycle_status == LifecycleStatus.ISSUED:
         facts.append("Not yet recorded as released for sale by the manufacturer.")
@@ -316,16 +307,6 @@ def _check_unit(
         fields |= {
             "message": SUSPICIOUS_MESSAGE,
             "advice": "Ask the seller about it or choose another pack, and report a concern.",
-        }
-        if recalled:
-            base["warnings"].append("The manufacturer has posted a recall that covers this pack.")
-    elif recalled:
-        result = CheckResult.BATCH_OR_PRODUCT_WARNING
-        fields |= {
-            "message": (
-                f"{ctx.manufacturer.display_name} has posted a recall that covers this pack. "
-                "Read the company's message below before you buy or use it."
-            ),
         }
     elif sale and sale.sold_at >= now - timedelta(hours=window):
         result = CheckResult.RECOGNISED_JUST_SOLD
@@ -376,27 +357,13 @@ def _check_carton(
 ) -> CheckResponse:  # fmt: skip
     base = _base(ctx, now.astimezone(WAT).date())
     announcements = _live_announcements(db, ctx)
-    recalled = carton.lifecycle_status == LifecycleStatus.RECALLED or any(
-        a.kind == AnnouncementKind.RECALL for a in announcements
-    )
-    if recalled:
-        result = CheckResult.BATCH_OR_PRODUCT_WARNING
-        title = TITLES[result]
-        message = (
-            f"{ctx.manufacturer.display_name} has posted a recall that covers this carton. "
-            "Read the company's message below."
-        )
-        base["warnings"].append(CARTON_MESSAGE)
-    else:
-        result = CheckResult.CARTON_CODE
-        title, message = CARTON_TITLE, CARTON_MESSAGE
     return CheckResponse(
-        result=result,
+        result=CheckResult.CARTON_CODE,
         identifier_type=identifier_type,
         subject="CARTON",
         code_last4=last4(code),
-        title=title,
-        message=message,
+        title=CARTON_TITLE,
+        message=CARTON_MESSAGE,
         just_sold_window_hours=window,
         recorded_facts=_facts(db, ctx, LifecycleEvent.carton_id, carton.carton_id),
         notices=_notices(announcements),
@@ -420,7 +387,7 @@ def check_code(
     unit = db.exec(select(ProductUnit).where(ProductUnit.qr_token_hash == digest)).first()
     carton = None if unit else db.exec(select(Carton).where(Carton.qr_token_hash == digest)).first()
     subject = unit or carton
-    ctx = _context(db, subject.batch_id) if subject else None
+    ctx = batch_context(db, subject.batch_id) if subject else None
     now = now.astimezone(UTC)
     th = thresholds or replace(
         risk.Thresholds.from_settings(get_settings()), window_hours=window_hours
@@ -441,13 +408,9 @@ def check_code(
     else:
         response = _check_carton(db, carton, ctx, identifier_type, code, now, window_hours)
 
-    # A recognised carton is always logged as CARTON_CODE, even under a recall, so carton scans
-    # never count as pack checks in stats or risk rules (D148).
-    logged = (
-        CheckResult.CARTON_CODE
-        if carton and response.result != CheckResult.INVALID_IDENTITY
-        else response.result
-    )
+    # A recognised carton is logged as CARTON_CODE, so carton scans never count as pack checks in
+    # stats or risk rules (D148).
+    logged = response.result
     db.add(
         ScanEvent(
             scan_id=scan_id,
