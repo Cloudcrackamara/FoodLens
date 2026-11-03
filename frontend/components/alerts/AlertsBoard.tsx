@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { TimelineView } from "@/components/company/PackTimeline";
 import { Card } from "@/components/ui/Card";
 import { EmptyPanel, ErrorPanel, InlineError, LoadingPanel } from "@/components/ui/Panels";
 import { StatusPill } from "@/components/ui/StatusPill";
@@ -21,6 +22,7 @@ import {
   type Alert,
   type AlertFilter,
 } from "@/lib/alerts";
+import { useAlertTimeline } from "@/lib/dashboards";
 import { formatDate } from "@/lib/format";
 import { buttonClass, cardTitleClass, helpTextClass, tabClass, textareaClass } from "@/lib/ui";
 
@@ -46,7 +48,23 @@ function Pills({ alert }: { alert: Alert }) {
   );
 }
 
-function Detail({ base, alertId }: { base: string; alertId: string }) {
+// Rule 4 and rule 9 alerts have no pack, so they have no timeline.
+const NO_PACK = ["R4_INVALID_BURST", "R9_MORE_OBSERVED_THAN_ALLOCATED"];
+
+function AlertTimeline({ base, alertId }: { base: string; alertId: string }) {
+  const timeline = useAlertTimeline(base, alertId, true);
+
+  return (
+    <section aria-labelledby="alert-timeline-heading" className="flex flex-col gap-2">
+      <h3 id="alert-timeline-heading" className={`m-0 ${cardTitleClass}`}>Pack timeline</h3>
+      {timeline.isPending && <LoadingPanel />}
+      {timeline.isError && <ErrorPanel onRetry={() => timeline.refetch()}>{describeError(timeline.error)}</ErrorPanel>}
+      {timeline.data && <TimelineView timeline={timeline.data} />}
+    </section>
+  );
+}
+
+function Detail({ base, alertId, withTimeline }: { base: string; alertId: string; withTimeline: boolean }) {
   const detail = useAlert(base, alertId);
   const status = useAlertStatus(base);
   const note = useAlertNote(base);
@@ -106,6 +124,8 @@ function Detail({ base, alertId }: { base: string; alertId: string }) {
         </ol>
       </section>
 
+      {withTimeline && !NO_PACK.includes(alert.rule) && <AlertTimeline base={base} alertId={alertId} />}
+
       <section aria-labelledby="notes-heading" className="flex flex-col gap-2">
         <h3 id="notes-heading" className={`m-0 ${cardTitleClass}`}>Notes</h3>
         {alert.notes.length > 0 && (
@@ -147,7 +167,7 @@ function Detail({ base, alertId }: { base: string; alertId: string }) {
  * (/api/admin/alerts). Built from the workspace parts: filter tabs, list rows with pills, a
  * detail card with a timeline (no board in design/).
  */
-export function AlertsBoard({ base }: { base: string }) {
+export function AlertsBoard({ base, withTimeline = false }: { base: string; withTimeline?: boolean }) {
   const [filter, setFilter] = useState<AlertFilter>("OPEN");
   const [selected, setSelected] = useState<string | null>(null);
   const list = useAlerts(base, filter);
@@ -198,7 +218,7 @@ export function AlertsBoard({ base }: { base: string }) {
             ))}
           </ul>
         </div>
-        <div className="min-w-0">{selected && <Detail base={base} alertId={selected} />}</div>
+        <div className="min-w-0">{selected && <Detail base={base} alertId={selected} withTimeline={withTimeline} />}</div>
       </div>
     </div>
   );

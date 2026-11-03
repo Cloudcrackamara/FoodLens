@@ -34,8 +34,6 @@ import {
 import { formatDate } from "@/lib/format";
 import { buttonClass } from "@/lib/ui";
 import { ErrorPanel, LoadingPanel } from "@/components/ui/Panels";
-import { PosPartners } from "./PosPartners";
-import { AlertsBoard } from "@/components/alerts/AlertsBoard";
 
 const companyActions: Record<CompanyStatus, CompanyDecision[]> = {
   PENDING_REVIEW: ["APPROVE", "REJECT"],
@@ -277,12 +275,6 @@ export function AdminReview() {
         </ul>
       </section>
 
-      <section aria-labelledby="alerts-heading" className="flex flex-col gap-3">
-        <h2 id="alerts-heading" className="font-heading text-[17px] font-semibold text-ink">Alerts</h2>
-        <AlertsBoard base="/api/admin/alerts" />
-      </section>
-
-      <PosPartners />
     </div>
   );
 }

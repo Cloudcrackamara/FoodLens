@@ -2,7 +2,7 @@
 
 FoodLens is a startup product at the demonstration-prototype stage; the founder's capstone is its first milestone. It is being rebuilt as a unit-level product integrity platform: every pack gets its own QR identity, shops record what happens to it, and consumers check it for free (`docs/PLAN.md`, final design in `docs/DECISIONS.md` D137–D147).
 
-**Status: Phases 1 to 6 are done.** The unit-identity schema exists (units, cartons, lifecycle events, scans, alerts, allocations, POS partners), and the old registration lookup, simulated register and OCR are removed. Manufacturers generate a QR code for every pack and carton, download the one-time label file, release, void and allocate stock (see [Pack codes and labels](#pack-codes-and-labels)). Approved distributors and retailers record received, transferred, sold, returned and corrected stock at `/merchant` (see [Merchant page](#merchant-page)), and shop tills record sales after payment through the signed POS API (see [POS integration and the demo till](#pos-integration-and-the-demo-till)). Anyone can check a pack for free at `/check` (Scan QR or Type code) or by opening the QR link `/p/{code}` (see [Consumer checks](#consumer-checks)). Companies register with type flags (manufacturer, distributor, retailer), manage demo-reviewed catalogue data and appear in the public partner directory. Each phase updates this README for what it changes.
+**Status: Phases 1 to 7 are done.** The unit-identity schema exists (units, cartons, lifecycle events, scans, alerts, allocations, POS partners), and the old registration lookup, simulated register and OCR are removed. Manufacturers generate a QR code for every pack and carton, download the one-time label file, release, void and allocate stock (see [Pack codes and labels](#pack-codes-and-labels)). Approved distributors and retailers record received, transferred, sold, returned and corrected stock at `/merchant` (see [Merchant page](#merchant-page)), and shop tills record sales after payment through the signed POS API (see [POS integration and the demo till](#pos-integration-and-the-demo-till)). Anyone can check a pack for free at `/check` (Scan QR or Type code) or by opening the QR link `/p/{code}` (see [Consumer checks](#consumer-checks)). Companies register with type flags (manufacturer, distributor, retailer), manage demo-reviewed catalogue data and appear in the public partner directory. Each phase updates this README for what it changes.
 
 > **DEMO DATA — NOT AN OFFICIAL REGULATOR SERVICE.** All companies, products and codes are fictional. A check is not a laboratory test and not a NAFDAC or SON decision, and no QR system catches every copied code.
 
@@ -138,8 +138,11 @@ Each QR encodes `{PUBLIC_BASE_URL}/p/{code}` with error correction level M and a
 |---|---|---|
 | `/suppliers` | Anyone | Partner directory: approved companies with demo-reviewed locations, badge "FoodLens demo-reviewed profile" |
 | `/company/register` | Signed-in user without a company | Registers a company as manufacturer, distributor and/or retailer (at least one; starts pending; you become owner) |
-| `/company` | Company members | Review status, locations, products (manufacturers only, with the NAFDAC number as printed), batches, change notices with attachments, announcements (once approved) |
-| `/admin` | Admins (seed admin) | Approve, reject, or suspend companies; mark locations demo-reviewed; approve, reject, or request clarification on change notices; hide announcements |
+| `/company` | Company members | Approved manufacturers: overview, products and batches (`/company/products`, `/company/batches/{id}`), pack timeline, alerts, notices, partners, consumer reports and stats. Other companies: `/company/profile` and the merchant page |
+| `/company/profile` | Company members | Review status, contact details, locations, change notices with attachments |
+| `/admin` | Admins (seed admin) | Overview, and the pages below |
+| `/admin/queues` | Admins | Approve, reject, or suspend companies; mark locations demo-reviewed; approve, reject, or request clarification on change notices; hide announcements |
+| `/admin/pos`, `/admin/alerts`, `/admin/reports`, `/admin/stats`, `/admin/scanning` | Admins | POS partners, alerts, consumer reports, platform stats, and the automated-scanning panel (counts by area and day, no IPs) |
 
 Try the full flow: create an account at `/register`, register a company, sign in as the seed admin in another browser (or a private window) and approve it at `/admin`, add a location at `/company`, mark it demo-reviewed at `/admin`, then see it at `/suppliers`. The NAFDAC number on a product is shown as printed, as information only; FoodLens never checks it against any register. A FoodLens demo review is never a NAFDAC or SON approval.
 
@@ -209,7 +212,7 @@ For usability-test sessions, list the test machines' IPs or a range in `RATE_LIM
 ## Risk alerts
 
 - Nine deterministic rules (D143, D152) run on every consumer check, single-pack merchant receipt or sale, and POS lookup or sale. Thresholds are in `backend/.env.example` (`RISK_*`, `ALLOCATION_OVERAGE_PCT`).
-- Manufacturers (owners and staff) see their alerts at `/company/alerts`: evidence, status changes and notes. Admins see every alert, including invalid-code bursts, on `/admin`.
+- Manufacturers (owners and staff) see their alerts at `/company/alerts`: evidence, the pack timeline, status changes and notes. Admins see every alert, including invalid-code bursts, at `/admin/alerts`.
 - Only OPEN or INVESTIGATING alerts at MEDIUM or HIGH (never rule 9), or one resolved as a suspected copy, change what a buyer sees. LOW alerts stay on the dashboard.
 - Scan logs older than 12 months: `uv run python -m app.jobs.purge` (from `backend/`). Alert evidence keeps its own snapshot.
 

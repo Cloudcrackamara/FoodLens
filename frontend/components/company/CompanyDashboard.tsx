@@ -1,15 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { FormField } from "@/components/auth/FormField";
-import { Catalogue } from "./Catalogue";
-import { Announcements } from "./Announcements";
 import { ChangeNotices } from "./ChangeNotices";
 import { ordersEnabled } from "@/lib/features";
 import { IncomingOrders } from "./IncomingOrders";
 import { describeError } from "@/lib/api";
-import { fieldErrors, useCurrentUser } from "@/lib/auth";
+import { fieldErrors } from "@/lib/auth";
 import { buttonClass } from "@/lib/ui";
 import {
   companyStatusLabels,
@@ -152,11 +149,6 @@ export function CompanyView({ company, isOwner = false }: { company: Company; is
         <p className="mt-2 font-medium">Status: {companyStatusLabels[company.review_status]}</p>
         <p>{statusExplanations[company.review_status]}</p>
         {company.review_note && <p className="mt-1 text-sm">Reviewer note: {company.review_note}</p>}
-        {company.is_manufacturer && (
-          <Link href="/company/alerts" className="mt-3 inline-block font-semibold text-brand-dark underline">
-            Alerts
-          </Link>
-        )}
       </section>
 
       <ContactDetails company={company} isOwner={isOwner} />
@@ -179,37 +171,19 @@ export function CompanyView({ company, isOwner = false }: { company: Company; is
         {company.review_status === "APPROVED" && <AddLocationForm companyId={company.company_id} />}
       </section>
 
-      {company.review_status === "APPROVED" && <Catalogue companyId={company.company_id} />}
       {company.review_status === "APPROVED" && <ChangeNotices companyId={company.company_id} />}
-      {company.review_status === "APPROVED" && <Announcements companyId={company.company_id} />}
       {ordersEnabled && company.review_status === "APPROVED" && <IncomingOrders companyId={company.company_id} />}
     </div>
   );
 }
 
-export function CompanyDashboard() {
-  const { data: user, isPending } = useCurrentUser();
-  const company = useMyCompany(user?.membership?.company_id);
+/** The company's status, contact details, locations and change notices (inside CompanyShell). */
+export function CompanyProfile({ companyId, isOwner }: { companyId: string; isOwner: boolean }) {
+  const company = useMyCompany(companyId);
 
-  if (isPending) return <LoadingPanel />;
-  if (!user) {
-    return (
-      <p>
-        <Link href="/login" className="font-semibold text-brand-dark underline">Sign in</Link> to manage your company.
-      </p>
-    );
-  }
-  if (!user.membership) {
-    return (
-      <p>
-        Your account is not linked to a company yet.{" "}
-        <Link href="/company/register" className="font-semibold text-brand-dark underline">Register your company</Link>.
-      </p>
-    );
-  }
   if (company.isError) {
-    return <ErrorPanel>{describeError(company.error)}</ErrorPanel>;
+    return <ErrorPanel onRetry={() => company.refetch()}>{describeError(company.error)}</ErrorPanel>;
   }
   if (!company.data) return <LoadingPanel />;
-  return <CompanyView company={company.data} isOwner={user.membership.role === "OWNER"} />;
+  return <CompanyView company={company.data} isOwner={isOwner} />;
 }

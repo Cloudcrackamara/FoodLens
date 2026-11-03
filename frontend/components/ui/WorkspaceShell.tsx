@@ -14,6 +14,8 @@ type Props = {
   nav: NavItem[];
   currentHref: string;
   pageTitle: string;
+  /** The small heading above the navigation: the section these pages belong to. */
+  sectionLabel: string;
   onLogout: () => void;
   children: ReactNode;
 };
@@ -49,7 +51,8 @@ function Sidebar({
   currentHref,
   onNavigate,
   onLogout,
-}: Pick<Props, "companyName" | "nav" | "currentHref" | "onLogout"> & { onNavigate?: () => void }) {
+  sectionLabel,
+}: Pick<Props, "companyName" | "nav" | "currentHref" | "onLogout" | "sectionLabel"> & { onNavigate?: () => void }) {
   return (
     <div className="flex h-full flex-col gap-1.5 bg-ink px-4 py-[22px] text-[#DCDAF0]">
       <Logo />
@@ -67,7 +70,7 @@ function Sidebar({
           </span>
         </span>
       </div>
-      <p className="mx-2 mt-2 mb-1 text-[11px] font-bold tracking-[0.08em] text-[#9C9AC4]">STOCK</p>
+      <p className="mx-2 mt-2 mb-1 text-[11px] font-bold tracking-[0.08em] text-[#9C9AC4]">{sectionLabel}</p>
       <nav aria-label="Business navigation" className="flex flex-col gap-[3px]">
         {nav.map((item) => {
           const current = item.href === currentHref;
@@ -109,6 +112,7 @@ export function WorkspaceShell({
   nav,
   currentHref,
   pageTitle,
+  sectionLabel,
   onLogout,
   children,
 }: Props) {
@@ -130,7 +134,7 @@ export function WorkspaceShell({
       <DemoDataBanner />
       <div className="flex flex-1">
         <aside aria-label="Business sidebar" className="hidden w-64 flex-none lg:block">
-          <Sidebar companyName={companyName} nav={nav} currentHref={currentHref} onLogout={onLogout} />
+          <Sidebar companyName={companyName} nav={nav} currentHref={currentHref} onLogout={onLogout} sectionLabel={sectionLabel} />
         </aside>
 
         {drawerOpen && (
@@ -148,6 +152,7 @@ export function WorkspaceShell({
                 currentHref={currentHref}
                 onNavigate={() => setDrawerOpen(false)}
                 onLogout={onLogout}
+                sectionLabel={sectionLabel}
               />
             </aside>
           </div>

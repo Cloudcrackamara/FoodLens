@@ -150,7 +150,7 @@ The headlines, labels and help text come from the current `check.py` and `CheckR
 | `Accounts`, `AccLogin*`, `AccForgot*`, `AccStatus*` | `/register`, `/login`, `/company/register` | Split-screen auth layout; warm "Your company" panel; indigo "What happens next" panel; status timeline. |
 | `Supplier`, `SupProducts`, `SupProduct`, `SupSubmissions`, `SupLocations`, `SupAnnouncements*` | `/company` → `CompanyDashboard`, `Catalogue`, `BatchCodes`, `ChangeNotices`, `Announcements` | Use the workspace shell, summary cards and tables. `SupProductNew` had a register lookup, which is dropped: `registration_number` is information only. |
 | `SupOrders*`, `Ws*` | `/orders`, `/suppliers` | Hidden while `ORDERS_ENABLED=false`. Keep for later. |
-| `Admin*`, `AdminQueue`, `AdminReports*` | `/admin` → `AdminReview` | Admin shell, queues, detail page with decision panel, review history. |
+| `Admin*`, `AdminQueue`, `AdminReports*` | `/admin/*` → `AdminShell`, `AdminReview` | Admin shell, queues, detail page with decision panel, review history. The queues still use the earlier layout inside the new shell. |
 | `AdminLogin*` | staff sign-in | Only if staff sign in separately; otherwise reuse its look on `/login`. |
 
 **Screens the design doesn't cover** need building in the same visual system. These are:

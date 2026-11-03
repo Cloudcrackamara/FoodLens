@@ -12,7 +12,10 @@ export function isMerchantPath(pathname: string | null): boolean {
   return pathname === "/merchant" || (pathname?.startsWith("/merchant/") ?? false);
 }
 
-/** The demo till and the alerts page draw their own banner and workspace shell too. */
+/** The demo till, company pages and admin pages draw their own banner and shell too. */
 export function isOwnShellPath(pathname: string | null): boolean {
-  return pathname === "/demo/pos" || pathname === "/company/alerts";
+  if (!pathname) return false;
+  if (pathname === "/demo/pos" || pathname === "/admin" || pathname.startsWith("/admin/")) return true;
+  if (pathname === "/company/register") return false; // the public registration form
+  return pathname === "/company" || pathname.startsWith("/company/");
 }

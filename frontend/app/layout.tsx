@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, Open_Sans, Poppins } from "next/font/google";
+import { Suspense } from "react";
 import { SiteChrome } from "@/components/SiteChrome";
 import { Providers } from "./providers";
 import "./globals.css";
@@ -37,7 +38,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="flex min-h-full flex-col bg-paper text-ink">
         <Providers>
-          <SiteChrome />
+          {/* usePathname needs a Suspense boundary on dynamic routes (cacheComponents). */}
+          <Suspense>
+            <SiteChrome />
+          </Suspense>
           {children}
         </Providers>
       </body>

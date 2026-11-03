@@ -103,6 +103,7 @@ export function MerchantShell({ href, title, ownerOnly = false, children }: Prop
       nav={nav}
       currentHref={href}
       pageTitle={title}
+      sectionLabel="STOCK"
       onLogout={() => logout.mutate(undefined, { onSuccess: () => router.push("/login") })}
     >
       {children({ companyId: membership.company_id, role: membership.role })}

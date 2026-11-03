@@ -3,7 +3,7 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { FormField } from "@/components/auth/FormField";
 import { describeError } from "@/lib/api";
-import { fieldErrors, useCurrentUser } from "@/lib/auth";
+import { fieldErrors } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
 import { buttonClass } from "@/lib/ui";
 import {
@@ -24,6 +24,7 @@ import {
   type GenerateForm,
 } from "@/lib/units";
 import { EmptyPanel, LoadingPanel } from "@/components/ui/Panels";
+import { Inventory } from "./Inventory";
 
 const submitClass = `self-start ${buttonClass("primary", "sm")}`;
 const inputClass = "min-h-[46px] rounded-[10px] border border-line-input bg-white px-3 py-2 text-base text-ink";
@@ -345,22 +346,9 @@ export function BatchCodes({ companyId, batchId, isOwner }: { companyId: string;
           <Allocations companyId={companyId} batchId={batchId} />
         </Section>
       )}
+
+      {total > 0 && <Inventory companyId={companyId} batchId={batchId} />}
     </div>
   );
 }
 
-/** The signed-in member's view of one batch. Owner-only parts are hidden for staff; the server
- *  enforces the same rules (D106). */
-export function MemberBatchCodes({ batchId }: { batchId: string }) {
-  const { data: user, isPending } = useCurrentUser();
-  if (isPending) return <LoadingPanel />;
-  const membership = user?.membership;
-  if (!membership) return <p>Sign in as a member of the manufacturer to manage this batch.</p>;
-  return (
-    <BatchCodes
-      companyId={membership.company_id}
-      batchId={batchId}
-      isOwner={membership.role === "OWNER"}
-    />
-  );
-}

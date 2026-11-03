@@ -369,6 +369,7 @@ export function DemoTillScreen({ decoder }: { decoder?: QrDecoder }) {
       nav={[{ href: "/demo/pos", label: TITLE }]}
       currentHref="/demo/pos"
       pageTitle={TITLE}
+      sectionLabel="TILL"
       onLogout={() => logout.mutate(undefined, { onSuccess: () => router.push("/login") })}
     >
       <div className="mx-auto flex w-full max-w-[560px] flex-col gap-4">

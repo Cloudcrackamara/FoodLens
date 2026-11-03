@@ -129,8 +129,14 @@ describe("site banner", () => {
     expect(banners()).toHaveLength(1);
     home.unmount();
 
+    // The public registration form has no shell of its own.
+    pathname = "/company/register";
+    const register = renderWithQuery(<SiteChrome />);
+    expect(banners()).toHaveLength(1);
+    register.unmount();
+
     // These pages draw their own banner (consumer header or workspace shell).
-    for (const path of ["/check", "/p/7Q2M", "/merchant", "/demo/pos", "/company/alerts"]) {
+    for (const path of ["/check", "/p/7Q2M", "/merchant", "/demo/pos", "/company", "/company/stats", "/admin", "/admin/scanning"]) {
       pathname = path;
       const { unmount } = renderWithQuery(<SiteChrome />);
       expect(banners()).toHaveLength(0);

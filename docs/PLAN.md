@@ -257,7 +257,7 @@ The earlier plan (Gate and Phases 0–7: foundation, auth, registration lookup, 
   - platform stats;
   - the automated-scanning panel: rate-limit hits and invalid-code bursts by area and day, no IPs;
   - consumer reports.
-- **Design:** this phase's workspace and admin shells cover the company and admin parts of the deferred design catch-up.
+- **Design:** this phase's workspace and admin shells cover the company and admin parts of the deferred design catch-up. The older forms inside them (batch, company profile, notices, review queues) keep their earlier layout; restyling them is the design catch-up after Phase 8.
 - **Commits:** two, each after the founder's approval: backend first, then screens.
 
 **Done when**
@@ -266,7 +266,7 @@ The earlier plan (Gate and Phases 0–7: foundation, auth, registration lookup, 
 - [x] Test: the automated-scanning panel counts are correct per area and day, and the response holds no IP.
 - [x] Test: a manufacturer sees only its own units, alerts, reports and stats.
 - [x] Test: no route can create a recall, and an old recall row changes nothing (D155).
-- [ ] Frontend tests: the timeline wording, alert actions, and empty states.
+- [x] Frontend tests: the timeline wording, alert actions, and empty states.
 
 ---
 
