@@ -275,22 +275,25 @@ The earlier plan (Gate and Phases 0–7: foundation, auth, registration lookup, 
 **Goal:** One command produces the D145 scenario, and the whole story can be demonstrated on a phone.
 
 **Done when**
-- [ ] The seed is idempotent and built through the services; every batch is released except the labelled test carton.
-- [ ] Demo codes are fixed 26-character tokens from `demo_data.py`, hashed like any other code (D111 exception).
-- [ ] Cases (D145):
-  - [ ] a batch allocated between Lagos and Kano;
-  - [ ] loose units allocated individually to a Kano retailer;
-  - [ ] one area exceeding its allocation (rule 9);
-  - [ ] a POS sale then a buyer rescan (just sold, no alert);
-  - [ ] sold in Lagos then scanned in Kano 3 hours later (alert);
-  - [ ] a refund then a resale (no alert);
-  - [ ] an invalid-code burst;
-  - [ ] a voided code scan;
-  - [ ] one deliberately unreleased carton;
-  - [ ] never-sold units.
-- [ ] Test: each scenario case gives its expected result and alert (and no alert where none is expected).
-- [ ] Test: no scenario except the unreleased test carton gives `SUSPICIOUS_ACTIVITY` because of an unreleased unit.
-- [ ] The README lists the demo codes, the logins (`SEED_DEMO_PASSWORD`) and a step-by-step demo script.
+- [x] The seed is idempotent and built through the services; every batch with codes is released except the labelled test carton (D156).
+- [x] Demo codes are fixed 26-character tokens from `demo_data.py`, hashed like any other code (D111 exception).
+- [x] Cases (D145):
+  - [x] a batch allocated between Lagos and Kano;
+  - [x] loose units allocated individually to a Kano retailer;
+  - [x] one area exceeding its allocation (rule 9);
+  - [x] a POS sale then a buyer rescan (just sold, no alert);
+  - [x] sold in Lagos then scanned in Kano 3 hours later (alert);
+  - [x] a refund then a resale (no alert);
+  - [x] an expired batch (a warning on the recognised result; D155 removed the recalled batch);
+  - [x] an invalid-code burst;
+  - [x] a voided code scan;
+  - [x] one deliberately unreleased carton;
+  - [x] never-sold units.
+- [x] Test: each scenario case gives its expected result and alert (and no alert where none is expected).
+- [x] Test: no scenario except the unreleased test carton gives `SUSPICIOUS_ACTIVITY` because of an unreleased unit.
+- [x] The README lists the demo codes and the logins (`SEED_DEMO_PASSWORD`), and `docs/DEMO_SCRIPT.md` is the step-by-step demo script.
+- [x] One command resets and seeds: `node scripts/reset-demo.mjs`.
+- [x] The whole demo run end to end in a browser at phone and laptop widths, recorded in `docs/log.md` (182).
 - [ ] A manual demo pass on a phone, recorded in `docs/log.md`.
 
 ---

@@ -2,7 +2,7 @@
 
 FoodLens is a startup product at the demonstration-prototype stage; the founder's capstone is its first milestone. It is being rebuilt as a unit-level product integrity platform: every pack gets its own QR identity, shops record what happens to it, and consumers check it for free (`docs/PLAN.md`, final design in `docs/DECISIONS.md` D137–D147).
 
-**Status: Phases 1 to 7 are done.** The unit-identity schema exists (units, cartons, lifecycle events, scans, alerts, allocations, POS partners), and the old registration lookup, simulated register and OCR are removed. Manufacturers generate a QR code for every pack and carton, download the one-time label file, release, void and allocate stock (see [Pack codes and labels](#pack-codes-and-labels)). Approved distributors and retailers record received, transferred, sold, returned and corrected stock at `/merchant` (see [Merchant page](#merchant-page)), and shop tills record sales after payment through the signed POS API (see [POS integration and the demo till](#pos-integration-and-the-demo-till)). Anyone can check a pack for free at `/check` (Scan QR or Type code) or by opening the QR link `/p/{code}` (see [Consumer checks](#consumer-checks)). Companies register with type flags (manufacturer, distributor, retailer), manage demo-reviewed catalogue data and appear in the public partner directory. Each phase updates this README for what it changes.
+**Status: Phases 1 to 7 are done, and Phase 8 (demo scenario) is built. A pass on a physical phone is still to do.** The unit-identity schema exists (units, cartons, lifecycle events, scans, alerts, allocations, POS partners), and the old registration lookup, simulated register and OCR are removed. Manufacturers generate a QR code for every pack and carton, download the one-time label file, release, void and allocate stock (see [Pack codes and labels](#pack-codes-and-labels)). Approved distributors and retailers record received, transferred, sold, returned and corrected stock at `/merchant` (see [Merchant page](#merchant-page)), and shop tills record sales after payment through the signed POS API (see [POS integration and the demo till](#pos-integration-and-the-demo-till)). Anyone can check a pack for free at `/check` (Scan QR or Type code) or by opening the QR link `/p/{code}` (see [Consumer checks](#consumer-checks)). Companies register with type flags (manufacturer, distributor, retailer), manage demo-reviewed catalogue data and appear in the public partner directory. Each phase updates this README for what it changes.
 
 > **DEMO DATA — NOT AN OFFICIAL REGULATOR SERVICE.** All companies, products and codes are fictional. A check is not a laboratory test and not a NAFDAC or SON decision, and no QR system catches every copied code.
 
@@ -63,8 +63,76 @@ Sign-ins after seeding:
 | Demo distributor (Demo Market Traders) | `buyer@demo.foodlens.invalid` | `SEED_DEMO_PASSWORD` in `backend/.env` |
 | Demo manufacturer (Demo Harvest Foods) | `seller@demo.foodlens.invalid` | `SEED_DEMO_PASSWORD` in `backend/.env` |
 | Demo retailer (Demo Corner Shop, demo till) | `shop@demo.foodlens.invalid` | `SEED_DEMO_PASSWORD` in `backend/.env` |
+| Demo retailer (Demo Kano Stores) | `kano@demo.foodlens.invalid` | `SEED_DEMO_PASSWORD` in `backend/.env` |
 
-The seed creates fictional companies, products, batches and reviewed locations. Demo QR codes arrive with the full scenario in Phase 8 (D145).
+The seed creates fictional companies, products, batches, reviewed locations and the demo scenario. To run the demo, see [Run the demo](#run-the-demo).
+
+## Run the demo
+
+The seed builds the whole demo scenario (D145) through the services, so every alert comes from the risk rules. The 7-minute walkthrough is [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md).
+
+**Set these once.** In `backend/.env`:
+
+```bash
+POS_SECRET_KEY=<generate: uv run python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())">
+SEED_ADMIN_EMAIL=admin@demo.foodlens.invalid
+SEED_ADMIN_PASSWORD=<10+ characters>
+SEED_DEMO_PASSWORD=<10+ characters>
+DEMO_POS_ENABLED=true
+SIMULATE_LOCATION_ENABLED=true
+```
+
+In `frontend/.env.local`:
+
+```bash
+NEXT_PUBLIC_DEMO_POS_ENABLED=true
+```
+
+**Reset and seed with one command**, from the repo root:
+
+```bash
+node scripts/reset-demo.mjs
+```
+
+**Warning: this deletes all data in the database named by `DATABASE_URL`, including every account you registered yourself.** Only the reference areas stay. It refuses, and deletes nothing, unless `APP_ENV=development` and the first four settings above are set. To add the scenario without deleting anything, run `uv run python -m app.seed` from `backend/` instead; a second run changes nothing.
+
+Then start the app with `node scripts/dev.mjs`.
+
+History is backdated from the moment of seeding. The seeded "just sold" pack (ending `1003`) keeps that result for 5.5 hours, and the resold pack (ending `1005`) for 4 hours. Reset again before a demo.
+
+### Demo logins
+
+| Role | Email | Password |
+|---|---|---|
+| Admin | `admin@demo.foodlens.invalid` (`SEED_ADMIN_EMAIL`) | `SEED_ADMIN_PASSWORD` |
+| Manufacturer: Demo Harvest Foods | `seller@demo.foodlens.invalid` | `SEED_DEMO_PASSWORD` |
+| Distributor: Demo Market Traders, Lagos | `buyer@demo.foodlens.invalid` | `SEED_DEMO_PASSWORD` |
+| Retailer with the demo till: Demo Corner Shop, Lagos | `shop@demo.foodlens.invalid` | `SEED_DEMO_PASSWORD` |
+| Retailer: Demo Kano Stores, Kano | `kano@demo.foodlens.invalid` | `SEED_DEMO_PASSWORD` |
+
+### Demo codes
+
+These codes are fictional and fixed, so they can be printed here (the D111 exception). They are stored as hashes like any other code. Type one at `/check`, or open `/p/<code without spaces>`. Choose the city shown in **Demo: check as if from**: with no area, the place-based rules cannot fire.
+
+| Code | City | Case | Result on check | Alert |
+|---|---|---|---|---|
+| `7DEM ABCD EFGH JKMN PQRS TV10 01` | Lagos | Never sold, kept for the walkthrough | In circulation, not yet sold | None until the walkthrough |
+| `7DEM ABCD EFGH JKMN PQRS TV10 02` | Lagos | Never sold, for a second run without a reset | In circulation, not yet sold | None |
+| `7DEM ABCD EFGH JKMN PQRS TV10 03` | Lagos | POS sale, then the buyer rescans | Just sold | None |
+| `7DEM ABCD EFGH JKMN PQRS TV10 04` | Kano | Sold in Lagos, checked in Kano 3 hours later | This code may have been copied | Rule 2, HIGH |
+| `7DEM ABCD EFGH JKMN PQRS TV10 05` | Lagos | Refund, then resale | Just sold | None |
+| `7DEM ABCD EFGH JKMN PQRS TV10 06` | Lagos | Never sold (`1007` to `1010` too, and `2001` to `2010` in Kano) | In circulation, not yet sold | None |
+| `7DEM ABCD EFGH JKMN PQRS TVK0 01` | Kano | Loose pack allocated individually to the Kano retailer (`K002` to `K004` too) | In circulation, not yet sold | None |
+| `7DEM ABCD EFGH JKMN PQRS TVA0 01` | Abuja | One of 5 packs checked in Abuja, which is allocated 3 (`A002` to `A005` too) | In circulation, not yet sold | Rule 9, MEDIUM, dashboard only |
+| `7DEM ABCD EFGH JKMN PQRS TVV0 01` | Ibadan | Voided before release, then checked | Code not recognised | Rule 8, HIGH |
+| `7DEM ABCD EFGH JKMN PQRS TVX0 01` | Port Harcourt | Never issued; one of a burst of 20 (`X002` to `X020`) | Code not recognised | Rule 4, MEDIUM, admin only |
+| `7DEM ABCD EFGH JKMN PQRS TVE0 01` | Lagos | Batch past its expiry date (`E002` too) | In circulation, not yet sold, with an amber expiry warning | None |
+| `7DEM ABCD EFGH JKMN PQRS TVT0 01` | Lagos | **Test case:** the one deliberately unreleased carton, batch `DEMO-LOT-TEST-UNRELEASED` (`T002`, `T003` too) | This code may have been copied | Rule 6, MEDIUM |
+| `7DEM ABCD EFGH JKMN PQRS TVC0 01` | Any | Carton C001, allocated to Lagos | This is a carton code | None |
+| `7DEM ABCD EFGH JKMN PQRS TVC0 02` | Any | Carton C002, allocated to Demo Kano Stores | This is a carton code | None |
+| `7DEM ABCD EFGH JKMN PQRS TVTC 01` | Any | The unreleased test carton | This is a carton code | None |
+
+Batch `DEMO-LOT-110` (Sample Palm Oil) holds the main cases and is allocated between Lagos (10 packs), Kano (14) and Abuja (3). Batch `DEMO-LOT-201` (Sample Groundnut Oil) has no codes, so the walkthrough can generate them live. Other seeded batches also have no codes yet.
 
 ## Run (separate terminals)
 
@@ -156,7 +224,7 @@ No account and no cookies. Every result carries `data_mode: "DEMO"` and the disc
 - **I've bought this** (no sale recorded) shows a note and sends nothing. **Report a concern** sends an anonymous report to the manufacturer and admins (`POST /api/check/report`, 5 per hour per network).
 - A check stores only the coarse area (city). With `SIMULATE_LOCATION_ENABLED=true` (demo only) a city chosen in the picker comes first (D148); otherwise the area comes from Cloudflare's location headers through a trusted tunnel, else the DB-IP Lite file at `GEOIP_DB_PATH`. The IP is discarded (D118). A check never changes a pack's status.
 
-Demo codes to type arrive with the seed scenario in Phase 8 (D145). Until then, generate codes for a batch at `/company` and type one from the label file.
+Demo codes to type are in [Demo codes](#demo-codes). You can also generate codes for a batch at `/company` and type one from the label file.
 
 ## Merchant page
 
@@ -247,7 +315,7 @@ Migration `0006_unit_identity` keeps existing data: `company_type` becomes the t
 
 ## Reset the local database
 
-This deletes all local data:
+To go back to the demo scenario, use `node scripts/reset-demo.mjs` ([Run the demo](#run-the-demo)). To remove the database and its volume entirely, including the test database, run this. It deletes all local data:
 
 ```bash
 docker compose down -v && docker compose up -d db

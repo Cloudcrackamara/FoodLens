@@ -215,6 +215,8 @@ def _raise(
         carton_id=carton_id,
         batch_id=batch_id,
         area_id=area_id,
+        created_at=now,
+        updated_at=now,
         evidence={
             "explanation": explanation,
             "occurrences": 1,

@@ -10,6 +10,7 @@ Rules:
 """
 
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date, datetime
 
@@ -97,7 +98,11 @@ def generate(
     units_per_carton: int | None,
     qr_size_mm: float,
     base_url: str,
+    token_factory: Callable[[], str] = identity.new_token,
+    occurred_at: datetime | None = None,
 ) -> GeneratedLabels:
+    """`token_factory` and `occurred_at` exist for the demo seed only (fixed demo codes, D111, and
+    a backdated history). No router passes them and no request schema carries them."""
     owned = own_batch(db, member, batch_id)
     if not 1 <= quantity <= MAX_UNITS_PER_REQUEST:
         raise UnitRuleError(f"Generate between 1 and {MAX_UNITS_PER_REQUEST} packs at a time")
@@ -105,7 +110,7 @@ def generate(
         raise UnitRuleError("Packs per carton must be between 1 and the number of packs")
 
     carton_total = identity.carton_count(quantity, units_per_carton)
-    issued = identity.new_identities(db, quantity + carton_total)
+    issued = identity.new_identities(db, quantity + carton_total, token_factory)
     carton_ids = [uuid.uuid4() for _ in range(carton_total)]
     unit_ids = [uuid.uuid4() for _ in range(quantity)]
     first_number = _next_carton_number(db, batch_id)
@@ -152,7 +157,12 @@ def generate(
         ],
     )
     lifecycle.record_manufacturer_event(
-        db, member, LifecycleEventType.ISSUED, unit_ids=unit_ids, carton_ids=carton_ids
+        db,
+        member,
+        LifecycleEventType.ISSUED,
+        unit_ids=unit_ids,
+        carton_ids=carton_ids,
+        occurred_at=occurred_at,
     )
     lifecycle.refresh_batch_release(db, owned.batch)
     audit.record(
@@ -216,9 +226,15 @@ def _carton_by_ref(db: Session, batch_id: uuid.UUID, carton_ref: str) -> Carton:
 
 
 def release(
-    db: Session, member: CompanyMember, batch_id: uuid.UUID, carton_ref: str | None = None
+    db: Session,
+    member: CompanyMember,
+    batch_id: uuid.UUID,
+    carton_ref: str | None = None,
+    *,
+    occurred_at: datetime | None = None,
 ) -> int:
-    """Release the batch's ISSUED units, or those of one carton. Returns how many."""
+    """Release the batch's ISSUED units, or those of one carton. Returns how many.
+    `occurred_at` is for the demo seed's backdated history only."""
     owned = own_batch(db, member, batch_id)
     units = select(ProductUnit.unit_id).where(
         ProductUnit.batch_id == batch_id, ProductUnit.lifecycle_status == LifecycleStatus.ISSUED
@@ -236,7 +252,12 @@ def release(
         raise UnitConflictError("There are no unreleased packs to release here")
 
     lifecycle.record_manufacturer_event(
-        db, member, LifecycleEventType.RELEASED, unit_ids=unit_ids, carton_ids=carton_ids
+        db,
+        member,
+        LifecycleEventType.RELEASED,
+        unit_ids=unit_ids,
+        carton_ids=carton_ids,
+        occurred_at=occurred_at,
     )
     lifecycle.refresh_batch_release(db, owned.batch)
     audit.record(
@@ -263,9 +284,11 @@ def void(
     whole_batch: bool = False,
     carton_refs: list[str] | None = None,
     tokens: list[str] | None = None,
+    occurred_at: datetime | None = None,
 ) -> int:
     """Void unreleased units (and cartons) with a reason. Returns how many units. Any released or
-    already voided target refuses the whole request (409)."""
+    already voided target refuses the whole request (409). `occurred_at` is for the demo seed's
+    backdated history only."""
     owned = own_batch(db, member, batch_id)
     if not reason.strip():
         raise UnitRuleError("Give a reason for voiding")
@@ -326,6 +349,7 @@ def void(
         unit_ids=list(units),
         carton_ids=list(cartons),
         reason=reason.strip(),
+        occurred_at=occurred_at,
     )
     lifecycle.refresh_batch_release(db, owned.batch)
     audit.record(
