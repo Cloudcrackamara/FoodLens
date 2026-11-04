@@ -1,17 +1,16 @@
 "use client";
 
-import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { FormField } from "@/components/auth/FormField";
-import { Catalogue } from "./Catalogue";
-import { Announcements } from "./Announcements";
 import { ChangeNotices } from "./ChangeNotices";
+import { ordersEnabled } from "@/lib/features";
 import { IncomingOrders } from "./IncomingOrders";
 import { describeError } from "@/lib/api";
-import { fieldErrors, useCurrentUser } from "@/lib/auth";
+import { fieldErrors } from "@/lib/auth";
+import { buttonClass } from "@/lib/ui";
 import {
   companyStatusLabels,
-  companyTypes,
+  companyTypeLabel,
   contactFormSchema,
   locationFormSchema,
   locationStatusLabels,
@@ -22,6 +21,7 @@ import {
   type ContactForm,
   type LocationForm,
 } from "@/lib/companies";
+import { EmptyPanel, ErrorPanel, LoadingPanel } from "@/components/ui/Panels";
 
 const statusExplanations: Record<Company["review_status"], string> = {
   PENDING_REVIEW:
@@ -63,14 +63,14 @@ function AddLocationForm({ companyId }: { companyId: string }) {
       <FormField id="location_area" label="Area or city" value={form.area}
         error={errors.area} onChange={set("area")} />
       {addLocation.isError && (
-        <p role="alert" className="text-red-700 dark:text-red-400">
+        <p role="alert" className="font-semibold text-bad">
           {describeError(addLocation.error)}
         </p>
       )}
       <button
         type="submit"
         disabled={addLocation.isPending}
-        className="self-start rounded-md bg-zinc-900 px-4 py-2 font-semibold text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
+        className={`self-start ${buttonClass("primary", "sm")}`}
       >
         Submit location for review
       </button>
@@ -100,7 +100,7 @@ function ContactDetails({ company, isOwner }: { company: Company; isOwner: boole
 
   return (
     <section aria-labelledby="contact-heading" className="flex flex-col gap-2">
-      <h2 id="contact-heading" className="text-lg font-semibold">Contact details</h2>
+      <h2 id="contact-heading" className="font-heading text-[17px] font-semibold text-ink">Contact details</h2>
       {!editing ? (
         <>
           <p className="break-words">
@@ -108,7 +108,7 @@ function ContactDetails({ company, isOwner }: { company: Company; isOwner: boole
             {company.contact_phone && ` · ${company.contact_phone}`}
           </p>
           {isOwner && (
-            <button type="button" onClick={() => setEditing(true)} className="self-start underline">
+            <button type="button" onClick={() => setEditing(true)} className="self-start font-semibold text-brand-dark underline">
               Edit contact details
             </button>
           )}
@@ -116,23 +116,23 @@ function ContactDetails({ company, isOwner }: { company: Company; isOwner: boole
         </>
       ) : (
         <form onSubmit={handleSubmit} noValidate aria-label="Edit contact details" className="flex flex-col gap-3">
-          <p className="text-sm text-zinc-700 dark:text-zinc-300">
+          <p className="text-sm text-text-muted">
             Changes are saved straight away and recorded with your name and the time. They are shown in
-            the supplier directory.
+            the partner directory.
           </p>
           <FormField id="contact_email" label="Contact email" type="email" value={form.contact_email}
             error={errors.contact_email} onChange={(value) => setForm({ ...form, contact_email: value })} />
           <FormField id="contact_phone" label="Contact phone (optional)" value={form.contact_phone}
             error={errors.contact_phone} onChange={(value) => setForm({ ...form, contact_phone: value })} />
           {update.isError && (
-            <p role="alert" className="text-red-700 dark:text-red-400">{describeError(update.error)}</p>
+            <p role="alert" className="font-semibold text-bad">{describeError(update.error)}</p>
           )}
           <div className="flex gap-3">
             <button type="submit" disabled={update.isPending}
-              className="rounded-md bg-zinc-900 px-4 py-2 font-semibold text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900">
+              className={buttonClass("primary", "sm")}>
               Save contact details
             </button>
-            <button type="button" onClick={() => setEditing(false)} className="underline">Cancel</button>
+            <button type="button" onClick={() => setEditing(false)} className="font-semibold text-brand-dark underline">Cancel</button>
           </div>
         </form>
       )}
@@ -143,9 +143,9 @@ function ContactDetails({ company, isOwner }: { company: Company; isOwner: boole
 export function CompanyView({ company, isOwner = false }: { company: Company; isOwner?: boolean }) {
   return (
     <div className="flex flex-col gap-6">
-      <section aria-labelledby="company-status" className="rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
-        <h2 id="company-status" className="text-xl font-bold">{company.display_name}</h2>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">{companyTypes[company.company_type]}</p>
+      <section aria-labelledby="company-status" className="rounded-[12px] bg-white p-6 shadow-card">
+        <h2 id="company-status" className="font-heading text-[17px] font-semibold text-ink">{company.display_name}</h2>
+        <p className="text-sm text-text-subtle">{companyTypeLabel(company)}</p>
         <p className="mt-2 font-medium">Status: {companyStatusLabels[company.review_status]}</p>
         <p>{statusExplanations[company.review_status]}</p>
         {company.review_note && <p className="mt-1 text-sm">Reviewer note: {company.review_note}</p>}
@@ -154,13 +154,13 @@ export function CompanyView({ company, isOwner = false }: { company: Company; is
       <ContactDetails company={company} isOwner={isOwner} />
 
       <section aria-labelledby="locations-heading" className="flex flex-col gap-3">
-        <h2 id="locations-heading" className="text-lg font-semibold">Supplier locations</h2>
+        <h2 id="locations-heading" className="font-heading text-[17px] font-semibold text-ink">Locations</h2>
         {company.locations.length === 0 ? (
-          <p>No locations yet.</p>
+          <EmptyPanel title="No locations yet." />
         ) : (
           <ul className="flex flex-col gap-2">
             {company.locations.map((location) => (
-              <li key={location.location_id} className="rounded-md border border-zinc-200 p-3 dark:border-zinc-800">
+              <li key={location.location_id} className="rounded-[10px] border border-line bg-white p-3.5">
                 <p className="font-medium">{location.name}</p>
                 <p>{location.address}, {location.area}</p>
                 <p className="text-sm">{locationStatusLabels[location.review_status]}</p>
@@ -171,37 +171,19 @@ export function CompanyView({ company, isOwner = false }: { company: Company; is
         {company.review_status === "APPROVED" && <AddLocationForm companyId={company.company_id} />}
       </section>
 
-      {company.review_status === "APPROVED" && <Catalogue companyId={company.company_id} />}
       {company.review_status === "APPROVED" && <ChangeNotices companyId={company.company_id} />}
-      {company.review_status === "APPROVED" && <Announcements companyId={company.company_id} />}
-      {company.review_status === "APPROVED" && <IncomingOrders companyId={company.company_id} />}
+      {ordersEnabled && company.review_status === "APPROVED" && <IncomingOrders companyId={company.company_id} />}
     </div>
   );
 }
 
-export function CompanyDashboard() {
-  const { data: user, isPending } = useCurrentUser();
-  const company = useMyCompany(user?.membership?.company_id);
+/** The company's status, contact details, locations and change notices (inside CompanyShell). */
+export function CompanyProfile({ companyId, isOwner }: { companyId: string; isOwner: boolean }) {
+  const company = useMyCompany(companyId);
 
-  if (isPending) return <p>Loading…</p>;
-  if (!user) {
-    return (
-      <p>
-        <Link href="/login" className="underline">Sign in</Link> to manage your company.
-      </p>
-    );
-  }
-  if (!user.membership) {
-    return (
-      <p>
-        Your account is not linked to a company yet.{" "}
-        <Link href="/company/register" className="underline">Register your company</Link>.
-      </p>
-    );
-  }
   if (company.isError) {
-    return <p role="alert">{describeError(company.error)}</p>;
+    return <ErrorPanel onRetry={() => company.refetch()}>{describeError(company.error)}</ErrorPanel>;
   }
-  if (!company.data) return <p>Loading…</p>;
-  return <CompanyView company={company.data} isOwner={user.membership.role === "OWNER"} />;
+  if (!company.data) return <LoadingPanel />;
+  return <CompanyView company={company.data} isOwner={isOwner} />;
 }

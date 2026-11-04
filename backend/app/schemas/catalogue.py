@@ -15,11 +15,10 @@ class ProductCreateRequest(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     brand: str = Field(min_length=1, max_length=120)
     category: str = Field(min_length=1, max_length=80)
-    package_size: str | None = Field(default=None, max_length=40)
+    size: str | None = Field(default=None, max_length=40)
     manufacturer_name: str = Field(min_length=1, max_length=200)
     label_information: str | None = Field(default=None, max_length=2000)
-    # The NAFDAC/SON number printed on the pack. FoodLens never treats it as proof; lookups
-    # check it against the simulated register (D81).
+    # The NAFDAC number as printed on the pack. Information only, never checked (D107).
     registration_number: str | None = Field(default=None, max_length=200)
 
 
@@ -54,7 +53,7 @@ class ProductRead(BaseModel):
     name: str
     brand: str
     category: str
-    package_size: str | None
+    size: str | None
     manufacturer_name: str
     label_information: str | None
     registration_number: str | None

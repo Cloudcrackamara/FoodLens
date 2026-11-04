@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FoodLens admin overview, mobile</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&amp;family=Open+Sans:wght@400;600&amp;family=IBM+Plex+Mono:wght@500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#145C34}a:hover{color:#0F4A29}
+.ad-side{flex:0 0 270px;box-sizing:border-box}
+.ad-menu{display:none}
+.ad-cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:24px}
+.ad-row{display:grid;grid-template-columns:minmax(0,696fr) minmax(0,336fr);gap:24px;align-items:start}
+.ad-row2{display:grid;grid-template-columns:minmax(0,336fr) minmax(0,696fr);gap:24px;align-items:start}
+.ad-ell{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ad-hide-sm{display:block}
+@media (max-width:1199px){.ad-cards{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:1023px){.ad-side{display:none !important}.ad-menu{display:inline-flex}.ad-row,.ad-row2{grid-template-columns:minmax(0,1fr)}.ad-pad{padding-left:24px !important;padding-right:24px !important}}
+@media (max-width:640px){.ad-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.ad-cards .ad-ell{white-space:normal}.ad-hide-sm{display:none !important}.ad-pad{padding-left:16px !important;padding-right:16px !important}}
+</style>
+</helmet>
+<div style="width: 100%">
+<dc-import name="Admin" hint-size="100%,3050px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":3050}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

@@ -69,7 +69,6 @@ def setup_company(client: TestClient, session: Session) -> tuple[Company, Produc
     batch = f.make_batch(
         session, product, batch_number="LOT-7", review_status=ReviewStatus.APPROVED
     )
-    f.make_register(session, f.make_agency(session), registration_number="DEMO-NAFDAC-7001")
     return company, product, batch
 
 
@@ -116,7 +115,7 @@ def test_pending_notice_leaves_published_data_unchanged(setup, session: Session)
         company_client,
         company,
         product_id=str(product.product_id),
-        proposed_changes={"name": "New Name", "package_size": "750 ml"},
+        proposed_changes={"name": "New Name", "size": "750 ml"},
         effective_date="2026-12-01",
     )
 
@@ -125,11 +124,11 @@ def test_pending_notice_leaves_published_data_unchanged(setup, session: Session)
     assert body["review_status"] == "PENDING_REVIEW"
     assert {(x["field_name"], x["current_value"], x["proposed_value"]) for x in body["fields"]} == {
         ("name", "Old Name", "New Name"),
-        ("package_size", None, "750 ml"),
+        ("size", None, "750 ml"),
     }
     session.refresh(product)
     assert product.name == "Old Name"
-    assert product.package_size is None
+    assert product.size is None
 
 
 def test_clarification_and_rejection_leave_data_unchanged(setup, session: Session) -> None:
@@ -201,7 +200,7 @@ def test_approval_updates_batch_dates(setup, session: Session) -> None:
     assert batch.expiry_date.isoformat() == "2030-01-31"
 
 
-def test_approved_change_shows_in_lookup(setup, session: Session) -> None:
+def test_approved_change_shows_in_published_catalogue(setup, session: Session) -> None:
     company_client, admin_client, company, product, _ = setup
     notice_id = submit(
         company_client,
@@ -210,18 +209,13 @@ def test_approved_change_shows_in_lookup(setup, session: Session) -> None:
         proposed_changes={"name": "Shown Name"},
     ).json()["notice_id"]
 
-    before = company_client.post(
-        "/api/lookups/registration",
-        json={"registration_number": "DEMO-NAFDAC-7001", "batch_number": "LOT-7"},
-    )
+    catalogue = f"/api/companies/{company.company_id}/products"
+    before = company_client.get(catalogue).json()
     decide(admin_client, notice_id, "APPROVE")
-    after = company_client.post(
-        "/api/lookups/registration",
-        json={"registration_number": "DEMO-NAFDAC-7001", "batch_number": "LOT-7"},
-    )
+    after = company_client.get(catalogue).json()
 
-    assert before.json()["product"]["name"] == "Old Name"
-    assert after.json()["product"]["name"] == "Shown Name"
+    assert [p["name"] for p in before] == ["Old Name"]
+    assert [p["name"] for p in after] == ["Shown Name"]
 
 
 def test_stale_notice_is_not_applied(setup, session: Session) -> None:

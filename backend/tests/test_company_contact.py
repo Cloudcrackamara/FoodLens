@@ -85,14 +85,19 @@ def test_contact_edit_ignores_status_and_ownership_fields(
         "contact_email": "hi@pending.example",
         "review_status": "APPROVED",
         "reviewed_by_user_id": None,
-        "company_type": "BOTH",
+        "is_distributor": True,
+        "is_retailer": True,
         "display_name": "Renamed",
         "claimed_legal_name": "Renamed Ltd",
     }
     data = client.patch(contact_url(company), json=body).json()
 
     assert data["review_status"] == "PENDING_REVIEW"
-    assert data["company_type"] == company.company_type.value
+    assert (data["is_manufacturer"], data["is_distributor"], data["is_retailer"]) == (
+        True,
+        False,
+        False,
+    )
     assert data["display_name"] == company.display_name
     assert data["claimed_legal_name"] == company.claimed_legal_name
 
@@ -118,7 +123,7 @@ def test_invalid_email_rejected(client: TestClient, session: Session) -> None:
 
 def test_only_the_owner_can_edit_contact(client: TestClient, session: Session) -> None:
     company = f.make_company(session)
-    signed_in_member(client, session, company, role=MemberRole.REPRESENTATIVE)
+    signed_in_member(client, session, company, role=MemberRole.STAFF)
 
     response = client.patch(contact_url(company), json={"contact_email": "rep@demo.example"})
 

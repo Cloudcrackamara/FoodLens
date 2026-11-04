@@ -124,3 +124,30 @@ describe("normalizeAddress", () => {
     expect(normalizeAddress(undefined)).toBe("");
   });
 });
+
+describe("Cloudflare location headers (D118)", () => {
+  const location = { "cf-ipcity": "Kano", "cf-region": "Kano" };
+
+  it("are kept on connections from trusted cloudflared", () => {
+    const req = request("127.0.0.1", { "cf-connecting-ip": "198.51.100.7", ...location });
+
+    setForwardedFor(req, tunnelOn);
+
+    expect(req.headers["cf-ipcity"]).toBe("Kano");
+    expect(req.headers["cf-region"]).toBe("Kano");
+  });
+
+  it("are removed when the tunnel is off or the connection is not cloudflared", () => {
+    for (const [address, options] of [
+      ["127.0.0.1", tunnelOff],
+      ["203.0.113.9", tunnelOn],
+    ] as const) {
+      const req = request(address, { ...location });
+
+      setForwardedFor(req, options);
+
+      expect(req.headers).not.toHaveProperty("cf-ipcity");
+      expect(req.headers).not.toHaveProperty("cf-region");
+    }
+  });
+});

@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FoodLens supplier workspace</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&amp;family=Open+Sans:wght@400;600;700&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#145C34}a:hover{color:#0F4A29}
+.ws-side{flex:0 0 256px;box-sizing:border-box}
+.ws-menu{display:none}
+.ws-row{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:24px;align-items:start}
+.ws-cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:20px}
+.ws-hide-sm{display:inline-flex}
+@keyframes ws-pulse{0%,100%{opacity:.5}50%{opacity:1}}
+.ws-skel{animation:ws-pulse 1.4s ease-in-out infinite}
+@media (max-width:1199px){.ws-cards{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:1023px){.ws-side{display:none !important}.ws-menu{display:inline-flex}.ws-row{grid-template-columns:minmax(0,1fr)}.ws-pad{padding-left:20px !important;padding-right:20px !important}}
+@media (max-width:640px){.ws-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.ws-hide-sm{display:none !important}.ws-pad{padding-left:14px !important;padding-right:14px !important}}
+@media (prefers-reduced-motion: reduce){.ws-skel{animation:none}}
+</style>
+</helmet>
+<div style="display: flex; min-height: 100vh; background: #FAF8F3; color: #2A2F3A; font-family: 'Open Sans', system-ui, sans-serif; font-size: 14px; line-height: 1.5">
+
+<!-- SIDEBAR -->
+<aside class="ws-side" aria-label="Supplier navigation" style="background: #16143D; color: #DCDAF0; padding: 22px 16px; display: flex; flex-direction: column; gap: 6px">
+<a href="Main.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 2px 6px 18px; color: #FFFFFF; text-decoration: none">
+<svg width="30" height="30" viewBox="0 0 36 36" aria-hidden="true"><circle cx="15" cy="15" r="11" fill="none" stroke="#F6B93B" stroke-width="3.5"></circle><path d="M23 23l9 9" stroke="#F6B93B" stroke-width="4" stroke-linecap="round"></path><path d="M10 15.5l3.5 3.5 6.5-7" fill="none" stroke="#3CC37A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span style="font-family: 'Poppins', sans-serif; font-size: 20px"><b>FoodLens</b> <span style="font-weight: 500; color: #F6B93B">business</span></span>
+</a>
+<div style="display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.07); margin-bottom: 8px">
+<span aria-hidden="true" style="flex: none; width: 40px; height: 40px; border-radius: 10px; background: #1B7A45; color: #FFFFFF; display: inline-flex; align-items: center; justify-content: center; font-family: 'Poppins', sans-serif; font-weight: 700">DF</span>
+<span style="min-width: 0"><b style="display: block; color: #FFFFFF; font-size: 14px; line-height: 1.3">Demo Foods Nigeria Ltd</b><span style="display: inline-block; margin-top: 3px; padding: 0 8px; border-radius: 999px; background: rgba(60,195,122,0.2); color: #A6E9C4; font-size: 11px; font-weight: 700">Reviewed · demo</span></span>
+</div>
+<p style="margin: 8px 8px 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #9C9AC4">SELLING</p>
+<nav style="display: flex; flex-direction: column; gap: 3px">
+<sc-for list="{{nav}}" as="n" hint-placeholder-count="7">
+<button type="button" onClick="{{n.go}}" aria-current="{{n.current}}" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border: 0; border-radius: 8px; background: {{n.bg}}; color: {{n.fg}}; font: inherit; font-weight: {{n.weight}}; text-align: left; cursor: pointer">
+<span style="flex: 1">{{n.label}}</span>
+<sc-if value="{{n.hasCount}}" hint-placeholder-val="{{ false }}"><span style="font-size: 11px; font-weight: 700; padding: 0 8px; border-radius: 999px; background: {{n.countBg}}; color: {{n.countFg}}">{{n.count}}</span></sc-if>
+</button>
+</sc-for>
+</nav>
+<div style="margin-top: auto; padding: 14px; border-radius: 12px; background: rgba(246,185,59,0.12); color: #F6D88C; font-size: 12px; line-height: 1.45">Shoppers see your announcements as “Message from the company · not reviewed by FoodLens”.</div>
+<a href="AccLogin.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 12px; color: #DCDAF0; text-decoration: none; font-weight: 600">Log out</a>
+</aside>
+
+<div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column">
+<header class="ws-pad" style="display: flex; align-items: center; gap: 12px; height: 68px; padding: 0 48px 0 32px; box-sizing: border-box; background: #FFFFFF; border-bottom: 1px solid #ECEDF1">
+<button type="button" class="ws-menu" onClick="{{toggleMenu}}" aria-label="Open navigation" aria-expanded="{{menuOpen}}" style="width: 44px; height: 44px; border: 1px solid #E3E5EA; border-radius: 8px; background: #FFFFFF; align-items: center; justify-content: center; cursor: pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2A2F3A" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+<p style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: 600; color: #16143D">{{pageTitle}}</p>
+<div style="flex: 1"></div>
+<span class="ws-hide-sm" style="align-items: center; height: 32px; padding: 0 12px; border-radius: 999px; background: #E3F4EA; color: #145C34; font-size: 12px; font-weight: 700">Manufacturer</span>
+<span class="ws-hide-sm" style="align-items: center; height: 32px; padding: 0 12px; border-radius: 999px; background: #FDF5E2; color: #7A4F00; font-size: 12px; font-weight: 700">Demo data</span>
+<span style="position: relative; display: inline-flex"><button type="button" onClick="{{toggleAcct}}" aria-label="Account: Tolu Adebayo" aria-haspopup="true" aria-expanded="{{acctOpen}}" style="width: 40px; height: 40px; border: 0; border-radius: 50%; background: #1B7A45; color: #FFFFFF; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer">TA</button><sc-if value="{{acctOpen}}" hint-placeholder-val="{{ false }}"><div role="menu" aria-label="Account" style="position: absolute; right: 0; top: 48px; z-index: 20; width: 260px; padding: 8px; border-radius: 10px; background: #FFFFFF; box-shadow: 0 10px 30px rgba(20,22,40,0.18); border: 1px solid #ECEDF1"><p style="margin: 0; padding: 8px 10px 10px; border-bottom: 1px solid #ECEDF1"><b style="display: block; color: #16143D">Tolu Adebayo</b><span style="font-size: 12px; color: #5F6472">Demo Foods Nigeria Ltd · Manufacturer</span></p><a role="menuitem" href="AccStatusApproved.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 10px; border-radius: 6px; color: #2A2F3A; text-decoration: none; font-weight: 400">Company details &amp; review status</a><a role="menuitem" href="AccForgot.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 10px; border-radius: 6px; color: #2A2F3A; text-decoration: none; font-weight: 400">Reset password</a><a role="menuitem" href="AccLogin.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 10px; border-radius: 6px; color: #8C1D16; text-decoration: none; font-weight: 600">Log out</a></div></sc-if></span>
+</header>
+<sc-if value="{{menuOpen}}" hint-placeholder-val="{{ false }}">
+<nav aria-label="Supplier navigation" style="display: flex; flex-direction: column; gap: 2px; padding: 10px; background: #16143D">
+<sc-for list="{{nav}}" as="n" hint-placeholder-count="7">
+<button type="button" onClick="{{n.go}}" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border: 0; border-radius: 8px; background: {{n.bg}}; color: {{n.fg}}; font: inherit; font-weight: 600; text-align: left; cursor: pointer"><span style="flex: 1">{{n.label}}</span><sc-if value="{{n.hasCount}}" hint-placeholder-val="{{ false }}"><span style="font-size: 11px; font-weight: 700; padding: 0 8px; border-radius: 999px; background: {{n.countBg}}; color: {{n.countFg}}">{{n.count}}</span></sc-if></button>
+</sc-for>
+</nav>
+</sc-if>
+
+<main class="ws-pad" style="padding: 28px 48px 40px 32px; display: flex; flex-direction: column; gap: 22px">
+
+<!-- ======== OVERVIEW ======== -->
+<sc-if value="{{isOverview}}" hint-placeholder-val="{{ true }}">
+<section style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 24px 28px; border-radius: 14px; background: #1B7A45; color: #FFFFFF">
+<div><h1 style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 22px; font-weight: 600">Good afternoon, Tolu</h1><p style="margin: 4px 0 0; color: #D7F0E1">{{bannerText}}</p></div>
+<button type="button" onClick="{{goOrders}}" style="min-height: 44px; padding: 0 20px; border: 0; border-radius: 999px; background: #FFFFFF; color: #145C34; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer">View new orders</button>
+</section>
+<section class="ws-cards" aria-label="Summary">
+<sc-for list="{{cards}}" as="c" hint-placeholder-count="5">
+<button type="button" onClick="{{c.go}}" style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 20px; border: 0; border-radius: 12px; background: {{c.bg}}; color: {{c.fg}}; font: inherit; text-align: left; cursor: pointer"><span style="font-size: 13px; font-weight: 700">{{c.label}}</span><span style="font-family: 'Poppins', sans-serif; font-size: 28px; font-weight: 700; line-height: 1.1">{{c.value}}</span><span style="font-size: 12px">{{c.sub}}</span></button>
+</sc-for>
+</section>
+<div class="ws-row">
+<section style="background: #FFFFFF; border-radius: 12px; box-shadow: 0 1px 12px rgba(20,22,40,0.07); padding: 24px">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px"><h2 style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600; color: #16143D">Recent order requests</h2><button type="button" onClick="{{goOrders}}" style="padding: 0; border: 0; background: none; color: #145C34; font: inherit; font-weight: 700; cursor: pointer">All orders</button></div>
+<sc-for list="{{recentOrders}}" as="o" hint-placeholder-count="3">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 12px 0; border-top: 1px solid #ECEDF1">
+<span style="font-family: 'IBM Plex Mono', monospace; color: #16143D">{{o.ref}}</span>
+<span style="flex: 1 1 180px"><b style="color: #16143D">{{o.buyer}}</b> · {{o.summary}}</span>
+<span style="padding: 1px 10px; border-radius: 999px; background: {{o.chipBg}}; color: {{o.chipFg}}; font-size: 12px; font-weight: 700">{{o.status}}</span>
+<button type="button" onClick="{{o.open}}" style="min-height: 34px; padding: 0 12px; border: 1px solid #C9CCD4; border-radius: 6px; background: #FFFFFF; font: inherit; font-weight: 600; color: #16143D; cursor: pointer">Open</button>
+</div>
+</sc-for>
+</section>
+<section style="background: #FFFFFF; border-radius: 12px; box-shadow: 0 1px 12px rgba(20,22,40,0.07); padding: 24px">
+<h2 style="margin: 0 0 8px; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600; color: #16143D">Waiting on FoodLens</h2>
+<ul style="list-style: none; margin: 0; padding: 0">
+<li style="display: flex; justify-content: space-between; gap: 8px; padding: 10px 0; border-top: 1px solid #ECEDF1"><span><b style="color: #16143D">Onitsha depot</b><br><span style="font-size: 12px; color: #5F6472">Location</span></span><span style="align-self: center; padding: 1px 8px; border-radius: 999px; background: #FDF5E2; color: #7A4F00; font-size: 12px; font-weight: 700">Pending review</span></li>
+<li style="display: flex; justify-content: space-between; gap: 8px; padding: 10px 0; border-top: 1px solid #ECEDF1"><span><b style="color: #16143D">CN-0142 · Pack size change</b><br><span style="font-size: 12px; color: #5F6472">Product submission</span></span><span style="align-self: center; padding: 1px 8px; border-radius: 999px; background: #FDF5E2; color: #7A4F00; font-size: 12px; font-weight: 700">Pending</span></li>
+<li style="display: flex; justify-content: space-between; gap: 8px; padding: 10px 0; border-top: 1px solid #ECEDF1"><span><b style="color: #16143D">CN-0139 · Label redesign</b><br><span style="font-size: 12px; color: #5F6472">FoodLens asked a question</span></span><span style="align-self: center; padding: 1px 8px; border-radius: 999px; background: #ECEBF7; color: #433F8A; font-size: 12px; font-weight: 700">Reply needed</span></li>
+</ul>
+<p style="margin: 10px 0 0; font-size: 12px; color: #5F6472">Register status of your 6 products: 3 active · 1 expired · 1 not found · 1 mismatch</p>
+</section>
+</div>
+</sc-if>
+
+<!-- ======== PRODUCTS ======== -->
+<sc-if value="{{isProducts}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px">
+<div><h1 style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 22px; font-weight: 600; color: #16143D">Products</h1><p style="margin: 2px 0 0; color: #5F6472">Each product shows what the demo register says about its number. Shoppers see the same thing.</p></div>
+<button type="button" onClick="{{goNew}}" style="min-height: 44px; padding: 0 20px; border: 0; border-radius: 999px; background: #1B7A45; color: #FFFFFF; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer">+ Add product</button>
+</div>
+<sc-if value="{{listData}}" hint-placeholder-val="{{ true }}">
+<section style="background: #FFFFFF; border-radius: 12px; box-shadow: 0 1px 12px rgba(20,22,40,0.07); padding: 8px 24px">
+<sc-for list="{{products}}" as="p" hint-placeholder-count="6">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; padding: 14px 0; border-top: {{p.topBorder}}">
+<span style="flex: 2 1 220px; min-width: 0"><b style="display: block; color: #16143D">{{p.name}}</b><span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5F6472">{{p.reg}}</span></span>
+<span style="flex: 1.4 1 200px"><span style="display: inline-flex; padding: 1px 10px; border-radius: 999px; background: {{p.rsBg}}; color: {{p.rsFg}}; font-size: 12px; font-weight: 700">{{p.rsLabel}}</span><span style="display: block; margin-top: 2px; font-size: 12px; color: #5F6472">{{p.rsHelp}}</span></span>
+<span style="flex: 0 1 110px; color: #3A3F4B">{{p.batchText}}</span>
+<span style="flex: 0 1 120px; font-size: 13px; color: #5F6472">{{p.updated}}</span>
+<button type="button" onClick="{{p.open}}" style="min-height: 36px; padding: 0 14px; border: 1px solid #C9CCD4; border-radius: 6px; background: #FFFFFF; font: inherit; font-weight: 600; color: #16143D; cursor: pointer">Manage</button>
+</div>
+</sc-for>
+</section>
+</sc-if>
+<sc-if value="{{listLoading}}" hint-placeholder-val="{{ false }}">
+<section aria-busy="true" aria-label="Loading" style="background: #FFFFFF; border-radius: 12px; box-shadow: 0 1px 12px rgba(20,22,40,0.07); padding: 16px 24px; display: flex; flex-direction: column; gap: 18px">
+<div class="ws-skel" style="height: 18px; width: 60%; border-radius: 6px; background: #ECEDF1"></div><div class="ws-skel" style="height: 18px; width: 80%; border-radius: 6px; background: #ECEDF1"></div><div class="ws-skel" style="height: 18px; width: 70%; border-radius: 6px; background: #ECEDF1"></div><div class="ws-skel" style="height: 18px; width: 75%; border-radius: 6px; background: #ECEDF1"></div>
+<p style="margin: 0; font-size: 13px; color: #5F6472">Loading your products…</p>
+</section>
+</sc-if>
+<sc-if value="{{listEmpty}}" hint-placeholder-val="{{ false }}">
+<section style="background: #FFFFFF; border-radius: 12px; border: 1px dashed #C9CCD4; padding: 48px 24px; text-align: center">
+<p style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 600; color: #16143D">No products yet</p>
+<p style="margin: 6px auto 16px; max-width: 420px; color: #5F6472">Add your first product with its NAFDAC or SON number. Shoppers will then see its register status when they check it.</p>
+<button type="button" onClick="{{goNew}}" style="min-height: 44px; padding: 0 20px; border: 0; border-radius: 999px; background: #1B7A45; color: #FFFFFF; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer">Add your first product</button>
+</section>
+</sc-if>
+<sc-if value="{{listError}}" hint-placeholder-val="{{ false }}">
+<section role="alert" style="background: #FFFFFF; border-radius: 12px; border: 2px solid #B42318; padding: 36px 24px; text-align: center">
+<p style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 600; color: #16143D">We couldn’t load this list</p>
+<p style="margin: 6px 0 16px; color: #5F6472">Check your connection. Nothing you saved has been lost.</p>
+<button type="button" onClick="{{retryList}}" style="min-height: 44px; padding: 0 20px; border: 2px solid #1B7A45; border-radius: 999px; background: #FFFFFF; color: #145C34; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer">Try again</button>
+</section>
+</sc-if>
+</sc-if>
+
+<!-- ======== PRODUCT DETAIL ======== -->
+<sc-if value="{{isProduct}}" hint-placeholder-val="{{ false }}">
+<nav aria-label="Breadcrumb" style="font-size: 14px"><button type="button" onClick="{{goProducts}}" style="padding: 0; border: 0; background: none; color: #145C34; font: inherit; font-weight: 700; cursor: pointer">Products</button> <span aria-hidden="true" style="color: #9AA0AC">/</span> {{sel.name}}</nav>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px"><h1 style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 22px; font-weight: 600; color: #16143D">{{sel.name}}</h1><span style="padding: 1px 10px; border-radius: 999px; background: {{sel.rsBg}}; color: {{sel.rsFg}}; font-size: 12px; font-weight: 700">{{sel.rsLabel}}</span></div>
+<div class="ws-row">
+<section style="background: #FFFFFF; border-radius: 12px; box-shadow: 0 1px 12px rgba(20,22,40,0.07); padding: 24px">
+<h2 style="margin: 0 0 4px; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600; color: #16143D">Batches</h2>
+<p style="margin: 0 0 10px; font-size: 13px; color: #5F6472">Shoppers who enter a batch number see whether it’s listed for this product.</p>
+<div style="overflow-x: auto"><table style="width: 100%; min-width: 460px; border-collapse: collapse">
+<thead><tr style="text-align: left; color: #16143D"><th scope="col" style="padding: 8px 10px 8px 0; font-weight: 600">Batch</th><th scope="col" style="padding: 8px 10px; font-weight: 600">Produced</th><th scope="col" style="padding: 8px 10px; font-weight: 600">Best before</th><th scope="col" style="padding: 8px 0 8px 10px; font-weight: 600">Status</th></tr></thead>
+<tbody>
+<sc-for list="{{batches}}" as="b" hint-placeholder-count="5">
+<tr style="border-top: 1px solid #ECEDF1"><td style="padding: 10px 10px 10px 0; font-family: 'IBM Plex Mono', monospace; color: #16143D">{{b.lot}}</td><td style="padding: 10px">{{b.made}}</td><td style="padding: 10px">{{b.bb}}</td><td style="padding: 10px 0 10px 10px"><span style="padding: 1px 8px; border-radius: 999px; background: #E3F4EA; color: #145C34; font-size: 12px; font-weight: 700">Listed</span><sc-if value="{{b.isNew}}" hint-placeholder-val="{{ false }}"> <span style="font-size: 12px; font-weight: 700; color: #1F5F8F">New</span></sc-if></td></tr>
+</sc-for>
+</tbody></table></div>
+<sc-if value="{{noBatches}}" hint-placeholder-val="{{ false }}"><p style="margin: 8px 0; color: #5F6472">No batches listed yet.</p></sc-if>
+<div style="margin-top: 16px; padding: 16px; border-radius: 10px; background: #F7F6F1">
+<p style="margin: 0 0 10px; font-weight: 700; color: #16143D">Add a batch</p>
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end">
+<label style="flex: 1 1 140px; display: flex; flex-direction: column; gap: 4px; font-weight: 600">Batch number<input type="text" value="{{newLot}}" onChange="{{onLot}}" placeholder="e.g. 24G-090" style="height: 42px; padding: 0 10px; border: {{lotBorder}}; border-radius: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 14px"></label>
+<label style="flex: 1 1 140px; display: flex; flex-direction: column; gap: 4px; font-weight: 600">Produced<input type="date" value="2026-10-14" onChange="{{noop}}" style="height: 42px; padding: 0 10px; border: 1px solid #C9CCD4; border-radius: 8px; font: inherit"></label>
+<label style="flex: 1 1 140px; display: flex; flex-direction: column; gap: 4px; font-weight: 600">Best before<input type="date" value="2027-10-14" onChange="{{noop}}" style="height: 42px; padding: 0 10px; border: 1px solid #C9CCD4; border-radius: 8px; font: inherit"></label>
+<button type="button" onClick="{{addBatch}}" style="min-height: 42px; padding: 0 18px; border: 0; border-radius: 8px; background: #1B7A45; color: #FFFFFF; font: inherit; font-weight: 700; cursor: pointer">Add batch</button>
+</div>
+<sc-if value="{{lotError}}" hint-placeholder-val="{{ false }}"><p role="alert" style="margin: 8px 0 0; font-size: 13px; font-weight: 600; color: #B42318">Enter the batch number as printed on the pack.</p></sc-if>
+</div>
+</section>
+<div style="display: flex; flex-direction: column; gap: 24px">
+<section style="background: #FFFFFF; border-radius: 12px; box-shadow: 0 1px 12px rgba(20,22,40,0.07); padding: 24px">
+<h2 style="margin: 0 0 8px; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600; color: #16143D">Register record</h2>
+<dl style="margin: 0; display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr); font-size: 13px">
+<dt style="padding: 8px 0; border-top: 1px solid #ECEDF1; color: #5F6472">Number</dt><dd style="margin: 0; padding: 8px 0; border-top: 1px solid #ECEDF1; font-family: 'IBM Plex Mono', monospace; color: #16143D">{{sel.reg}}</dd>
+<dt style="padding: 8px 0; border-top: 1px solid #ECEDF1; color: #5F6472">Agency</dt><dd style="margin: 0; padding: 8px 0; border-top: 1px solid #ECEDF1">NAFDAC (simulated)</dd>
+<dt style="padding: 8px 0; border-top: 1px solid #ECEDF1; color: #5F6472">Status</dt><dd style="margin: 0; padding: 8px 0; border-top: 1px solid #ECEDF1; font-weight: 700; color: {{sel.rsFg}}">{{sel.rsLabel}}</dd>
+<dt style="padding: 8px 0; border-top: 1px solid #ECEDF1; color: #5F6472">Expires</dt><dd style="margin: 0; padding: 8px 0; border-top: 1px solid #ECEDF1">{{sel.expires}}</dd>
+</dl>
+<p style="margin: 10px 0 0; font-size: 12px; color: #5F6472">Read from the demo register. You can’t edit it here.</p>
+</section>
+<section style="background: #FFFFFF; border-radius: 12px; box-shadow: 0 1px 12px rgba(20,22,40,0.07); padding: 24px">
+<h2 style="margin: 0 0 6px; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600; color: #16143D">Need to change something?</h2>
+<p style="margin: 0 0 12px; font-size: 13px; color: #3A3F4B">Changes to a published product, like pack size or label, are reviewed by FoodLens before they go live.</p>
+<button type="button" onClick="{{goSubmissions}}" style="width: 100%; min-height: 44px; border: 2px solid #1B7A45; border-radius: 999px; background: #FFFFFF; color: #145C34; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer">Submit a change</button>
+</section>
+</div>
+</div>
+</sc-if>
+
+<!-- ======== ADD PRODUCT ======== -->
+<sc-if value="{{isNew}}" hint-placeholder-val="{{ false }}">
+<nav aria-label="Breadcrumb" style="font-size: 14px"><button type="button" onClick="{{goProducts}}" style="padding: 0; border: 0; background: none; color: #145C34; font: inherit; font-weight: 700; cursor: pointer">Products</button> <span aria-hidden="true" style="color: #9AA0AC">/</span> Add product</nav>
+<div class="ws-row">
+<section style="background: #FFFFFF; border-radius: 12px; box-shadow: 0 1px 12px rgba(20,22,40,0.07); padding: 28px; display: flex; flex-direction: column; gap: 16px">
+<h1 style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 22px; font-weight: 600; color: #16143D">Add a product</h1>
+<div style="display: flex; flex-wrap: wrap; gap: 14px">
+<label style="flex: 2 1 240px; display: flex; flex-direction: column; gap: 4px; font-weight: 600">Product name<input type="text" value="Tomato paste" onChange="{{noop}}" style="height: 46px; padding: 0 12px; border: 1px solid #C9CCD4; border-radius: 8px; font: inherit; font-weight: 400"></label>
+<label style="flex: 1 1 140px; display: flex; flex-direction: column; gap: 4px; font-weight: 600">Pack size<input type="text" value="1 kg" onChange="{{noop}}" style="height: 46px; padding: 0 12px; border: 1px solid #C9CCD4; border-radius: 8px; font: inherit; font-weight: 400"></label>
+</div>
+<label style="display: flex; flex-direction: column; gap: 4px; font-weight: 600">NAFDAC or SON registration number
+<span style="display: flex; gap: 8px"><input type="text" value="{{newReg}}" onChange="{{onNewReg}}" style="flex: 1; min-width: 0; height: 46px; padding: 0 12px; border: 1px solid #C9CCD4; border-radius: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 16px"><button type="button" onClick="{{lookup}}" style="flex: none; min-height: 46px; padding: 0 16px; border: 2px solid #1B7A45; border-radius: 8px; background: #FFFFFF; color: #145C34; font: inherit; font-weight: 700; cursor: pointer">Look up</button></span></label>
+<sc-if value="{{lookupFound}}" hint-placeholder-val="{{ false }}">
+<div role="status" style="padding: 14px 16px; border-radius: 10px; background: #E3F4EA; color: #145C34"><b>Found in the demo register.</b> Tomato paste, 1 kg · Demo Foods Nigeria Ltd · Active until 2 Jun 2029.</div>
+</sc-if>
+<sc-if value="{{lookupMissing}}" hint-placeholder-val="{{ false }}">
+<div role="status" style="padding: 14px 16px; border-radius: 10px; background: #EEEFF2; color: #3A3F4B"><b>Not found in the demo register.</b> You can still add it, but shoppers will see “Not found”. Check the number on the pack.</div>
+</sc-if>
+<button type="button" onClick="{{addProduct}}" style="align-self: flex-start; min-height: 48px; padding: 0 24px; border: 0; border-radius: 999px; background: #1B7A45; color: #FFFFFF; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer">Add product</button>
+</section>
+<section style="background: #ECEBF7; border-radius: 12px; padding: 24px; color: #2F2C5E; font-size: 14px">
+<h2 style="margin: 0 0 8px; font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: 600; color: #16143D">How register status works</h2>
+<p style="margin: 0 0 8px">FoodLens looks your number up in the demo register and shows shoppers the same result you see here.</p>
+<p style="margin: 0"><b>Active</b> · <b>Expired</b> · <b>Not found</b> · <b>Mismatch</b> (the number belongs to a different product). You can’t change the status yourself; renew or correct the registration with the regulator.</p>
+</section>
+</div>
+</sc-if>
+
+<!-- ======== SUBMISSIONS ======== -->
+<sc-if value="{{isSubmissions}}" hint-placeholder-val="{{ false }}">
+<div><h1 style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 22px; font-weight: 600; color: #16143D">Product submissions</h1><p style="margin: 2px 0 0; color: #5F6472">Changes to published products are reviewed by FoodLens before they go live.</p></div>
+<div class="ws-row">
+<section style="background: #FFFFFF; border-radius: 12px; box-shadow: 0 1px 12px rgba(20,22,40,0.07); padding: 8px 24px">
+<sc-for list="{{subs}}" as="s" hint-placeholder-count="4">
+<div style="padding: 14px 0; border-top: {{s.topBorder}}">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px"><span style="font-family: 'IBM Plex Mono', monospace; color: #16143D">{{s.ref}}</span><b style="flex: 1 1 200px; color: #16143D">{{s.what}} · {{s.product}}</b><span style="padding: 1px 10px; border-radius: 999px; background: {{s.chipBg}}; color: {{s.chipFg}}; font-size: 12px; font-weight: 700">{{s.status}}</span></div>
+<p style="margin: 4px 0 0; font-size: 13px; color: #5F6472">{{s.meta}}</p>
+<sc-if value="{{s.hasNote}}" hint-placeholder-val="{{ false }}"><p style="margin: 8px 0 0; padding: 10px 12px; border-radius: 8px; background: {{s.noteBg}}; font-size: 13px; color: #2A2F3A"><b>FoodLens:</b> {{s.note}}</p></sc-if>
+</div>
+</sc-for>
+</section>
+<section style="background: #FFFFFF; border-radius: 12px; box-shadow: 0 1px 12px rgba(20,22,40,0.07); padding: 24px; display: flex; flex-direction: column; gap: 12px">
+<h2 style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600; color: #16143D">New change submission</h2>
+<label style="display: flex; flex-direction: column; gap: 4px; font-weight: 600">Product<select style="height: 42px; padding: 0 8px; border: 1px solid #C9CCD4; border-radius: 8px; font: inherit; font-weight: 400"><option>Tomato paste, 70 g · A7-0412L</option><option>Tomato paste, 210 g · A7-0418L</option><option>Seasoning cubes, 10 g · 02-4410L</option></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-weight: 600">What is changing?<select style="height: 42px; padding: 0 8px; border: 1px solid #C9CCD4; border-radius: 8px; font: inherit; font-weight: 400"><option>Pack size</option><option>Label design</option><option>Product name</option><option>Registration number</option><option>Other</option></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-weight: 600">Why<textarea rows="3" value="{{subWhy}}" onChange="{{onSubWhy}}" placeholder="e.g. New 65 g sachet replaces the 70 g tin from January." style="padding: 8px 10px; border: 1px solid #C9CCD4; border-radius: 8px; font: inherit; font-weight: 400; resize: vertical"></textarea></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-weight: 600">Effective date<input type="date" value="2027-01-05" onChange="{{noop}}" style="height: 42px; padding: 0 10px; border: 1px solid #C9CCD4; border-radius: 8px; font: inherit; font-weight: 400"></label>
+<div style="display: flex; flex-direction: column; gap: 4px"><span style="font-weight: 600">Supporting document <span style="font-weight: 400; font-size: 12px; color: #5F6472">Optional · PDF or image, up to 10 MB</span></span>
+<button type="button" style="display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 64px; border: 2px dashed #C9CCD4; border-radius: 8px; background: #FAF8F3; color: #3A3F4B; font: inherit; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"></path></svg>Choose a file</button></div>
+<button type="button" onClick="{{sendSub}}" style="min-height: 46px; border: 0; border-radius: 999px; background: #1B7A45; color: #FFFFFF; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer">Send for review</button>
+<sc-if value="{{subError}}" hint-placeholder-val="{{ false }}"><p role="alert" style="margin: 0; font-size: 13px; font-weight: 600; color: #B42318">Tell FoodLens why this is changing.</p></sc-if>
+</section>
+</div>
+</sc-if>
+
+<!-- ======== LOCATIONS ======== -->
+<sc-if value="{{isLocations}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px">
+<div><h1 style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 22px; font-weight: 600; color: #16143D">Depots &amp; warehouses</h1><p style="margin: 2px 0 0; color: #5F6472">Wholesalers only see a location after FoodLens reviews it.</p></div>
+<button type="button" onClick="{{toggleLocForm}}" style="min-height: 44px; padding: 0 20px; border: 0; border-radius: 999px; background: #1B7A45; color: #FFFFFF; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer">+ Add location</button>
+</div>
+<sc-if value="{{locFormOpen}}" hint-placeholder-val="{{ false }}">
+<section style="background: #FFFFFF; border-radius: 12px; box-shadow: 0 1px 12px rgba(20,22,40,0.07); padding: 24px; display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end">
+<label style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 4px; font-weight: 600">Name<input type="text" value="Kano warehouse" onChange="{{noop}}" style="height: 42px; padding: 0 10px; border: 1px solid #C9CCD4; border-radius: 8px; font: inherit; font-weight: 400"></label>
+<label style="flex: 0 1 160px; display: flex; flex-direction: column; gap: 4px; font-weight: 600">Type<select style="height: 42px; padding: 0 8px; border: 1px solid #C9CCD4; border-radius: 8px; font: inherit; font-weight: 400"><option>Warehouse</option><option>Depot</option></select></label>
+<label style="flex: 2 1 280px; display: flex; flex-direction: column; gap: 4px; font-weight: 600">Address<input type="text" value="Plot 4, Sharada Industrial Estate, Kano" onChange="{{noop}}" style="height: 42px; padding: 0 10px; border: 1px solid #C9CCD4; border-radius: 8px; font: inherit; font-weight: 400"></label>
+<label style="flex: 1 1 180px; display: flex; flex-direction: column; gap: 4px; font-weight: 600">Opening hours<input type="text" value="Mon–Fri 8:00–17:00" onChange="{{noop}}" style="height: 42px; padding: 0 10px; border: 1px solid #C9CCD4; border-radius: 8px; font: inherit; font-weight: 400"></label>
+<button type="button" onClick="{{addLoc}}" style="min-height: 42px; padding: 0 18px; border: 0; border-radius: 8px; background: #1B7A45; color: #FFFFFF; font: inherit; font-weight: 700; cursor: pointer">Send for review</button>
+</section>
+</sc-if>
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px">
+<sc-for list="{{locs}}" as="l" hint-placeholder-count="3">
+<article style="background: #FFFFFF; border-radius: 12px; box-shadow: 0 1px 12px rgba(20,22,40,0.07); padding: 22px; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; justify-content: space-between; gap: 8px; align-items: flex-start"><b style="font-family: 'Poppins', sans-serif; font-size: 16px; color: #16143D">{{l.name}}</b><span style="flex: none; padding: 1px 10px; border-radius: 999px; background: {{l.chipBg}}; color: {{l.chipFg}}; font-size: 12px; font-weight: 700">{{l.status}}</span></div>
+<span style="font-size: 13px; color: #5F6472">{{l.type}}</span>
+<span>{{l.addr}}</span>
+<span style="font-size: 13px; color: #3A3F4B">{{l.hours}}</span>
+<span style="margin-top: 6px; padding-top: 10px; border-top: 1px solid #ECEDF1; font-size: 13px; color: {{l.visColor}}; font-weight: 600">{{l.vis}}</span>
+</article>
+</sc-for>
+</div>
+</sc-if>
+
+<!-- ======== ANNOUNCEMENTS ======== -->
+<sc-if value="{{isAnn}}" hint-placeholder-val="{{ false }}">
+<div><h1 style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 22px; font-weight: 600; color: #16143D">Announcements</h1><p style="margin: 2px 0 0; color: #5F6472">Short notices shoppers see under a product’s result, like a warning about copies.</p></div>
+<div class="ws-row">
+<section style="background: #FFFFFF; border-radius: 12px; box-shadow: 0 1px 12px rgba(20,22,40,0.07); padding: 24px; display: flex; flex-direction: column; gap: 12px">
+<h2 style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600; color: #16143D">New announcement</h2>
+<label style="display: flex; flex-direction: column; gap: 4px; font-weight: 600">Product<select style="height: 42px; padding: 0 8px; border: 1px solid #C9CCD4; border-radius: 8px; font: inherit; font-weight: 400"><option>Tomato paste, 70 g · A7-0412L</option><option>Tomato paste, 210 g · A7-0418L</option><option>Seasoning cubes, 10 g · 02-4410L</option></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-weight: 600"><span style="display: flex; justify-content: space-between">Title<span style="font-weight: 400; font-size: 12px; color: {{titleCountColor}}">{{titleCount}} / 80</span></span><input type="text" maxlength="80" value="{{annTitle}}" onChange="{{onAnnTitle}}" aria-invalid="{{claimError}}" style="height: 44px; padding: 0 10px; border: {{annBorder}}; border-radius: 8px; font: inherit; font-weight: 400"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-weight: 600"><span style="display: flex; justify-content: space-between">Message<span style="font-weight: 400; font-size: 12px; color: #5F6472">{{bodyCount}} / 500</span></span><textarea rows="4" maxlength="500" value="{{annBody}}" onChange="{{onAnnBody}}" aria-invalid="{{claimError}}" style="padding: 8px 10px; border: {{annBorder}}; border-radius: 8px; font: inherit; font-weight: 400; resize: vertical"></textarea></label>
+<sc-if value="{{claimError}}" hint-placeholder-val="{{ false }}">
+<div role="alert" style="padding: 14px 16px; border-radius: 10px; background: #FDECEA; color: #6E1A13; font-size: 14px"><b style="display: block; margin-bottom: 4px; color: #8C1D16">Remove “{{claimWord}}” before posting</b>Announcements can’t make safety or regulator-approval claims. FoodLens can’t check them, and shoppers could read them as a guarantee. You can say things like “Our cap is red” or “Beware of copies with a blue cap”.</div>
+</sc-if>
+<div style="padding: 14px; border-radius: 10px; border: 1px dashed #B9BCC6; background: #FAF8F3">
+<p style="margin: 0 0 6px; font-size: 12px; font-weight: 700; color: #5F6472">PREVIEW · what shoppers see</p>
+<p style="margin: 0; font-size: 12px; color: #5F6472">Message from the company · not reviewed by FoodLens</p>
+<p style="margin: 6px 0 2px; font-weight: 700; color: #16143D">{{previewTitle}}</p>
+<p style="margin: 0; font-size: 14px; color: #2A2F3A">{{previewBody}}</p>
+</div>
+<button type="button" onClick="{{postAnn}}" disabled="{{postDisabled}}" style="min-height: 46px; border: 0; border-radius: 999px; background: {{postBg}}; color: #FFFFFF; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer">Post announcement</button>
+</section>
+<section style="background: #FFFFFF; border-radius: 12px; box-shadow: 0 1px 12px rgba(20,22,40,0.07); padding: 24px">
+<h2 style="margin: 0 0 6px; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600; color: #16143D">Your announcements</h2>
+<sc-for list="{{anns}}" as="a" hint-placeholder-count="4">
+<div style="padding: 12px 0; border-top: 1px solid #ECEDF1">
+<div style="display: flex; justify-content: space-between; gap: 8px; align-items: flex-start"><b style="color: #16143D">{{a.title}}</b><span style="flex: none; padding: 1px 8px; border-radius: 999px; background: {{a.chipBg}}; color: {{a.chipFg}}; font-size: 12px; font-weight: 700">{{a.status}}</span></div>
+<p style="margin: 2px 0 0; font-size: 12px; color: #5F6472">{{a.meta}}</p>
+<sc-if value="{{a.hasReason}}" hint-placeholder-val="{{ false }}"><p style="margin: 6px 0 0; padding: 8px 10px; border-radius: 8px; background: #FDECEA; font-size: 13px; color: #6E1A13"><b>Hidden by FoodLens:</b> {{a.reason}}</p></sc-if>
+<sc-if value="{{a.canWithdraw}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{a.withdraw}}" style="margin-top: 8px; min-height: 34px; padding: 0 12px; border: 1px solid #C9CCD4; border-radius: 6px; background: #FFFFFF; font: inherit; font-weight: 600; color: #16143D; cursor: pointer">Withdraw</button></sc-if>
+</div>
+</sc-for>
+</section>
+</div>
+</sc-if>
+
+<!-- ======== ORDERS ======== -->
+<sc-if value="{{isOrders}}" hint-placeholder-val="{{ false }}">
+<div><h1 style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 22px; font-weight: 600; color: #16143D">Incoming orders</h1><p style="margin: 2px 0 0; color: #5F6472">Stock requests from wholesalers. No prices or payments go through FoodLens.</p></div>
+<div role="tablist" aria-label="Filter orders" style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{orderTabs}}" as="t" hint-placeholder-count="5">
+<button type="button" role="tab" aria-selected="{{t.on}}" onClick="{{t.pick}}" style="display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; border-radius: 999px; border: {{t.border}}; background: {{t.bg}}; color: {{t.fg}}; font: inherit; font-weight: 600; cursor: pointer">{{t.label}} <span style="font-size: 12px; padding: 0 7px; border-radius: 999px; background: {{t.countBg}}">{{t.count}}</span></button>
+</sc-for>
+</div>
+<sc-if value="{{listData}}" hint-placeholder-val="{{ true }}">
+<section style="background: #FFFFFF; border-radius: 12px; box-shadow: 0 1px 12px rgba(20,22,40,0.07); padding: 8px 24px">
+<sc-for list="{{orderRows}}" as="o" hint-placeholder-count="5">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; padding: 14px 0; border-top: {{o.topBorder}}">
+<span style="flex: 0 0 76px; font-family: 'IBM Plex Mono', monospace; color: #16143D">{{o.ref}}</span>
+<span style="flex: 2 1 200px; min-width: 0"><b style="display: block; color: #16143D">{{o.buyer}}</b><span style="font-size: 13px; color: #5F6472">{{o.city}}</span></span>
+<span style="flex: 1.4 1 180px">{{o.summary}}<br><span style="font-size: 13px; color: #5F6472">{{o.fulfil}}</span></span>
+<span style="flex: 0 1 120px; font-size: 13px; color: #5F6472">{{o.when}}</span>
+<span style="flex: 0 0 auto; padding: 1px 10px; border-radius: 999px; background: {{o.chipBg}}; color: {{o.chipFg}}; font-size: 12px; font-weight: 700">{{o.status}}</span>
+<button type="button" onClick="{{o.open}}" style="min-height: 36px; padding: 0 14px; border: 1px solid #C9CCD4; border-radius: 6px; background: #FFFFFF; font: inherit; font-weight: 600; color: #16143D; cursor: pointer">Open</button>
+</div>
+</sc-for>
+</section>
+</sc-if>
+<sc-if value="{{listLoading}}" hint-placeholder-val="{{ false }}">
+<section aria-busy="true" aria-label="Loading" style="background: #FFFFFF; border-radius: 12px; box-shadow: 0 1px 12px rgba(20,22,40,0.07); padding: 16px 24px; display: flex; flex-direction: column; gap: 18px"><div class="ws-skel" style="height: 18px; width: 70%; border-radius: 6px; background: #ECEDF1"></div><div class="ws-skel" style="height: 18px; width: 55%; border-radius: 6px; background: #ECEDF1"></div><div class="ws-skel" style="height: 18px; width: 65%; border-radius: 6px; background: #ECEDF1"></div></section>
+</sc-if>
+<sc-if value="{{listEmpty}}" hint-placeholder-val="{{ false }}">
+<section style="background: #FFFFFF; border-radius: 12px; border: 1px dashed #C9CCD4; padding: 48px 24px; text-align: center"><p style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 600; color: #16143D">No order requests yet</p><p style="margin: 6px auto 0; max-width: 420px; color: #5F6472">Wholesalers can request stock once your products and a reviewed location are listed.</p></section>
+</sc-if>
+<sc-if value="{{listError}}" hint-placeholder-val="{{ false }}">
+<section role="alert" style="background: #FFFFFF; border-radius: 12px; border: 2px solid #B42318; padding: 36px 24px; text-align: center"><p style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 600; color: #16143D">We couldn’t load your orders</p><p style="margin: 6px 0 16px; color: #5F6472">Check your connection and try again. No order has been changed.</p><button type="button" onClick="{{retryList}}" style="min-height: 44px; padding: 0 20px; border: 2px solid #1B7A45; border-radius: 999px; background: #FFFFFF; color: #145C34; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer">Try again</button></section>
+</sc-if>
+</sc-if>
+
+<!-- ======== ORDER DETAIL ======== -->
+<sc-if value="{{isOrder}}" hint-placeholder-val="{{ false }}">
+<nav aria-label="Breadcrumb" style="font-size: 14px"><button type="button" onClick="{{goOrders}}" style="padding: 0; border: 0; background: none; color: #145C34; font: inherit; font-weight: 700; cursor: pointer">Incoming orders</button> <span aria-hidden="true" style="color: #9AA0AC">/</span> <span style="font-family: 'IBM Plex Mono', monospace">{{ord.ref}}</span></nav>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px"><h1 style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 22px; font-weight: 600; color: #16143D">{{ord.ref}} · {{ord.buyer}}</h1><span style="padding: 2px 12px; border-radius: 999px; background: {{ord.chipBg}}; color: {{ord.chipFg}}; font-size: 13px; font-weight: 700">{{ord.status}}</span></div>
+<div class="ws-row">
+<div style="display: flex; flex-direction: column; gap: 24px; min-width: 0">
+<section style="background: #FFFFFF; border-radius: 12px; box-shadow: 0 1px 12px rgba(20,22,40,0.07); padding: 24px">
+<h2 style="margin: 0 0 8px; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600; color: #16143D">Requested products</h2>
+<sc-for list="{{ordLines}}" as="l" hint-placeholder-count="3">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 12px 0; border-top: 1px solid #ECEDF1">
+<span style="flex: 2 1 200px; min-width: 0"><b style="display: block; color: #16143D">{{l.name}}</b><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5F6472">{{l.reg}}</span> <span style="padding: 0 8px; border-radius: 999px; background: #E3F4EA; color: #145C34; font-size: 11px; font-weight: 700">Active</span></span>
+<span style="flex: 0 1 140px; font-weight: 700; color: #16143D">{{l.qty}}</span>
+<sc-if value="{{l.pickBatch}}" hint-placeholder-val="{{ false }}"><label style="flex: 1 1 180px; display: flex; flex-direction: column; gap: 2px; font-size: 12px; font-weight: 700; color: #3A3F4B">Batch for this line<select value="{{l.batch}}" onChange="{{l.setBatch}}" style="height: 38px; padding: 0 8px; border: {{l.batchBorder}}; border-radius: 6px; font: inherit; font-size: 14px; font-weight: 400"><option value="">Choose batch</option><sc-for list="{{l.options}}" as="op" hint-placeholder-count="3"><option value="{{op}}">{{op}}</option></sc-for></select></label></sc-if>
+<sc-if value="{{l.showBatch}}" hint-placeholder-val="{{ false }}"><span style="flex: 1 1 180px; font-size: 13px">Batch <b style="font-family: 'IBM Plex Mono', monospace">{{l.batch}}</b></span></sc-if>
+</div>
+</sc-for>
+<p style="margin: 10px 0 0; padding: 10px 12px; border-radius: 8px; background: #FAF8F3; font-size: 13px; color: #3A3F4B">No prices or payments in FoodLens. Agree price and payment with the buyer directly.</p>
+</section>
+<section style="background: #FFFFFF; border-radius: 12px; box-shadow: 0 1px 12px rgba(20,22,40,0.07); padding: 24px">
+<h2 style="margin: 0 0 10px; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600; color: #16143D">Messages</h2>
+<sc-for list="{{msgs}}" as="m" hint-placeholder-count="2">
+<div style="margin-bottom: 10px; padding: 10px 12px; border-radius: 10px; background: {{m.bg}}; max-width: 86%; align-self: flex-start"><b style="font-size: 12px; color: #5F6472">{{m.who}} · {{m.when}}</b><p style="margin: 2px 0 0">{{m.text}}</p></div>
+</sc-for>
+<div style="display: flex; gap: 8px; margin-top: 6px"><label style="flex: 1; min-width: 0"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Reply to the buyer</span><input type="text" value="{{reply}}" onChange="{{onReply}}" placeholder="Reply to Arewa Grainline…" style="width: 100%; box-sizing: border-box; height: 44px; padding: 0 12px; border: 1px solid #C9CCD4; border-radius: 8px; font: inherit"></label><button type="button" onClick="{{sendReply}}" style="flex: none; min-height: 44px; padding: 0 16px; border: 0; border-radius: 8px; background: #16143D; color: #FFFFFF; font: inherit; font-weight: 700; cursor: pointer">Send</button></div>
+</section>
+</div>
+<div style="display: flex; flex-direction: column; gap: 24px; min-width: 0">
+<section style="background: #FFFFFF; border-radius: 12px; box-shadow: 0 1px 12px rgba(20,22,40,0.07); padding: 24px">
+<h2 style="margin: 0 0 8px; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600; color: #16143D">Decision</h2>
+<sc-if value="{{canDecide}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<button type="button" onClick="{{accept}}" style="min-height: 46px; border: 0; border-radius: 999px; background: #1B7A45; color: #FFFFFF; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer">Accept request</button>
+<button type="button" onClick="{{openDecline}}" style="min-height: 46px; border: 2px solid #C9CCD4; border-radius: 999px; background: #FFFFFF; color: #16143D; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer">Decline</button>
+<sc-if value="{{declineOpen}}" hint-placeholder-val="{{ false }}">
+<label style="display: flex; flex-direction: column; gap: 4px; font-weight: 600">Reason (the buyer sees this)<select value="{{declineReason}}" onChange="{{onDeclineReason}}" style="height: 42px; padding: 0 8px; border: {{declineBorder}}; border-radius: 8px; font: inherit; font-weight: 400"><option value="">Choose a reason</option><option value="stock">Out of stock for this pack size</option><option value="area">We can’t deliver to this area</option><option value="min">Below our minimum order</option><option value="other">Other</option></select></label>
+<button type="button" onClick="{{confirmDecline}}" style="min-height: 42px; border: 0; border-radius: 8px; background: #3A3F4B; color: #FFFFFF; font: inherit; font-weight: 700; cursor: pointer">Confirm decline</button>
+</sc-if>
+</div>
+</sc-if>
+<sc-if value="{{canFulfil}}" hint-placeholder-val="{{ false }}">
+<p style="margin: 0 0 10px; font-size: 14px; color: #3A3F4B">Accepted. When the stock leaves, choose the batch for each line so the buyer can check it.</p>
+<button type="button" onClick="{{fulfil}}" style="width: 100%; min-height: 46px; border: 0; border-radius: 999px; background: #1B7A45; color: #FFFFFF; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer">Mark as fulfilled</button>
+<sc-if value="{{fulfilError}}" hint-placeholder-val="{{ false }}"><p role="alert" style="margin: 8px 0 0; font-size: 13px; font-weight: 600; color: #B42318">Choose a batch for every line first.</p></sc-if>
+</sc-if>
+<sc-if value="{{isClosed}}" hint-placeholder-val="{{ false }}"><p style="margin: 0; color: #3A3F4B">{{closedText}}</p></sc-if>
+</section>
+<section style="background: #FFFFFF; border-radius: 12px; box-shadow: 0 1px 12px rgba(20,22,40,0.07); padding: 24px">
+<h2 style="margin: 0 0 8px; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 600; color: #16143D">Buyer</h2>
+<p style="margin: 0"><b style="color: #16143D">{{ord.buyer}}</b> · {{ord.city}}</p>
+<p style="margin: 4px 0 0"><span style="padding: 0 8px; border-radius: 999px; background: #E3F4EA; color: #145C34; font-size: 11px; font-weight: 700">Demo-reviewed profile</span></p>
+<p style="margin: 10px 0 0; font-size: 13px; color: #3A3F4B">{{ord.contact}}</p>
+<h3 style="margin: 16px 0 4px; font-size: 14px; color: #16143D">Fulfilment</h3>
+<p style="margin: 0; font-size: 13px; color: #3A3F4B">{{ord.fulfil}}</p>
+<h3 style="margin: 16px 0 4px; font-size: 14px; color: #16143D">Timeline</h3>
+<sc-for list="{{ordTimeline}}" as="t" hint-placeholder-count="2"><p style="margin: 0 0 4px; font-size: 13px; color: #3A3F4B"><b>{{t.what}}</b> · {{t.when}}</p></sc-for>
+</section>
+</div>
+</div>
+</sc-if>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"variant":{"editor":"string","default":"","section":"State"},"page":{"editor":"enum","options":["overview","products","product","productNew","submissions","locations","announcements","orders","order"],"default":"overview","section":"State"},"listState":{"editor":"enum","options":["data","loading","empty","error"],"default":"data","section":"State"},"orderState":{"editor":"enum","options":["new","accepted"],"default":"new","section":"State"},"annState":{"editor":"enum","options":["clean","claim"],"default":"clean","section":"State"},"$preview":{"width":1440,"height":1250}}'>
+class Component extends DCLogic {
+renderVals() {
+const VM = { products: { page: 'products' }, product: { page: 'product' }, productNew: { page: 'productNew' }, submissions: { page: 'submissions' }, locations: { page: 'locations' }, announcements: { page: 'announcements' }, announceError: { page: 'announcements', annState: 'claim' }, orders: { page: 'orders' }, order: { page: 'order' }, orderAccepted: { page: 'order', orderState: 'accepted' }, productsEmpty: { page: 'products', listState: 'empty' }, productsLoading: { page: 'products', listState: 'loading' }, ordersError: { page: 'orders', listState: 'error' } };
+const P = Object.assign({}, this.props, VM[this.props.variant] || {}), st = this.state || {};
+const page = st.page || P.page || 'overview';
+const listState = st.listState || P.listState || 'data';
+const set = (o) => this.setState(o);
+const go = (p, extra) => () => set(Object.assign({ page: p, menuOpen: false }, extra || {}));
+const RS = { active: ['Active', '#E3F4EA', '#145C34', 'Matches an active registration'], expired: ['Expired', '#FDF1DC', '#8A4100', 'Registration expired on 30 Jun 2025'], notfound: ['Not found', '#EEEFF2', '#3A3F4B', 'Number isn’t in the register. Check it, or submit a change.'], mismatch: ['Mismatch', '#FDECEA', '#8C1D16', 'Register lists a different product for this number'] };
+const baseProducts = [
+{ id: 1, name: 'Tomato paste, 70 g', reg: 'A7-0412L', rs: 'active', expires: '14 Mar 2028', updated: 'Updated 3 Oct' },
+{ id: 2, name: 'Tomato paste, 210 g', reg: 'A7-0418L', rs: 'active', expires: '2 Nov 2027', updated: 'Updated 28 Sep' },
+{ id: 3, name: 'Tomato paste, 400 g', reg: 'A7-0421L', rs: 'expired', expires: '30 Jun 2025 (expired)', updated: 'Updated 1 Jul 2025' },
+{ id: 4, name: 'Seasoning cubes, 10 g', reg: '02-4410L', rs: 'active', expires: '9 Aug 2028', updated: 'Updated 12 Sep' },
+{ id: 5, name: 'Chilli sauce, 250 ml', reg: 'A7-0533L', rs: 'notfound', expires: '—', updated: 'Added 2 Oct' },
+{ id: 6, name: 'Tomato ketchup, 500 g', reg: 'A7-0611L', rs: 'mismatch', expires: '—', updated: 'Added 5 Oct' }
+];
+const extraProducts = st.extraProducts || [];
+const products = baseProducts.concat(extraProducts);
+const B0 = {
+1: [['24B-117', '12 Mar 2026', '03 Mar 2027'], ['24C-201', '2 Apr 2026', '2 Apr 2027'], ['24D-044', '20 May 2026', '20 May 2027'], ['24E-310', '8 Jul 2026', '8 Jul 2027'], ['24F-122', '15 Sep 2026', '15 Sep 2027']],
+2: [['24B-301', '18 Mar 2026', '18 Mar 2027'], ['24D-311', '28 May 2026', '28 May 2027'], ['24F-330', '19 Sep 2026', '19 Sep 2027']],
+3: [['24A-410', '10 Jan 2025', '10 Jan 2026'], ['24B-412', '2 Feb 2025', '2 Feb 2026']],
+4: [['SC-2601', '5 Jan 2026', '5 Jan 2028'], ['SC-2604', '1 Apr 2026', '1 Apr 2028'], ['SC-2607', '3 Jul 2026', '3 Jul 2028'], ['SC-2609', '9 Sep 2026', '9 Sep 2028']]
+};
+const added = st.addedBatches || {};
+const batchesFor = (id) => (B0[id] || []).map((b) => ({ lot: b[0], made: b[1], bb: b[2], isNew: false })).concat((added[id] || []).map((l) => ({ lot: l, made: '14 Oct 2026', bb: '14 Oct 2027', isNew: true })));
+const selId = st.selId || 1;
+const selP = products.find((p) => p.id === selId) || products[0];
+const sel = Object.assign({}, selP, { rsLabel: RS[selP.rs][0], rsBg: RS[selP.rs][1], rsFg: RS[selP.rs][2] });
+const OS = { new: ['New', '#E3EFF8', '#1F5F8F'], accepted: ['Accepted', '#ECEBF7', '#433F8A'], fulfilled: ['Fulfilled', '#E3F4EA', '#145C34'], declined: ['Declined', '#EEEFF2', '#3A3F4B'] };
+const baseOrders = [
+{ ref: 'OR-1093', buyer: 'Arewa Grainline', city: 'Kano', when: 'Today, 10:14', status: 'new', fulfil: 'Pickup · Ikeja depot · from 24 Oct', contact: 'Ibrahim Musa · +234 803 000 0000 · orders@arewagrainline.example', lines: [[1, 40, 'cartons'], [2, 25, 'cartons'], [4, 10, 'cases']], note: 'Restocking our Kano depot before month end. Can we collect on Friday?' },
+{ ref: 'OR-1091', buyer: 'Okeke Provisions Hub', city: 'Onitsha', when: 'Yesterday, 16:02', status: 'new', fulfil: 'Delivery · Upper Iweka, Onitsha', contact: 'Chidi Okeke · +234 806 000 0000 · buying@okekehub.example', lines: [[1, 20, 'cartons'], [4, 30, 'cases']], note: 'Usual monthly order.' },
+{ ref: 'OR-1088', buyer: 'Kano Staples Depot', city: 'Kano', when: '17 Oct', status: 'accepted', fulfil: 'Pickup · Ikeja depot', contact: 'Halima Sani · +234 809 000 0000', lines: [[2, 15, 'cartons']], note: '' },
+{ ref: 'OR-1080', buyer: 'Okeke Provisions Hub', city: 'Onitsha', when: '12 Oct', status: 'fulfilled', fulfil: 'Delivery · Upper Iweka, Onitsha', contact: 'Chidi Okeke · +234 806 000 0000', lines: [[1, 30, 'cartons'], [4, 20, 'cases']], note: '', batches: ['24E-310', 'SC-2607'] },
+{ ref: 'OR-1077', buyer: 'Lagos Mart Wholesale', city: 'Lagos', when: '10 Oct', status: 'declined', fulfil: 'Pickup · Ikeja depot', contact: 'Femi Ade · +234 802 000 0000', lines: [[3, 50, 'cartons']], note: '', reason: 'Out of stock for this pack size' }
+];
+const ostat = Object.assign({}, st.ostat || {});
+if (P.orderState === 'accepted' && !st.ostat) ostat['OR-1093'] = 'accepted';
+const orders = baseOrders.map((o) => Object.assign({}, o, { status: ostat[o.ref] || o.status }));
+const pname = (id) => (products.find((p) => p.id === id) || {}).name;
+const preg = (id) => (products.find((p) => p.id === id) || {}).reg;
+const summary = (o) => o.lines.length + (o.lines.length === 1 ? ' product · ' : ' products · ') + o.lines.reduce((a, l) => a + l[1], 0) + ' units';
+const newCount = orders.filter((o) => o.status === 'new').length;
+const orderRowsAll = orders.map((o, i) => ({ ref: o.ref, buyer: o.buyer, city: o.city, summary: summary(o), fulfil: o.fulfil, when: o.when, status: OS[o.status][0], chipBg: OS[o.status][1], chipFg: OS[o.status][2], st: o.status, open: go('order', { ordRef: o.ref }) }));
+const of = st.of || 'all';
+const orderRows = orderRowsAll.filter((o) => of === 'all' || o.st === of).map((o, i) => Object.assign(o, { topBorder: i ? '1px solid #ECEDF1' : '0' }));
+const ord0 = orders.find((o) => o.ref === (st.ordRef || 'OR-1093'));
+const batchSel = st.batchSel || {};
+const ordLines = ord0.lines.map((l, i) => {
+const key = ord0.ref + ':' + i;
+const opts = (B0[l[0]] || []).map((b) => b[0]);
+const chosen = ord0.status === 'fulfilled' ? (ord0.batches ? ord0.batches[i] : batchSel[key]) : (batchSel[key] || '');
+return { name: pname(l[0]), reg: preg(l[0]), qty: l[1] + ' ' + l[2], options: opts, batch: chosen || '', pickBatch: ord0.status === 'accepted', showBatch: ord0.status === 'fulfilled', batchBorder: st.fulfilErr && !chosen ? '2px solid #B42318' : '1px solid #C9CCD4', setBatch: (e) => set({ batchSel: Object.assign({}, batchSel, { [key]: e.target.value }), fulfilErr: false }) };
+});
+const msgs = [{ who: ord0.buyer, when: ord0.when, text: ord0.note || 'No message.', bg: '#F1F2F5' }].concat((st.replies || []).map((r) => ({ who: 'You', when: 'Just now', text: r, bg: '#E3F4EA' })));
+const tl = [{ what: 'Requested', when: ord0.when }];
+if (ord0.status === 'accepted' || ord0.status === 'fulfilled') tl.push({ what: 'Accepted', when: ostat[ord0.ref] ? 'Just now' : '18 Oct' });
+if (ord0.status === 'fulfilled') tl.push({ what: 'Fulfilled', when: ostat[ord0.ref] ? 'Just now' : '14 Oct' });
+if (ord0.status === 'declined') tl.push({ what: 'Declined', when: ostat[ord0.ref] ? 'Just now' : '10 Oct' });
+const reasons = { stock: 'Out of stock for this pack size', area: 'We can’t deliver to this area', min: 'Below our minimum order', other: 'Other' };
+const annClaim = P.annState === 'claim' && st.annTitle === undefined;
+const annTitle = st.annTitle !== undefined ? st.annTitle : (annClaim ? 'Now NAFDAC approved and 100% safe' : 'Copies with a green lid');
+const annBody = st.annBody !== undefined ? st.annBody : (annClaim ? 'Our tomato paste is NAFDAC approved and safe for your family.' : 'Our 70 g tin has a red lid. Tins with a green lid have been seen in Kano. Check the number before you buy.');
+const claimRe = /(nafdac[\s-]*approved|approved by nafdac|verified by nafdac|son[\s-]*approved|certified|\bsafe\b)/i;
+const cm = (annTitle + ' ' + annBody).match(claimRe);
+const AS = { live: ['Live', '#E3F4EA', '#145C34'], hidden: ['Hidden by FoodLens', '#FDECEA', '#8C1D16'], withdrawn: ['Withdrawn', '#EEEFF2', '#3A3F4B'] };
+const baseAnns = [
+{ id: 'a1', title: 'Copies with a blue cap', meta: 'Tomato paste, 70 g · posted 3 Oct', s: 'live' },
+{ id: 'a2', title: 'New label from November', meta: 'Tomato paste, 70 g · posted 28 Sep', s: 'live' },
+{ id: 'a3', title: 'Now NAFDAC approved', meta: 'Seasoning cubes · posted 10 Sep', s: 'hidden', reason: 'claims regulator approval. Hidden on 12 Sep.' },
+{ id: 'a4', title: 'Easter promo packs', meta: 'Tomato paste, 210 g · posted 1 Apr', s: 'withdrawn' }
+];
+const annS = st.annS || {};
+const anns = (st.newAnns || []).concat(baseAnns).map((a) => { const s = annS[a.id] || a.s; return { title: a.title, meta: a.meta, status: AS[s][0], chipBg: AS[s][1], chipFg: AS[s][2], hasReason: s === 'hidden', reason: a.reason || '', canWithdraw: s === 'live', withdraw: () => set({ annS: Object.assign({}, annS, { [a.id]: 'withdrawn' }) }) }; });
+const liveCount = anns.filter((a) => a.status === 'Live').length;
+const LS = { approved: ['Approved', '#E3F4EA', '#145C34', 'Visible to wholesalers', '#145C34'], pending: ['Pending review', '#FDF5E2', '#7A4F00', 'Hidden from wholesalers until reviewed', '#7A4F00'] };
+const locs = [
+{ name: 'Ikeja depot', type: 'Depot', addr: '12 Demo Industrial Ave, Ikeja, Lagos', hours: 'Mon–Sat 8:00–18:00', s: 'approved' },
+{ name: 'Apapa warehouse', type: 'Warehouse', addr: 'Wharf Rd, Apapa, Lagos', hours: 'Mon–Fri 7:00–17:00', s: 'approved' },
+{ name: 'Onitsha depot', type: 'Depot', addr: 'Upper Iweka Rd, Onitsha, Anambra', hours: 'Mon–Sat 8:00–17:00', s: 'pending' }
+].concat(st.newLocs || []).map((l) => ({ name: l.name, type: l.type, addr: l.addr, hours: l.hours, status: LS[l.s][0], chipBg: LS[l.s][1], chipFg: LS[l.s][2], vis: LS[l.s][3], visColor: LS[l.s][4] }));
+const pendingLocs = locs.filter((l) => l.status === 'Pending review').length;
+const SS = { pending: ['Pending', '#FDF5E2', '#7A4F00'], clarify: ['Clarification asked', '#ECEBF7', '#433F8A'], approved: ['Approved', '#E3F4EA', '#145C34'], rejected: ['Rejected', '#EEEFF2', '#3A3F4B'] };
+const subs = (st.newSubs || []).concat([
+{ ref: 'CN-0142', what: 'Pack size change', product: 'Tomato paste, 70 g', meta: 'Sent today, 09:15 · effective 5 Jan 2027', s: 'pending' },
+{ ref: 'CN-0139', what: 'Label redesign', product: 'Tomato paste, 210 g', meta: 'Sent 16 Oct · effective 1 Nov 2026', s: 'clarify', note: 'Please upload the new label artwork as a PDF so we can compare it.' },
+{ ref: 'CN-0131', what: 'Product name', product: 'Seasoning cubes, 10 g', meta: 'Sent 2 Oct · live since 6 Oct', s: 'approved' },
+{ ref: 'CN-0127', what: 'Registration number', product: 'Tomato ketchup, 500 g', meta: 'Sent 28 Sep', s: 'rejected', note: 'The new number belongs to another company in the register.' }
+]).map((s, i) => ({ ref: s.ref, what: s.what, product: s.product, meta: s.meta, status: SS[s.s][0], chipBg: SS[s.s][1], chipFg: SS[s.s][2], hasNote: !!s.note, note: s.note || '', noteBg: s.s === 'rejected' ? '#FDECEA' : '#ECEBF7', topBorder: i ? '1px solid #ECEDF1' : '0' }));
+const titles = { overview: 'Overview', products: 'Products', product: 'Products', productNew: 'Products', submissions: 'Product submissions', locations: 'Locations', announcements: 'Announcements', orders: 'Incoming orders', order: 'Incoming orders' };
+const navDefs = [['overview', 'Overview'], ['products', 'Products', products.length], ['submissions', 'Product submissions', 1], ['locations', 'Locations', pendingLocs], ['announcements', 'Announcements', liveCount], ['orders', 'Incoming orders', newCount]];
+const activeKey = page === 'product' || page === 'productNew' ? 'products' : page === 'order' ? 'orders' : page;
+const nav = navDefs.map(([k, l, c]) => ({ label: l, count: c, hasCount: !!c, go: go(k), current: activeKey === k ? 'page' : 'false', bg: activeKey === k ? '#1B7A45' : 'transparent', fg: activeKey === k ? '#FFFFFF' : '#DCDAF0', weight: activeKey === k ? 700 : 500, countBg: k === 'orders' && c ? '#F6B93B' : 'rgba(255,255,255,0.14)', countFg: k === 'orders' && c ? '#16143D' : '#FFFFFF' }));
+const lot = st.newLot !== undefined ? st.newLot : '';
+const fulfilOk = () => ordLines.every((l) => l.batch);
+return {
+acctOpen: !!st.acctOpen, toggleAcct: () => set({ acctOpen: !st.acctOpen }),
+menuOpen: !!st.menuOpen, toggleMenu: () => set({ menuOpen: !st.menuOpen }),
+nav: nav, pageTitle: titles[page],
+isOverview: page === 'overview', isProducts: page === 'products', isProduct: page === 'product', isNew: page === 'productNew', isSubmissions: page === 'submissions', isLocations: page === 'locations', isAnn: page === 'announcements', isOrders: page === 'orders', isOrder: page === 'order',
+listData: listState === 'data', listLoading: listState === 'loading', listEmpty: listState === 'empty', listError: listState === 'error', retryList: () => set({ listState: 'data' }),
+goOrders: go('orders'), goProducts: go('products'), goNew: go('productNew'), goSubmissions: go('submissions'), noop: () => {},
+bannerText: newCount + ' new order request' + (newCount === 1 ? '' : 's') + ' and ' + pendingLocs + ' location waiting for review.',
+cards: [['Products', products.length, '3 active in register', '#E8F5EE', '#145C34', 'products'], ['Batches', 14 + Object.values(added).reduce((a, x) => a + x.length, 0), 'across 4 products', '#E7F1F8', '#1F5F8F', 'products'], ['Locations pending', pendingLocs, 'waiting for review', '#FDF5E2', '#7A4F00', 'locations'], ['Live announcements', liveCount, 'seen by shoppers', '#EEEDF8', '#433F8A', 'announcements'], ['New orders', newCount, 'need a reply', '#FDEFE4', '#8F430B', 'orders']].map(([l, v, s, bg, fg, p]) => ({ label: l, value: v, sub: s, bg: bg, fg: fg, go: go(p) })),
+recentOrders: orderRowsAll.slice(0, 3),
+products: products.map((p, i) => ({ name: p.name, reg: p.reg, rsLabel: RS[p.rs][0], rsBg: RS[p.rs][1], rsFg: RS[p.rs][2], rsHelp: RS[p.rs][3], batchText: batchesFor(p.id).length + ' batches', updated: p.updated, topBorder: i ? '1px solid #ECEDF1' : '0', open: go('product', { selId: p.id }) })),
+sel: sel, batches: batchesFor(sel.id), noBatches: batchesFor(sel.id).length === 0,
+newLot: lot, onLot: (e) => set({ newLot: e.target.value.toUpperCase(), lotErr: false }), lotError: !!st.lotErr, lotBorder: st.lotErr ? '2px solid #B42318' : '1px solid #C9CCD4',
+addBatch: () => { if (!lot.trim()) { set({ lotErr: true }); return; } set({ addedBatches: Object.assign({}, added, { [sel.id]: (added[sel.id] || []).concat([lot.trim()]) }), newLot: '' }); },
+newReg: st.newReg !== undefined ? st.newReg : 'A7-0425L', onNewReg: (e) => set({ newReg: e.target.value.toUpperCase(), lookup: null }),
+lookup: () => set({ lookup: (st.newReg === undefined || st.newReg === 'A7-0425L') ? 'found' : 'missing' }),
+lookupFound: st.lookup === 'found', lookupMissing: st.lookup === 'missing',
+addProduct: () => set({ extraProducts: extraProducts.concat([{ id: 100 + extraProducts.length, name: 'Tomato paste, 1 kg', reg: st.newReg || 'A7-0425L', rs: st.lookup === 'missing' ? 'notfound' : 'active', expires: '2 Jun 2029', updated: 'Added just now' }]), page: 'products', lookup: null }),
+subs: subs, subWhy: st.subWhy || '', onSubWhy: (e) => set({ subWhy: e.target.value, subErr: false }), subError: !!st.subErr,
+sendSub: () => { if (!(st.subWhy || '').trim()) { set({ subErr: true }); return; } set({ newSubs: [{ ref: 'CN-0143', what: 'Pack size change', product: 'Tomato paste, 70 g', meta: 'Sent just now · effective 5 Jan 2027', s: 'pending' }].concat(st.newSubs || []), subWhy: '' }); },
+locs: locs, locFormOpen: !!st.locForm, toggleLocForm: () => set({ locForm: !st.locForm }),
+addLoc: () => set({ newLocs: (st.newLocs || []).concat([{ name: 'Kano warehouse', type: 'Warehouse', addr: 'Plot 4, Sharada Industrial Estate, Kano', hours: 'Mon–Fri 8:00–17:00', s: 'pending' }]), locForm: false }),
+annTitle: annTitle, annBody: annBody, titleCount: annTitle.length, bodyCount: annBody.length, titleCountColor: annTitle.length > 70 ? '#8A4100' : '#5F6472',
+onAnnTitle: (e) => set({ annTitle: e.target.value, annBody: annBody }), onAnnBody: (e) => set({ annBody: e.target.value, annTitle: annTitle }),
+claimError: !!cm, claimWord: cm ? cm[0] : '', annBorder: cm ? '2px solid #B42318' : '1px solid #C9CCD4',
+previewTitle: annTitle || 'Title', previewBody: annBody || 'Your message', postDisabled: !!cm || !annTitle.trim(), postBg: (cm || !annTitle.trim()) ? '#9AA0AC' : '#1B7A45',
+postAnn: () => { if (cm || !annTitle.trim()) return; set({ newAnns: [{ id: 'n' + Date.now(), title: annTitle, meta: 'Tomato paste, 70 g · posted just now', s: 'live' }].concat(st.newAnns || []), annTitle: '', annBody: '' }); },
+anns: anns,
+orderTabs: [['all', 'All'], ['new', 'New'], ['accepted', 'Accepted'], ['fulfilled', 'Fulfilled'], ['declined', 'Declined']].map(([k, l]) => ({ label: l, count: orderRowsAll.filter((o) => k === 'all' || o.st === k).length, on: of === k, border: of === k ? '1px solid #1B7A45' : '1px solid #E3E5EA', bg: of === k ? '#1B7A45' : '#FFFFFF', fg: of === k ? '#FFFFFF' : '#2A2F3A', countBg: of === k ? 'rgba(255,255,255,0.22)' : '#F1F2F5', pick: () => set({ of: k }) })),
+orderRows: orderRows,
+ord: { ref: ord0.ref, buyer: ord0.buyer, city: ord0.city, fulfil: ord0.fulfil, contact: ord0.contact, status: OS[ord0.status][0], chipBg: OS[ord0.status][1], chipFg: OS[ord0.status][2] },
+ordLines: ordLines, msgs: msgs, ordTimeline: tl,
+reply: st.reply || '', onReply: (e) => set({ reply: e.target.value }), sendReply: () => { if (!(st.reply || '').trim()) return; set({ replies: (st.replies || []).concat([st.reply]), reply: '' }); },
+canDecide: ord0.status === 'new', canFulfil: ord0.status === 'accepted', isClosed: ord0.status === 'fulfilled' || ord0.status === 'declined',
+closedText: ord0.status === 'fulfilled' ? 'Fulfilled. The buyer can see the batch for each line.' : 'Declined: ' + (ord0.reason || reasons[st.declineReason] || '') + '.',
+accept: () => set({ ostat: Object.assign({}, ostat, { [ord0.ref]: 'accepted' }), declineOpen: false }),
+declineOpen: !!st.declineOpen, openDecline: () => set({ declineOpen: true }),
+declineReason: st.declineReason || '', onDeclineReason: (e) => set({ declineReason: e.target.value, declineErr: false }), declineBorder: st.declineErr ? '2px solid #B42318' : '1px solid #C9CCD4',
+confirmDecline: () => { if (!st.declineReason) { set({ declineErr: true }); return; } set({ ostat: Object.assign({}, ostat, { [ord0.ref]: 'declined' }), declineOpen: false }); },
+fulfil: () => { if (!fulfilOk()) { set({ fulfilErr: true }); return; } set({ ostat: Object.assign({}, ostat, { [ord0.ref]: 'fulfilled' }), fulfilErr: false }); },
+fulfilError: !!st.fulfilErr
+};
+}
+}
+</script>
+</body>
+</html>

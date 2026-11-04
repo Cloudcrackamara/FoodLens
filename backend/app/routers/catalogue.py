@@ -26,6 +26,10 @@ NOT_APPROVED = "Products can be added after FoodLens approves your company profi
 def _error(exc: Exception) -> HTTPException:
     if isinstance(exc, company_service.CompanyNotApprovedError):
         return HTTPException(status.HTTP_409_CONFLICT, NOT_APPROVED)
+    if isinstance(exc, catalogue_service.NotManufacturerError):
+        return HTTPException(
+            status.HTTP_403_FORBIDDEN, "Only manufacturer companies can add products and batches"
+        )
     if isinstance(exc, company_service.NotFoundError):
         return HTTPException(status.HTTP_404_NOT_FOUND, "Product not found")
     if isinstance(exc, catalogue_service.DuplicateCodeError):
@@ -43,6 +47,7 @@ _HANDLED = (
     company_service.NotFoundError,
     catalogue_service.DuplicateCodeError,
     catalogue_service.InvalidRegistrationNumberError,
+    catalogue_service.NotManufacturerError,
 )
 
 

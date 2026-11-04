@@ -13,7 +13,7 @@ const product: Product = {
   name: "Old Name",
   brand: "Test Foods",
   category: "Oils",
-  package_size: null,
+  size: null,
   manufacturer_name: "Test Foods Ltd (fictional)",
   label_information: null,
   registration_number: "DEMO-NAFDAC-7001",

@@ -27,14 +27,50 @@ class Settings(BaseSettings):
 
     # Rate limits, per client network (IP). Token buckets: a burst, then a steady refill.
     rate_limit_enabled: bool = True
-    rate_limit_lookup_burst: int = Field(default=20, ge=1)
-    rate_limit_lookup_refill_per_second: float = Field(default=1.0, gt=0)
+    rate_limit_check_burst: int = Field(default=20, ge=1)
+    rate_limit_check_refill_per_second: float = Field(default=1.0, gt=0)
     rate_limit_login_per_minute: int = Field(default=5, ge=1)  # per IP + email
     rate_limit_register_per_hour: int = Field(default=5, ge=1)
+    rate_limit_report_per_hour: int = Field(default=5, ge=1)  # consumer reports (D119)
     # Comma-separated IPs or CIDR ranges never limited, e.g. usability-test machines.
     rate_limit_exempt_ips: str = ""
     # Proxies whose X-Forwarded-For header is trusted (the Next.js server).
     trusted_proxy_ips: str = "127.0.0.1,::1"
+
+    # Base URL printed in every QR code and label: {PUBLIC_BASE_URL}/p/{token} (D129, D139).
+    # QR codes are permanent once printed, so set it before printing real labels.
+    public_base_url: str = "http://localhost:3000"
+
+    # Consumer checks (D115, D118). A sale at or after now - window shows as just sold.
+    just_sold_window_hours: int = Field(default=6, ge=1)
+    # Offline DB-IP Lite city database (.mmdb). Blank skips this step of the area lookup.
+    geoip_db_path: str = ""
+    # Demo only: lets the check page choose a city when no other area source answers.
+    simulate_location_enabled: bool = False
+
+    # Risk rules (D143, D152). Changing a default needs the founder's approval.
+    risk_different_area_km: float = Field(default=50, gt=0)  # rule 1
+    risk_travel_min_km: float = Field(default=100, gt=0)  # rule 2
+    risk_max_travel_kmh: float = Field(default=120, gt=0)  # rule 2
+    risk_scan_volume: int = Field(default=10, ge=1)  # rule 3: more than this in 24 hours
+    risk_invalid_burst: int = Field(default=20, ge=1)  # rule 4: at least this in 10 minutes
+    allocation_overage_pct: float = Field(default=10, ge=0)  # rule 9
+
+    # POS integration (D121-D123, D151). POS_SECRET_KEY is a Fernet key that encrypts partner
+    # signing secrets at rest; blank turns the POS API off (503).
+    pos_secret_key: str = ""
+    pos_max_skew_seconds: int = Field(default=300, ge=1)
+    pos_max_event_age_days: int = Field(default=7, ge=1)
+    pos_max_future_seconds: int = Field(default=300, ge=0)
+    pos_max_units_per_request: int = Field(default=100, ge=1)
+    # Per-partner token bucket (D119).
+    rate_limit_pos_burst: int = Field(default=60, ge=1)
+    rate_limit_pos_refill_per_second: float = Field(default=5.0, gt=0)
+    # Demo only, off by default: the simulated till at /demo/pos (D123).
+    demo_pos_enabled: bool = False
+
+    # Wholesale order requests are future work: the routes exist only when true (D127).
+    orders_enabled: bool = False
 
     # Private folder for change-notice attachments (relative to backend/). Never served statically.
     upload_dir: str = "storage/notices"
@@ -45,6 +81,14 @@ class Settings(BaseSettings):
     seed_admin_display_name: str = "FoodLens Demo Admin"
     # Password for the demo buyer/seller accounts; blank means they cannot sign in (D101).
     seed_demo_password: str | None = None
+
+    @field_validator("public_base_url")
+    @classmethod
+    def valid_base_url(cls, value: str) -> str:
+        value = value.strip().rstrip("/")
+        if not value.startswith(("http://", "https://")):
+            raise ValueError("PUBLIC_BASE_URL must start with http:// or https://")
+        return value
 
     @field_validator("rate_limit_exempt_ips", "trusted_proxy_ips")
     @classmethod

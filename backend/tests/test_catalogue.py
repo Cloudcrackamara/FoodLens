@@ -1,5 +1,5 @@
-"""Company catalogue: products and batches go live at once and carry the registration number
-printed on the pack; companies cannot create or edit register records (D61-D62, D80-D81)."""
+"""Company catalogue: products and batches go live at once and carry the NAFDAC number printed
+on the pack as information only (D61-D62, D104, D107). Only manufacturers own products."""
 
 from collections.abc import Callable
 
@@ -8,16 +8,8 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session, select
 
 from app.core.security import hash_password
-from app.models import (
-    AppUser,
-    AuditLog,
-    Company,
-    Product,
-    ProductBatch,
-    RegulatorRegister,
-    RegulatoryAgency,
-)
-from app.models.enums import CompanyReviewStatus, CompanyType, MemberRole
+from app.models import AppUser, AuditLog, Company, Product, ProductBatch
+from app.models.enums import CompanyReviewStatus, MemberRole
 from tests import factories as f
 
 PASSWORD = "correct-horse-battery"
@@ -26,7 +18,7 @@ PRODUCT = {
     "name": "Sample Cocoa Drink",
     "brand": "Test Foods",
     "category": "Beverages",
-    "package_size": "500 g",
+    "size": "500 g",
     "manufacturer_name": "Test Foods Ltd (fictional)",
     "registration_number": "demo-nafdac-5001",
 }
@@ -42,16 +34,12 @@ def sign_in(client: TestClient, session: Session, **overrides) -> AppUser:
 
 
 def my_company(
-    client: TestClient, session: Session, status=CompanyReviewStatus.APPROVED
+    client: TestClient, session: Session, status=CompanyReviewStatus.APPROVED, **flags
 ) -> Company:
     user = sign_in(client, session)
-    company = f.make_company(session, review_status=status)
+    company = f.make_company(session, review_status=status, **flags)
     f.make_member(session, user, company, role=MemberRole.OWNER)
     return company
-
-
-def agency(session: Session) -> RegulatoryAgency:
-    return f.make_agency(session, name="NAFDAC (simulated)")
 
 
 def add_product(client: TestClient, company: Company, **overrides):
@@ -63,12 +51,6 @@ def add_batch(client: TestClient, company: Company, product_id: str, **overrides
     return client.post(
         f"/api/companies/{company.company_id}/products/{product_id}/batches", json=body
     )
-
-
-def lookup(client: TestClient, number: str, batch: str | None = None) -> dict:
-    return client.post(
-        "/api/lookups/registration", json={"registration_number": number, "batch_number": batch}
-    ).json()
 
 
 @pytest.fixture
@@ -93,8 +75,7 @@ def test_product_and_batch_go_live_immediately(client: TestClient, session: Sess
     assert batch.status_code == 201
     assert batch.json()["batch_number"] == "LOT-1"
     assert product.json()["registration_number"] == "DEMO-NAFDAC-5001"  # normalised
-    # The number is not in the simulated register, so the lookup never shows a match.
-    assert lookup(client, "DEMO-NAFDAC-5001", "lot-1")["result"] == "REGISTRATION_NOT_FOUND"
+    assert product.json()["size"] == "500 g"
 
 
 def test_client_cannot_set_status_or_owner_on_product(client: TestClient, session: Session) -> None:
@@ -174,44 +155,24 @@ def test_publishing_is_audited(client: TestClient, session: Session) -> None:
     assert ("product_batch", "published") in actions
 
 
-# --- Registration numbers: entered by companies, checked only against the register ---------
+# --- NAFDAC numbers: entered by companies, information only (D107) ---------------------------
 
 
-def test_product_number_matching_the_register_shows_as_registered(
-    client: TestClient, session: Session
+@pytest.mark.parametrize(
+    "flags",
+    [
+        {"is_manufacturer": False, "is_distributor": True},
+        {"is_manufacturer": False, "is_retailer": True},
+    ],
+)
+def test_only_manufacturers_add_products_and_batches(
+    client: TestClient, session: Session, flags: dict
 ) -> None:
-    company = my_company(client, session)
-    f.make_register(
-        session,
-        agency(session),
-        registration_number="DEMO-NAFDAC-5001",
-        registered_product_name="Sample Cocoa Drink",
-        registered_company_name=company.claimed_legal_name,
-    )
-    product_id = add_product(client, company).json()["product_id"]
-    add_batch(client, company, product_id)
+    company = my_company(client, session, **flags)
+    product = f.make_product(session, company)
 
-    assert lookup(client, "DEMO-NAFDAC-5001", "LOT-1")["result"] == "REGISTERED_ACTIVE"
-
-
-def test_copying_another_companys_number_is_a_mismatch(
-    client: TestClient, session: Session
-) -> None:
-    company = my_company(client, session)
-    f.make_register(
-        session,
-        agency(session),
-        registration_number="DEMO-NAFDAC-5001",
-        registered_product_name="Sample Cocoa Drink",
-        registered_company_name="Someone Else Ltd (fictional)",
-    )
-    product_id = add_product(client, company).json()["product_id"]
-    add_batch(client, company, product_id)
-
-    result = lookup(client, "DEMO-NAFDAC-5001", "LOT-1")
-
-    assert result["result"] == "REGISTRATION_MISMATCH"
-    assert result["mismatch"] == {"reason": "registered_names_differ"}
+    assert add_product(client, company).status_code == 403
+    assert add_batch(client, company, str(product.product_id)).status_code == 403
 
 
 def test_registration_number_is_optional(client: TestClient, session: Session) -> None:
@@ -227,28 +188,6 @@ def test_malformed_registration_number_is_rejected(client: TestClient, session: 
     company = my_company(client, session)
 
     assert add_product(client, company, registration_number="<bad>").status_code == 422
-
-
-def test_company_cannot_create_or_change_register_records(
-    client: TestClient, session: Session
-) -> None:
-    company = my_company(client, session)
-
-    response = add_product(
-        client,
-        company,
-        register_status="ACTIVE",
-        registered_product_name="Sample Cocoa Drink",
-        registered_company_name="Test Foods Ltd (fictional)",
-    )
-
-    assert response.status_code == 201
-    assert session.exec(select(RegulatorRegister)).all() == []
-    gone = client.post(
-        f"/api/companies/{company.company_id}/products/{response.json()['product_id']}/credentials",
-        json={"agency_id": str(agency(session).agency_id), "reference_number": "X"},
-    )
-    assert gone.status_code in (404, 405)
 
 
 def test_member_sees_catalogue_with_registration_numbers(
@@ -268,24 +207,51 @@ def test_member_sees_catalogue_with_registration_numbers(
 # --- Registration types and directory owner contact -----------------------------------------
 
 
-@pytest.mark.parametrize("company_type", list(CompanyType))
-def test_registration_accepts_each_company_type(
-    client: TestClient, session: Session, company_type: CompanyType
+@pytest.mark.parametrize(
+    "flags",
+    [
+        {"is_manufacturer": True},
+        {"is_distributor": True},
+        {"is_retailer": True},
+        {"is_distributor": True, "is_retailer": True},
+        {"is_manufacturer": True, "is_distributor": True, "is_retailer": True},
+    ],
+)
+def test_registration_accepts_any_combination_of_types(
+    client: TestClient, session: Session, flags: dict
 ) -> None:
     sign_in(client, session)
 
     response = client.post(
         "/api/companies",
         json={
-            "company_type": company_type,
             "display_name": "Typed Co (fictional)",
             "contact_email": "typed@example.com",
             "claimed_legal_name": "Typed Co Ltd",
-        },
+        }
+        | flags,
     )
 
     assert response.status_code == 201
-    assert response.json()["company_type"] == company_type
+    body = response.json()
+    for flag in ("is_manufacturer", "is_distributor", "is_retailer"):
+        assert body[flag] is flags.get(flag, False)
+
+
+def test_registration_needs_at_least_one_type(client: TestClient, session: Session) -> None:
+    sign_in(client, session)
+
+    response = client.post(
+        "/api/companies",
+        json={
+            "display_name": "Typeless Co (fictional)",
+            "contact_email": "typeless@example.com",
+            "claimed_legal_name": "Typeless Co Ltd",
+            "is_manufacturer": False,
+        },
+    )
+
+    assert response.status_code == 422
 
 
 def test_directory_shows_owner_contact_without_login_email(
@@ -295,7 +261,8 @@ def test_directory_shows_owner_contact_without_login_email(
     company_id = client.post(
         "/api/companies",
         json={
-            "company_type": "BOTH",
+            "is_manufacturer": True,
+            "is_distributor": True,
             "display_name": "Owner Contact Co (fictional)",
             "contact_email": "sales@ownerco.example.com",
             "contact_phone": "+234 000 111 2222",

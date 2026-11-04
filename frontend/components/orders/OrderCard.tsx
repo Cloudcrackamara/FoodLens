@@ -16,17 +16,17 @@ export function OrderCard({
   const other = perspective === "buyer" ? order.seller : order.buyer;
   return (
     <li aria-label={`Order from ${order.buyer.display_name} to ${order.seller.display_name}`}
-      className="flex flex-col gap-2 rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
+      className="flex flex-col gap-2 rounded-[12px] bg-white p-6 shadow-card">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <p className="font-semibold">
             {perspective === "buyer" ? "To" : "From"} {other.display_name}
           </p>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="text-sm text-text-subtle">
             Sent {new Date(order.created_at).toLocaleDateString("en-GB")}
           </p>
         </div>
-        <span className="rounded-full border border-zinc-500 px-3 py-1 text-xs font-semibold">
+        <span className="inline-flex items-center rounded-full bg-neutral-bg px-2.5 py-0.5 text-sm font-bold text-neutral">
           {orderStatusLabels[order.status]}
         </span>
       </div>
@@ -35,7 +35,7 @@ export function OrderCard({
           <li key={line.line_id}>
             {line.product_name}: {formatQuantity(line.quantity)} {line.unit}
             {line.batches.length > 0 && (
-              <span className="text-zinc-600 dark:text-zinc-400">
+              <span className="text-text-subtle">
                 {" "}· batches {line.batches.map((b) => b.batch_number).join(", ")}
               </span>
             )}

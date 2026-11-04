@@ -1,29 +1,35 @@
 """Minimal builders for valid rows. All values are obviously fictional."""
 
+import hashlib
+import secrets
 import uuid
-from datetime import date
+from datetime import UTC, datetime
 from decimal import Decimal
 
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from app.models import (
     AppUser,
+    Area,
+    BatchAllocation,
+    Carton,
     ChangeNotice,
     Company,
     CompanyMember,
+    LifecycleEvent,
     OrderLine,
+    PosPartner,
     Product,
     ProductBatch,
-    RegulatorRegister,
-    RegulatoryAgency,
+    ProductUnit,
     WholesaleOrder,
 )
 from app.models.enums import (
     ChangeType,
-    CompanyType,
+    EventSource,
     FulfilmentMethod,
+    LifecycleEventType,
     MemberRole,
-    RegisterStatus,
 )
 
 
@@ -45,7 +51,7 @@ def make_user(db: Session, **overrides) -> AppUser:
 
 def make_company(db: Session, **overrides) -> Company:
     values = {
-        "company_type": CompanyType.MANUFACTURER,
+        "is_manufacturer": True,
         "display_name": "Demo Harvest Foods",
         "contact_email": "contact@demo-harvest.example.test",
         "claimed_legal_name": "Demo Harvest Foods Ltd (fictional)",
@@ -87,34 +93,6 @@ def make_batch(db: Session, product: Product, **overrides) -> ProductBatch:
     return batch
 
 
-def make_agency(db: Session, **overrides) -> RegulatoryAgency:
-    values = {
-        "name": "NAFDAC (simulated)",
-        "scheme": f"Food product registration (demo) {_suffix()}",
-    }
-    agency = RegulatoryAgency(**(values | overrides))
-    db.add(agency)
-    db.flush()
-    return agency
-
-
-def make_register(db: Session, agency: RegulatoryAgency, **overrides) -> RegulatorRegister:
-    """A simulated register record. Tests only: no API can create these."""
-    values = {
-        "agency_id": agency.agency_id,
-        "registration_number": f"DEMO-NAFDAC-{_suffix().upper()}",
-        "registered_product_name": "Sample Palm Oil",
-        "registered_company_name": "Demo Harvest Foods Ltd (fictional)",
-        "status": RegisterStatus.ACTIVE,
-        "provenance": "Fictional register record for FoodLens tests",
-        "last_checked_on": date(2026, 10, 1),
-    }
-    record = RegulatorRegister(**(values | overrides))
-    db.add(record)
-    db.flush()
-    return record
-
-
 def make_notice(db: Session, company: Company, user: AppUser, **targets) -> ChangeNotice:
     notice = ChangeNotice(
         company_id=company.company_id,
@@ -154,3 +132,82 @@ def make_line(db: Session, order: WholesaleOrder, product: Product, **overrides)
     db.add(line)
     db.flush()
     return line
+
+
+# --- Unit identity ---------------------------------------------------------------------------
+
+
+def token_hash() -> str:
+    """A random sha256 hex, standing in for the hash of a normalised QR token."""
+    return hashlib.sha256(secrets.token_bytes(16)).hexdigest()
+
+
+def area(db: Session, city: str = "Lagos") -> Area:
+    """A seeded reference area (migration 0006)."""
+    return db.exec(select(Area).where(Area.city == city)).one()
+
+
+def make_carton(db: Session, batch: ProductBatch, manufacturer: Company, **overrides) -> Carton:
+    values = {
+        "batch_id": batch.batch_id,
+        "manufacturer_id": manufacturer.company_id,
+        "carton_ref": f"C{_suffix()[:4].upper()}",
+        "qr_token_hash": token_hash(),
+    }
+    carton = Carton(**(values | overrides))
+    db.add(carton)
+    db.flush()
+    return carton
+
+
+def make_unit(db: Session, batch: ProductBatch, **overrides) -> ProductUnit:
+    product = db.get(Product, batch.product_id)
+    values = {
+        "batch_id": batch.batch_id,
+        "product_id": product.product_id,
+        "manufacturer_id": product.company_id,
+        "qr_token_hash": token_hash(),
+    }
+    unit = ProductUnit(**(values | overrides))
+    db.add(unit)
+    db.flush()
+    return unit
+
+
+def make_event(db: Session, **overrides) -> LifecycleEvent:
+    values = {
+        "event_type": LifecycleEventType.ISSUED,
+        "source": EventSource.MANUFACTURER,
+        "occurred_at": datetime(2026, 10, 1, 9, 0, tzinfo=UTC),
+    }
+    event = LifecycleEvent(**(values | overrides))
+    db.add(event)
+    db.flush()
+    return event
+
+
+def make_allocation(
+    db: Session, batch: ProductBatch, user: AppUser, **overrides
+) -> BatchAllocation:
+    values = {
+        "batch_id": batch.batch_id,
+        "destination_area_id": area(db).area_id,
+        "quantity": 10,
+        "created_by_user_id": user.user_id,
+    }
+    allocation = BatchAllocation(**(values | overrides))
+    db.add(allocation)
+    db.flush()
+    return allocation
+
+
+def make_pos_partner(db: Session, admin: AppUser, **overrides) -> PosPartner:
+    values = {
+        "name": "Demo Till Systems (fictional)",
+        "signing_secret_encrypted": "not-a-real-ciphertext",
+        "created_by_user_id": admin.user_id,
+    }
+    partner = PosPartner(**(values | overrides))
+    db.add(partner)
+    db.flush()
+    return partner

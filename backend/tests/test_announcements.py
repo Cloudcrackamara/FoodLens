@@ -1,4 +1,6 @@
-"""Product announcements: live without review, labelled, never change product data, hideable."""
+"""Product announcements: live without review, labelled, never change product data, hideable.
+
+Consumers see them on check results (Phase 3); here the public list comes from the service."""
 
 from collections.abc import Callable
 
@@ -15,6 +17,7 @@ from app.models.enums import (
     ProductStatus,
     ReviewStatus,
 )
+from app.services import announcements as announcement_service
 from tests import factories as f
 
 PASSWORD = "correct-horse-battery"
@@ -42,7 +45,6 @@ def company_with_product(
         status=ProductStatus.PUBLISHED,
     )
     f.make_batch(session, product, batch_number="LOT-8", review_status=ReviewStatus.APPROVED)
-    f.make_register(session, f.make_agency(session), registration_number="DEMO-NAFDAC-8001")
     return company, product
 
 
@@ -54,11 +56,12 @@ def post(client: TestClient, company: Company, product: Product, **body):
     )
 
 
-def lookup(client: TestClient) -> dict:
-    return client.post(
-        "/api/lookups/registration",
-        json={"registration_number": "DEMO-NAFDAC-8001", "batch_number": "LOT-8"},
-    ).json()
+def shown(session: Session, product: Product) -> list[dict]:
+    """What a consumer sees for the product: live announcements, newest first, labelled."""
+    return [
+        a.model_dump(mode="json")
+        for a in announcement_service.for_lookup(session, product.product_id)
+    ]
 
 
 @pytest.fixture
@@ -68,7 +71,7 @@ def admin_client(make_client: Callable[..., TestClient], session: Session) -> Te
     return client
 
 
-def test_announcement_goes_live_and_shows_in_lookup_with_label(
+def test_announcement_goes_live_and_is_shown_with_label(
     client: TestClient, session: Session
 ) -> None:
     company, product = company_with_product(client, session)
@@ -77,13 +80,12 @@ def test_announcement_goes_live_and_shows_in_lookup_with_label(
 
     assert response.status_code == 201
     assert response.json()["status"] == "LIVE"  # client cannot set status
-    result = lookup(client)
-    assert result["result"] == "REGISTERED_ACTIVE"
-    assert result["announcements"] == [
+    public = shown(session, product)
+    assert public == [
         {
             "title": "New packaging",
             "message": "From March 2027 the bottle is green.",
-            "posted_at": result["announcements"][0]["posted_at"],
+            "posted_at": public[0]["posted_at"],
             "label": LABEL,
         }
     ]
@@ -97,7 +99,6 @@ def test_announcement_never_changes_product_data(client: TestClient, session: Se
 
     session.refresh(product)
     assert product.model_dump() == before
-    assert lookup(client)["product"]["name"] == before["name"]
 
 
 def test_only_latest_three_live_announcements_are_shown(
@@ -107,7 +108,7 @@ def test_only_latest_three_live_announcements_are_shown(
     for n in range(4):
         post(client, company, product, title=f"Note {n}")
 
-    titles = [a["title"] for a in lookup(client)["announcements"]]
+    titles = [a["title"] for a in shown(session, product)]
 
     assert len(titles) == 3
 
@@ -146,7 +147,7 @@ def test_counterfeit_warnings_and_other_words_are_allowed(
     response = post(client, company, product, title="Counterfeit warning", message=message)
 
     assert response.status_code == 201
-    assert lookup(client)["announcements"][0]["message"] == message
+    assert shown(session, product)[0]["message"] == message
 
 
 def test_pending_company_cannot_post(client: TestClient, session: Session) -> None:
@@ -171,7 +172,7 @@ def test_company_can_withdraw_its_own_announcement(client: TestClient, session: 
     )
 
     assert response.json()["status"] == "HIDDEN"
-    assert lookup(client)["announcements"] == []
+    assert shown(session, product) == []
 
 
 def test_admin_hides_announcement_and_records_who(
@@ -190,7 +191,7 @@ def test_admin_hides_announcement_and_records_who(
     stored = session.get(ProductAnnouncement, announcement_id)
     assert stored.status == AnnouncementStatus.HIDDEN
     assert stored.hidden_by_user_id is not None and stored.hidden_at is not None
-    assert lookup(client)["announcements"] == []
+    assert shown(session, product) == []
     hidden = admin_client.get("/api/admin/announcements", params={"status": "HIDDEN"}).json()
     assert hidden[0]["hidden_by_display_name"] is not None
 
@@ -233,20 +234,6 @@ def test_hidden_announcement_cannot_be_hidden_again(
         admin_client.post(f"/api/admin/announcements/{announcement_id}/hide", json={}).status_code
         == 409
     )
-
-
-def test_announcements_hidden_when_company_suspended(client: TestClient, session: Session) -> None:
-    company, product = company_with_product(client, session)
-    post(client, company, product)
-    company.review_status = CompanyReviewStatus.SUSPENDED
-    session.add(company)
-    session.flush()
-
-    result = lookup(client)
-
-    assert result["result"] == "REGISTERED_ACTIVE"  # the register record itself is unaffected
-    assert [w["code"] for w in result["warnings"]] == ["BATCH_NOT_IN_CATALOGUE"]
-    assert result["announcements"] == []
 
 
 @pytest.mark.parametrize(

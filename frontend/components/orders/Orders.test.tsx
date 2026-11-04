@@ -9,10 +9,15 @@ import {
   manufacturerUser,
   requestedOrder,
   supplierDetail,
-  wholesalerUser,
+  distributorUser,
 } from "@/test/orderFixtures";
 import { renderWithQuery, routeFetch } from "@/test/utils";
+import { SiteHeader } from "@/components/SiteHeader";
 import { MyOrders } from "./MyOrders";
+
+// Order requests are hidden future work (D127); these tests cover them switched on.
+vi.mock("@/lib/features", () => ({ ordersEnabled: true }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 const SUPPLIER = `GET /api/suppliers/${supplier.company_id}`;
 const BUYER_ORDERS = `/api/companies/${buyerCompanyId}/orders`;
@@ -25,36 +30,36 @@ function bodyOf(fetchMock: ReturnType<typeof routeFetch>, key: string) {
 
 afterEach(() => vi.unstubAllGlobals());
 
-describe("Supplier page", () => {
-  it("shows each product's register result, labelled demo data, never 'safe'", async () => {
+describe("Partner page", () => {
+  it("shows each product's NAFDAC number as printed, with no register result, never 'safe'", async () => {
     routeFetch({ [SUPPLIER]: { body: supplierDetail }, "GET /api/auth/me": { status: 401 } });
     renderWithQuery(<SupplierPage companyId={supplier.company_id} />);
 
     const oil = await screen.findByRole("listitem", { name: "Sample Palm Oil" });
-    expect(oil).toHaveTextContent("Active in the simulated register (demo data)");
-    expect(screen.getByRole("listitem", { name: "Sample Tomato Paste" })).toHaveTextContent("Expired or inactive");
-    expect(screen.getByRole("listitem", { name: "Sample Honey" })).toHaveTextContent("Not found in the simulated register");
-    expect(screen.getByRole("listitem", { name: "Sample Yam Flour" })).toHaveTextContent("No registration number given");
-    expect(screen.getByRole("listitem", { name: "Sample Cocoa" })).toHaveTextContent("different product or company");
+    expect(oil).toHaveTextContent("NAFDAC number (as printed): DEMO-NAFDAC-0001");
+    expect(oil).toHaveTextContent("1 L");
+    expect(screen.getByRole("listitem", { name: "Sample Yam Flour" })).toHaveTextContent("none given");
+    expect(document.body.textContent).not.toMatch(/register/i);
+    expect(screen.getByText(/FoodLens does not check them/)).toBeInTheDocument();
     expect(screen.getByRole("note", { name: "Demo data notice" })).toHaveTextContent(
       "DEMO DATA — NOT AN OFFICIAL REGULATOR SERVICE",
     );
-    expect(document.body.textContent).not.toMatch(/\b(safe|unsafe|genuine)\b/i);
+    expect(document.body.textContent).not.toMatch(/\b(safe|unsafe|genuine|authentic|original|fake)\b/i);
   });
 
-  it("hides the order form from signed-out users and non-wholesalers", async () => {
+  it("hides the order form from signed-out users and non-distributors", async () => {
     routeFetch({ [SUPPLIER]: { body: supplierDetail }, "GET /api/auth/me": { body: manufacturerUser } });
     renderWithQuery(<SupplierPage companyId={supplier.company_id} />);
 
     await screen.findByRole("listitem", { name: "Sample Palm Oil" });
     expect(screen.queryByRole("form", { name: "Request an order" })).not.toBeInTheDocument();
-    expect(screen.getByText(/approved wholesaler companies can request orders/)).toBeInTheDocument();
+    expect(screen.getByText(/approved distributor companies can request orders/)).toBeInTheDocument();
   });
 
   it("sends only products, quantities, units, and pickup choice; no status, ids, or prices", async () => {
     const fetchMock = routeFetch({
       [SUPPLIER]: { body: supplierDetail },
-      "GET /api/auth/me": { body: wholesalerUser },
+      "GET /api/auth/me": { body: distributorUser },
       [`POST ${BUYER_ORDERS}`]: { status: 201, body: requestedOrder },
     });
     renderWithQuery(<SupplierPage companyId={supplier.company_id} />);
@@ -82,7 +87,7 @@ describe("Supplier page", () => {
   it("switches to delivery and requires details", async () => {
     const fetchMock = routeFetch({
       [SUPPLIER]: { body: supplierDetail },
-      "GET /api/auth/me": { body: wholesalerUser },
+      "GET /api/auth/me": { body: distributorUser },
       [`POST ${BUYER_ORDERS}`]: { status: 201, body: requestedOrder },
     });
     renderWithQuery(<SupplierPage companyId={supplier.company_id} />);
@@ -108,7 +113,7 @@ describe("Supplier page", () => {
   });
 
   it("refuses zero quantities before sending", async () => {
-    const fetchMock = routeFetch({ [SUPPLIER]: { body: supplierDetail }, "GET /api/auth/me": { body: wholesalerUser } });
+    const fetchMock = routeFetch({ [SUPPLIER]: { body: supplierDetail }, "GET /api/auth/me": { body: distributorUser } });
     renderWithQuery(<SupplierPage companyId={supplier.company_id} />);
 
     const form = await screen.findByRole("form", { name: "Request an order" });
@@ -123,7 +128,7 @@ describe("Supplier page", () => {
 describe("My orders (buyer)", () => {
   it("lists requests and lets the buyer cancel only while requested", async () => {
     const fetchMock = routeFetch({
-      "GET /api/auth/me": { body: wholesalerUser },
+      "GET /api/auth/me": { body: distributorUser },
       [`GET ${BUYER_ORDERS}?role=buying`]: { body: [requestedOrder, acceptedOrder] },
       [`POST ${BUYER_ORDERS}/o-1/cancel`]: { body: { ...requestedOrder, status: "CANCELLED" } },
     });
@@ -148,7 +153,7 @@ describe("Incoming orders (seller)", () => {
   const products = [
     {
       product_id: "p-oil", product_code: "DEMO-PC-0001", name: "Sample Palm Oil", brand: "Demo", category: "Oils",
-      package_size: null, manufacturer_name: "Demo", label_information: null, registration_number: null,
+      size: null, manufacturer_name: "Demo", label_information: null, registration_number: null,
       status: "PUBLISHED", created_at: "2026-10-01T00:00:00Z",
       batches: [
         { batch_id: "b-101", batch_number: "DEMO-LOT-101", production_date: null, expiry_date: null, created_at: "2026-10-01T00:00:00Z" },
@@ -198,5 +203,19 @@ describe("Incoming orders (seller)", () => {
         allocations: [{ line_id: "l-1", batch_ids: ["b-101"] }],
       }),
     );
+  });
+});
+
+describe("Orders link", () => {
+  it("shows My orders only to approved distributor members when orders are on", async () => {
+    routeFetch({ "GET /api/auth/me": { body: distributorUser } });
+    const { unmount } = renderWithQuery(<SiteHeader />);
+    expect(await screen.findByRole("link", { name: "My orders" })).toHaveAttribute("href", "/orders");
+    unmount();
+
+    routeFetch({ "GET /api/auth/me": { body: manufacturerUser } });
+    renderWithQuery(<SiteHeader />);
+    await screen.findByRole("link", { name: "My company" });
+    expect(screen.queryByRole("link", { name: "My orders" })).not.toBeInTheDocument();
   });
 });

@@ -32,10 +32,10 @@ export const productFields = {
   name: "Product name",
   brand: "Brand",
   category: "Category",
-  package_size: "Package size",
+  size: "Size",
   manufacturer_name: "Manufacturer",
   label_information: "Label information",
-  registration_number: "Registration number on the pack",
+  registration_number: "NAFDAC number (as printed)",
 } as const;
 export const batchFields = { production_date: "Production date", expiry_date: "Expiry date" } as const;
 export const fieldLabels: Record<string, string> = { ...productFields, ...batchFields };

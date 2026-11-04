@@ -9,7 +9,7 @@ export const productSchema = z.object({
   name: z.string(),
   brand: z.string(),
   category: z.string(),
-  package_size: z.string().nullable(),
+  size: z.string().nullable(),
   manufacturer_name: z.string(),
   label_information: z.string().nullable(),
   registration_number: z.string().nullable(),
@@ -35,7 +35,7 @@ export const productFormSchema = z.object({
   name: z.string().trim().min(1, "Enter the product name").max(120),
   brand: z.string().trim().min(1, "Enter the brand").max(120),
   category: z.string().trim().min(1, "Enter a category").max(80),
-  package_size: z.string().trim().max(40),
+  size: z.string().trim().max(40),
   manufacturer_name: z.string().trim().min(1, "Enter the manufacturer").max(200),
   registration_number: z.string().trim().max(200),
 });
@@ -71,7 +71,7 @@ export function useAddProduct(companyId: string) {
       method: "POST",
       body: {
         ...form,
-        package_size: orNull(form.package_size),
+        size: orNull(form.size),
         registration_number: orNull(form.registration_number),
       },
     }),

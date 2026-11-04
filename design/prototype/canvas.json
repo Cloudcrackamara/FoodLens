@@ -1,0 +1,1365 @@
+{
+ "v": 3,
+ "createdOnFiles": {
+  "v": 1,
+  "at": "2026-10-17T16:35:00Z"
+ },
+ "title": "FoodLens",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [
+  {
+   "id": "approved",
+   "name": "Landing & admin"
+  },
+  {
+   "id": "consumer",
+   "name": "Consumer check"
+  },
+  {
+   "id": "reports",
+   "name": "Reports & moderation"
+  },
+  {
+   "id": "accounts",
+   "name": "Company accounts"
+  },
+  {
+   "id": "supplier",
+   "name": "Supplier workspace"
+  },
+  {
+   "id": "wholesaler",
+   "name": "Wholesaler workspace"
+  },
+  {
+   "id": "review",
+   "name": "Admin review & staff sign-in"
+  },
+  {
+   "id": "guides",
+   "name": "Pack guides"
+  }
+ ],
+ "boards": {
+  "Main.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 5500,
+   "title": "Landing \u00b7 desktop 1440",
+   "expand": "fill"
+  },
+  "Mobile.dc.html": {
+   "x": 1520,
+   "y": 0,
+   "w": 375,
+   "h": 11200,
+   "title": "Landing \u00b7 mobile 375",
+   "expand": "fill"
+  },
+  "Admin.dc.html": {
+   "x": 2095,
+   "y": 0,
+   "w": 1440,
+   "h": 1540,
+   "title": "Admin overview \u00b7 desktop 1440",
+   "expand": "fill"
+  },
+  "AdminTablet.dc.html": {
+   "x": 3615,
+   "y": 0,
+   "w": 834,
+   "h": 2800,
+   "title": "Admin overview \u00b7 tablet 834",
+   "expand": "fill"
+  },
+  "AdminMobile.dc.html": {
+   "x": 4529,
+   "y": 0,
+   "w": 390,
+   "h": 3050,
+   "title": "Admin overview \u00b7 mobile 390",
+   "expand": "fill"
+  },
+  "Scan.dc.html": {
+   "x": 0,
+   "y": 260,
+   "w": 390,
+   "h": 844,
+   "title": "Scan \u00b7 ready",
+   "expand": "fill",
+   "page": "consumer",
+   "is_interactive": true
+  },
+  "ScanReading.dc.html": {
+   "x": 470,
+   "y": 260,
+   "w": 390,
+   "h": 844,
+   "title": "Scan \u00b7 reading",
+   "expand": "fill",
+   "page": "consumer"
+  },
+  "ScanDenied.dc.html": {
+   "x": 940,
+   "y": 260,
+   "w": 390,
+   "h": 844,
+   "title": "Scan \u00b7 camera blocked",
+   "expand": "fill",
+   "page": "consumer",
+   "is_interactive": true
+  },
+  "ScanUnavailable.dc.html": {
+   "x": 1410,
+   "y": 260,
+   "w": 390,
+   "h": 844,
+   "title": "Scan \u00b7 camera unavailable",
+   "expand": "fill",
+   "page": "consumer",
+   "is_interactive": true
+  },
+  "Confirm.dc.html": {
+   "x": 0,
+   "y": 1484,
+   "w": 390,
+   "h": 844,
+   "title": "Confirm \u00b7 we read this number",
+   "expand": "fill",
+   "page": "consumer",
+   "is_interactive": true
+  },
+  "ConfirmTyped.dc.html": {
+   "x": 470,
+   "y": 1484,
+   "w": 390,
+   "h": 844,
+   "title": "Confirm \u00b7 type it yourself",
+   "expand": "fill",
+   "page": "consumer",
+   "is_interactive": true
+  },
+  "ConfirmError.dc.html": {
+   "x": 940,
+   "y": 1484,
+   "w": 390,
+   "h": 844,
+   "title": "Confirm \u00b7 correction",
+   "expand": "fill",
+   "page": "consumer",
+   "is_interactive": true
+  },
+  "ConfirmChecking.dc.html": {
+   "x": 1410,
+   "y": 1484,
+   "w": 390,
+   "h": 844,
+   "title": "Confirm \u00b7 checking",
+   "expand": "fill",
+   "page": "consumer"
+  },
+  "Result.dc.html": {
+   "x": 0,
+   "y": 2708,
+   "w": 390,
+   "h": 1560,
+   "title": "Result \u00b7 active match",
+   "expand": "fill",
+   "page": "consumer",
+   "is_interactive": true
+  },
+  "ResultNotFound.dc.html": {
+   "x": 470,
+   "y": 2708,
+   "w": 390,
+   "h": 1200,
+   "title": "Result \u00b7 not found",
+   "expand": "fill",
+   "page": "consumer",
+   "is_interactive": true
+  },
+  "ResultExpired.dc.html": {
+   "x": 940,
+   "y": 2708,
+   "w": 390,
+   "h": 1250,
+   "title": "Result \u00b7 expired",
+   "expand": "fill",
+   "page": "consumer",
+   "is_interactive": true
+  },
+  "ResultMismatch.dc.html": {
+   "x": 1410,
+   "y": 2708,
+   "w": 390,
+   "h": 1350,
+   "title": "Result \u00b7 different product",
+   "expand": "fill",
+   "page": "consumer",
+   "is_interactive": true
+  },
+  "ResultInsufficient.dc.html": {
+   "x": 1880,
+   "y": 2708,
+   "w": 390,
+   "h": 1050,
+   "title": "Result \u00b7 not enough information",
+   "expand": "fill",
+   "page": "consumer",
+   "is_interactive": true
+  },
+  "ResultLimit.dc.html": {
+   "x": 2350,
+   "y": 2708,
+   "w": 390,
+   "h": 950,
+   "title": "Result \u00b7 too many checks",
+   "expand": "fill",
+   "page": "consumer"
+  },
+  "ScanDesktop.dc.html": {
+   "x": 0,
+   "y": 4648,
+   "w": 1440,
+   "h": 900,
+   "title": "Scan \u00b7 desktop 1440",
+   "expand": "fill",
+   "page": "consumer",
+   "is_interactive": true
+  },
+  "ResultTablet.dc.html": {
+   "x": 1520,
+   "y": 4648,
+   "w": 834,
+   "h": 1300,
+   "title": "Result match \u00b7 tablet 834",
+   "expand": "fill",
+   "page": "consumer",
+   "is_interactive": true
+  },
+  "ResultMismatchDesktop.dc.html": {
+   "x": 2434,
+   "y": 4648,
+   "w": 1440,
+   "h": 1100,
+   "title": "Result different product \u00b7 desktop 1440",
+   "expand": "fill",
+   "page": "consumer",
+   "is_interactive": true
+  },
+  "Report.dc.html": {
+   "x": 0,
+   "y": 260,
+   "w": 390,
+   "h": 2050,
+   "title": "Report \u00b7 form (interactive)",
+   "expand": "fill",
+   "page": "reports",
+   "is_interactive": true
+  },
+  "ReportPhotos.dc.html": {
+   "x": 470,
+   "y": 260,
+   "w": 390,
+   "h": 2250,
+   "title": "Report \u00b7 photo upload states",
+   "expand": "fill",
+   "page": "reports",
+   "is_interactive": true
+  },
+  "ReportInvalid.dc.html": {
+   "x": 940,
+   "y": 260,
+   "w": 390,
+   "h": 2200,
+   "title": "Report \u00b7 validation errors",
+   "expand": "fill",
+   "page": "reports",
+   "is_interactive": true
+  },
+  "ReportSubmitting.dc.html": {
+   "x": 1410,
+   "y": 260,
+   "w": 390,
+   "h": 2250,
+   "title": "Report \u00b7 sending",
+   "expand": "fill",
+   "page": "reports"
+  },
+  "ReportFailed.dc.html": {
+   "x": 1880,
+   "y": 260,
+   "w": 390,
+   "h": 2350,
+   "title": "Report \u00b7 send failed",
+   "expand": "fill",
+   "page": "reports",
+   "is_interactive": true
+  },
+  "ReportDone.dc.html": {
+   "x": 2350,
+   "y": 260,
+   "w": 390,
+   "h": 1100,
+   "title": "Report \u00b7 confirmation",
+   "expand": "fill",
+   "page": "reports",
+   "is_interactive": true
+  },
+  "ReportDesktop.dc.html": {
+   "x": 0,
+   "y": 2990,
+   "w": 1440,
+   "h": 1700,
+   "title": "Report \u00b7 desktop 1440",
+   "expand": "fill",
+   "page": "reports",
+   "is_interactive": true
+  },
+  "AdminReports.dc.html": {
+   "x": 0,
+   "y": 5070,
+   "w": 1440,
+   "h": 1150,
+   "title": "Admin \u00b7 reports list",
+   "expand": "fill",
+   "page": "reports",
+   "is_interactive": true
+  },
+  "AdminReportDetail.dc.html": {
+   "x": 1520,
+   "y": 5070,
+   "w": 1440,
+   "h": 1500,
+   "title": "Admin \u00b7 report detail (interactive)",
+   "expand": "fill",
+   "page": "reports",
+   "is_interactive": true
+  },
+  "AdminReportReviewed.dc.html": {
+   "x": 0,
+   "y": 6950,
+   "w": 1440,
+   "h": 1500,
+   "title": "Decision \u00b7 marked reviewed",
+   "expand": "fill",
+   "page": "reports"
+  },
+  "AdminReportClarify.dc.html": {
+   "x": 1520,
+   "y": 6950,
+   "w": 1440,
+   "h": 1500,
+   "title": "Decision \u00b7 clarification requested",
+   "expand": "fill",
+   "page": "reports"
+  },
+  "AdminReportRejected.dc.html": {
+   "x": 3040,
+   "y": 6950,
+   "w": 1440,
+   "h": 1500,
+   "title": "Decision \u00b7 rejected with reason",
+   "expand": "fill",
+   "page": "reports"
+  },
+  "AdminReportEscalated.dc.html": {
+   "x": 4560,
+   "y": 6950,
+   "w": 1440,
+   "h": 1500,
+   "title": "Decision \u00b7 escalated",
+   "expand": "fill",
+   "page": "reports"
+  },
+  "Accounts.dc.html": {
+   "x": 0,
+   "y": 260,
+   "w": 1440,
+   "h": 1650,
+   "title": "Register (interactive)",
+   "expand": "fill",
+   "page": "accounts",
+   "is_interactive": true
+  },
+  "AccRegisterErrors.dc.html": {
+   "x": 1520,
+   "y": 260,
+   "w": 1440,
+   "h": 1750,
+   "title": "Register \u00b7 validation errors",
+   "expand": "fill",
+   "page": "accounts",
+   "is_interactive": true
+  },
+  "AccLogin.dc.html": {
+   "x": 3040,
+   "y": 260,
+   "w": 1440,
+   "h": 900,
+   "title": "Log in",
+   "expand": "fill",
+   "page": "accounts",
+   "is_interactive": true
+  },
+  "AccLoginError.dc.html": {
+   "x": 4560,
+   "y": 260,
+   "w": 1440,
+   "h": 900,
+   "title": "Log in \u00b7 error",
+   "expand": "fill",
+   "page": "accounts",
+   "is_interactive": true
+  },
+  "AccStatusPending.dc.html": {
+   "x": 0,
+   "y": 2440,
+   "w": 1440,
+   "h": 1000,
+   "title": "Status \u00b7 pending review",
+   "expand": "fill",
+   "page": "accounts",
+   "is_interactive": true
+  },
+  "AccStatusChanges.dc.html": {
+   "x": 1520,
+   "y": 2440,
+   "w": 1440,
+   "h": 1000,
+   "title": "Status \u00b7 changes needed",
+   "expand": "fill",
+   "page": "accounts",
+   "is_interactive": true
+  },
+  "AccStatusApproved.dc.html": {
+   "x": 3040,
+   "y": 2440,
+   "w": 1440,
+   "h": 1000,
+   "title": "Status \u00b7 approved",
+   "expand": "fill",
+   "page": "accounts",
+   "is_interactive": true
+  },
+  "AccStatusSuspended.dc.html": {
+   "x": 4560,
+   "y": 2440,
+   "w": 1440,
+   "h": 1000,
+   "title": "Status \u00b7 suspended",
+   "expand": "fill",
+   "page": "accounts",
+   "is_interactive": true
+  },
+  "AccRegisterMobile.dc.html": {
+   "x": 0,
+   "y": 3820,
+   "w": 390,
+   "h": 2700,
+   "title": "Register \u00b7 phone 390",
+   "expand": "fill",
+   "page": "accounts",
+   "is_interactive": true
+  },
+  "AccLoginMobile.dc.html": {
+   "x": 470,
+   "y": 3820,
+   "w": 390,
+   "h": 844,
+   "title": "Log in \u00b7 phone 390",
+   "expand": "fill",
+   "page": "accounts",
+   "is_interactive": true
+  },
+  "Supplier.dc.html": {
+   "x": 0,
+   "y": 260,
+   "w": 1440,
+   "h": 1250,
+   "title": "Overview (interactive workspace)",
+   "expand": "fill",
+   "page": "supplier",
+   "is_interactive": true
+  },
+  "SupProducts.dc.html": {
+   "x": 1520,
+   "y": 260,
+   "w": 1440,
+   "h": 1150,
+   "title": "Products",
+   "expand": "fill",
+   "page": "supplier",
+   "is_interactive": true
+  },
+  "SupProduct.dc.html": {
+   "x": 3040,
+   "y": 260,
+   "w": 1440,
+   "h": 1500,
+   "title": "Product \u00b7 batches",
+   "expand": "fill",
+   "page": "supplier",
+   "is_interactive": true
+  },
+  "SupProductNew.dc.html": {
+   "x": 4560,
+   "y": 260,
+   "w": 1440,
+   "h": 1400,
+   "title": "Add product",
+   "expand": "fill",
+   "page": "supplier",
+   "is_interactive": true
+  },
+  "SupSubmissions.dc.html": {
+   "x": 0,
+   "y": 2140,
+   "w": 1440,
+   "h": 1400,
+   "title": "Product submissions",
+   "expand": "fill",
+   "page": "supplier",
+   "is_interactive": true
+  },
+  "SupLocations.dc.html": {
+   "x": 1520,
+   "y": 2140,
+   "w": 1440,
+   "h": 1150,
+   "title": "Locations",
+   "expand": "fill",
+   "page": "supplier",
+   "is_interactive": true
+  },
+  "SupAnnouncements.dc.html": {
+   "x": 3040,
+   "y": 2140,
+   "w": 1440,
+   "h": 1500,
+   "title": "Announcements",
+   "expand": "fill",
+   "page": "supplier",
+   "is_interactive": true
+  },
+  "SupAnnounceError.dc.html": {
+   "x": 4560,
+   "y": 2140,
+   "w": 1440,
+   "h": 1500,
+   "title": "Announcement \u00b7 claim blocked",
+   "expand": "fill",
+   "page": "supplier",
+   "is_interactive": true
+  },
+  "SupOrders.dc.html": {
+   "x": 0,
+   "y": 4020,
+   "w": 1440,
+   "h": 1100,
+   "title": "Orders",
+   "expand": "fill",
+   "page": "supplier",
+   "is_interactive": true
+  },
+  "SupOrder.dc.html": {
+   "x": 1520,
+   "y": 4020,
+   "w": 1440,
+   "h": 1300,
+   "title": "Order \u00b7 new request",
+   "expand": "fill",
+   "page": "supplier",
+   "is_interactive": true
+  },
+  "SupOrderAccepted.dc.html": {
+   "x": 3040,
+   "y": 4020,
+   "w": 1440,
+   "h": 1450,
+   "title": "Order \u00b7 accepted, link batches",
+   "expand": "fill",
+   "page": "supplier",
+   "is_interactive": true
+  },
+  "SupOrdersMobile.dc.html": {
+   "x": 4560,
+   "y": 4020,
+   "w": 390,
+   "h": 1900,
+   "title": "Orders \u00b7 phone 390",
+   "expand": "fill",
+   "page": "supplier",
+   "is_interactive": true
+  },
+  "SupProductsEmpty.dc.html": {
+   "x": 0,
+   "y": 6300,
+   "w": 1440,
+   "h": 900,
+   "title": "Products \u00b7 empty",
+   "expand": "fill",
+   "page": "supplier",
+   "is_interactive": true
+  },
+  "SupProductsLoading.dc.html": {
+   "x": 1520,
+   "y": 6300,
+   "w": 1440,
+   "h": 900,
+   "title": "Products \u00b7 loading",
+   "expand": "fill",
+   "page": "supplier"
+  },
+  "SupOrdersError.dc.html": {
+   "x": 3040,
+   "y": 6300,
+   "w": 1440,
+   "h": 900,
+   "title": "Orders \u00b7 error",
+   "expand": "fill",
+   "page": "supplier",
+   "is_interactive": true
+  },
+  "Wholesaler.dc.html": {
+   "x": 0,
+   "y": 260,
+   "w": 1440,
+   "h": 1350,
+   "title": "Find suppliers (interactive workspace)",
+   "expand": "fill",
+   "page": "wholesaler",
+   "is_interactive": true
+  },
+  "WsSupplier.dc.html": {
+   "x": 1520,
+   "y": 260,
+   "w": 1440,
+   "h": 1550,
+   "title": "Supplier page",
+   "expand": "fill",
+   "page": "wholesaler",
+   "is_interactive": true
+  },
+  "WsFindLoading.dc.html": {
+   "x": 3040,
+   "y": 260,
+   "w": 1440,
+   "h": 900,
+   "title": "Find \u00b7 loading",
+   "expand": "fill",
+   "page": "wholesaler"
+  },
+  "WsFindEmpty.dc.html": {
+   "x": 4560,
+   "y": 260,
+   "w": 1440,
+   "h": 900,
+   "title": "Find \u00b7 no results",
+   "expand": "fill",
+   "page": "wholesaler",
+   "is_interactive": true
+  },
+  "WsFindMobile.dc.html": {
+   "x": 6080,
+   "y": 260,
+   "w": 390,
+   "h": 2200,
+   "title": "Find \u00b7 phone 390",
+   "expand": "fill",
+   "page": "wholesaler",
+   "is_interactive": true
+  },
+  "WsRequest.dc.html": {
+   "x": 0,
+   "y": 2840,
+   "w": 1440,
+   "h": 1500,
+   "title": "Request \u00b7 choose products",
+   "expand": "fill",
+   "page": "wholesaler",
+   "is_interactive": true
+  },
+  "WsRequestReview.dc.html": {
+   "x": 1520,
+   "y": 2840,
+   "w": 1440,
+   "h": 1150,
+   "title": "Request \u00b7 review",
+   "expand": "fill",
+   "page": "wholesaler",
+   "is_interactive": true
+  },
+  "WsRequestDone.dc.html": {
+   "x": 3040,
+   "y": 2840,
+   "w": 1440,
+   "h": 1000,
+   "title": "Request \u00b7 sent",
+   "expand": "fill",
+   "page": "wholesaler",
+   "is_interactive": true
+  },
+  "WsRequestMobile.dc.html": {
+   "x": 4560,
+   "y": 2840,
+   "w": 390,
+   "h": 2300,
+   "title": "Request \u00b7 phone 390",
+   "expand": "fill",
+   "page": "wholesaler",
+   "is_interactive": true
+  },
+  "WsOrders.dc.html": {
+   "x": 0,
+   "y": 5520,
+   "w": 1440,
+   "h": 1050,
+   "title": "My orders",
+   "expand": "fill",
+   "page": "wholesaler",
+   "is_interactive": true
+  },
+  "WsOrder.dc.html": {
+   "x": 1520,
+   "y": 5520,
+   "w": 1440,
+   "h": 1300,
+   "title": "Order \u00b7 requested (can cancel)",
+   "expand": "fill",
+   "page": "wholesaler",
+   "is_interactive": true
+  },
+  "WsOrderFulfilled.dc.html": {
+   "x": 3040,
+   "y": 5520,
+   "w": 1440,
+   "h": 1300,
+   "title": "Order \u00b7 fulfilled with batches",
+   "expand": "fill",
+   "page": "wholesaler",
+   "is_interactive": true
+  },
+  "WsOrdersEmpty.dc.html": {
+   "x": 4560,
+   "y": 5520,
+   "w": 1440,
+   "h": 900,
+   "title": "My orders \u00b7 empty",
+   "expand": "fill",
+   "page": "wholesaler",
+   "is_interactive": true
+  },
+  "WsOrdersMobile.dc.html": {
+   "x": 6080,
+   "y": 5520,
+   "w": 390,
+   "h": 1800,
+   "title": "My orders \u00b7 phone 390",
+   "expand": "fill",
+   "page": "wholesaler",
+   "is_interactive": true
+  },
+  "AdminQueue.dc.html": {
+   "x": 0,
+   "y": 260,
+   "w": 1440,
+   "h": 1100,
+   "title": "Companies queue",
+   "expand": "fill",
+   "page": "review",
+   "is_interactive": true
+  },
+  "AdminLogin.dc.html": {
+   "x": 0,
+   "y": 7340,
+   "w": 1440,
+   "h": 900,
+   "title": "FoodLens staff sign-in",
+   "expand": "fill",
+   "page": "review",
+   "is_interactive": true
+  },
+  "Guide.dc.html": {
+   "x": 0,
+   "y": 260,
+   "w": 390,
+   "h": 1900,
+   "title": "Guide \u00b7 where to find the number",
+   "expand": "fill",
+   "page": "guides",
+   "is_interactive": true
+  },
+  "AdminCompanyCO015.dc.html": {
+   "x": 1520,
+   "y": 260,
+   "w": 1440,
+   "h": 1300,
+   "title": "Company \u00b7 CO-015 Ngozi Foods (pending)",
+   "expand": "fill",
+   "page": "review",
+   "is_interactive": true
+  },
+  "AdminCompanyCO017.dc.html": {
+   "x": 3040,
+   "y": 260,
+   "w": 1440,
+   "h": 1300,
+   "title": "Company \u00b7 CO-017 Kano Staples Depot (wholesaler)",
+   "expand": "fill",
+   "page": "review",
+   "is_interactive": true
+  },
+  "AdminCompanyCO018.dc.html": {
+   "x": 4560,
+   "y": 260,
+   "w": 1440,
+   "h": 1300,
+   "title": "Company \u00b7 CO-018 Benue Fresh Juices",
+   "expand": "fill",
+   "page": "review",
+   "is_interactive": true
+  },
+  "AdminCompanyApproved.dc.html": {
+   "x": 6080,
+   "y": 260,
+   "w": 1440,
+   "h": 1300,
+   "title": "Company \u00b7 approved feedback",
+   "expand": "fill",
+   "page": "review",
+   "is_interactive": true
+  },
+  "AdminCompanyChanges.dc.html": {
+   "x": 7600,
+   "y": 260,
+   "w": 1440,
+   "h": 1300,
+   "title": "Company \u00b7 changes requested",
+   "expand": "fill",
+   "page": "review",
+   "is_interactive": true
+  },
+  "AdminLocations.dc.html": {
+   "x": 0,
+   "y": 1940,
+   "w": 1440,
+   "h": 1100,
+   "title": "Locations queue",
+   "expand": "fill",
+   "page": "review",
+   "is_interactive": true
+  },
+  "AdminLocationLC044.dc.html": {
+   "x": 1520,
+   "y": 1940,
+   "w": 1440,
+   "h": 1250,
+   "title": "Location \u00b7 LC-044 Onitsha depot",
+   "expand": "fill",
+   "page": "review",
+   "is_interactive": true
+  },
+  "AdminLocationLC041.dc.html": {
+   "x": 3040,
+   "y": 1940,
+   "w": 1440,
+   "h": 1250,
+   "title": "Location \u00b7 LC-041 Kaduna depot",
+   "expand": "fill",
+   "page": "review",
+   "is_interactive": true
+  },
+  "AdminLocationApproved.dc.html": {
+   "x": 4560,
+   "y": 1940,
+   "w": 1440,
+   "h": 1250,
+   "title": "Location \u00b7 approved feedback",
+   "expand": "fill",
+   "page": "review",
+   "is_interactive": true
+  },
+  "AdminChanges.dc.html": {
+   "x": 0,
+   "y": 3570,
+   "w": 1440,
+   "h": 1100,
+   "title": "Product changes queue",
+   "expand": "fill",
+   "page": "review",
+   "is_interactive": true
+  },
+  "AdminChangeCN0142.dc.html": {
+   "x": 1520,
+   "y": 3570,
+   "w": 1440,
+   "h": 1550,
+   "title": "Change \u00b7 CN-0142 pack size (compare)",
+   "expand": "fill",
+   "page": "review",
+   "is_interactive": true
+  },
+  "AdminChangeCN0140.dc.html": {
+   "x": 3040,
+   "y": 3570,
+   "w": 1440,
+   "h": 1550,
+   "title": "Change \u00b7 CN-0140 Demo Mills",
+   "expand": "fill",
+   "page": "review",
+   "is_interactive": true
+  },
+  "AdminChangeCN0137.dc.html": {
+   "x": 4560,
+   "y": 3570,
+   "w": 1440,
+   "h": 1550,
+   "title": "Change \u00b7 CN-0137 number belongs to another product",
+   "expand": "fill",
+   "page": "review",
+   "is_interactive": true
+  },
+  "AdminChangeApproved.dc.html": {
+   "x": 6080,
+   "y": 3570,
+   "w": 1440,
+   "h": 1550,
+   "title": "Change \u00b7 approved feedback",
+   "expand": "fill",
+   "page": "review",
+   "is_interactive": true
+  },
+  "AdminChangeMobile.dc.html": {
+   "x": 7600,
+   "y": 3570,
+   "w": 390,
+   "h": 2600,
+   "title": "Change \u00b7 phone 390",
+   "expand": "fill",
+   "page": "review",
+   "is_interactive": true
+  },
+  "AdminAnnouncements.dc.html": {
+   "x": 0,
+   "y": 5500,
+   "w": 1440,
+   "h": 1100,
+   "title": "Announcements queue",
+   "expand": "fill",
+   "page": "review",
+   "is_interactive": true
+  },
+  "AdminAnnouncementAN0219.dc.html": {
+   "x": 1520,
+   "y": 5500,
+   "w": 1440,
+   "h": 1450,
+   "title": "Announcement \u00b7 AN-0219 reported (RP-031)",
+   "expand": "fill",
+   "page": "review",
+   "is_interactive": true
+  },
+  "AdminAnnouncementAN0218.dc.html": {
+   "x": 3040,
+   "y": 5500,
+   "w": 1440,
+   "h": 1450,
+   "title": "Announcement \u00b7 AN-0218 quality claim (RP-029)",
+   "expand": "fill",
+   "page": "review",
+   "is_interactive": true
+  },
+  "AdminAnnouncementHidden.dc.html": {
+   "x": 4560,
+   "y": 5500,
+   "w": 1440,
+   "h": 1450,
+   "title": "Announcement \u00b7 hidden with reason",
+   "expand": "fill",
+   "page": "review",
+   "is_interactive": true
+  },
+  "AdminLoginError.dc.html": {
+   "x": 1520,
+   "y": 7340,
+   "w": 1440,
+   "h": 900,
+   "title": "Staff sign-in \u00b7 error",
+   "expand": "fill",
+   "page": "review",
+   "is_interactive": true
+  },
+  "AccForgot.dc.html": {
+   "x": 0,
+   "y": 4980,
+   "w": 1440,
+   "h": 900,
+   "title": "Reset password",
+   "expand": "fill",
+   "page": "accounts",
+   "is_interactive": true
+  },
+  "AccForgotSent.dc.html": {
+   "x": 1520,
+   "y": 4980,
+   "w": 1440,
+   "h": 900,
+   "title": "Reset password \u00b7 link sent",
+   "expand": "fill",
+   "page": "accounts",
+   "is_interactive": true
+  },
+  "AccStatusApprovedWholesaler.dc.html": {
+   "x": 3040,
+   "y": 4980,
+   "w": 1440,
+   "h": 1000,
+   "title": "Approved \u00b7 wholesaler \u2192 wholesaler workspace",
+   "expand": "fill",
+   "page": "accounts",
+   "is_interactive": true
+  },
+  "GuideBatch.dc.html": {
+   "x": 470,
+   "y": 260,
+   "w": 390,
+   "h": 1500,
+   "title": "Guide \u00b7 batch (LOT) number",
+   "expand": "fill",
+   "page": "guides",
+   "is_interactive": true
+  },
+  "GuideLimits.dc.html": {
+   "x": 940,
+   "y": 260,
+   "w": 390,
+   "h": 1600,
+   "title": "Guide \u00b7 what a lookup can\u2019t tell you",
+   "expand": "fill",
+   "page": "guides",
+   "is_interactive": true
+  },
+  "GuideScanHelp.dc.html": {
+   "x": 1410,
+   "y": 260,
+   "w": 390,
+   "h": 1900,
+   "title": "Where to find the number \u00b7 from Scan",
+   "expand": "fill",
+   "page": "guides",
+   "is_interactive": true
+  }
+ },
+ "order": [
+  "Main.dc.html",
+  "Mobile.dc.html",
+  "Admin.dc.html",
+  "AdminTablet.dc.html",
+  "AdminMobile.dc.html",
+  "Scan.dc.html",
+  "ScanReading.dc.html",
+  "ScanDenied.dc.html",
+  "ScanUnavailable.dc.html",
+  "Confirm.dc.html",
+  "ConfirmTyped.dc.html",
+  "ConfirmError.dc.html",
+  "ConfirmChecking.dc.html",
+  "Result.dc.html",
+  "ResultNotFound.dc.html",
+  "ResultExpired.dc.html",
+  "ResultMismatch.dc.html",
+  "ResultInsufficient.dc.html",
+  "ResultLimit.dc.html",
+  "ScanDesktop.dc.html",
+  "ResultTablet.dc.html",
+  "ResultMismatchDesktop.dc.html",
+  "Report.dc.html",
+  "ReportPhotos.dc.html",
+  "ReportInvalid.dc.html",
+  "ReportSubmitting.dc.html",
+  "ReportFailed.dc.html",
+  "ReportDone.dc.html",
+  "ReportDesktop.dc.html",
+  "AdminReports.dc.html",
+  "AdminReportDetail.dc.html",
+  "AdminReportReviewed.dc.html",
+  "AdminReportClarify.dc.html",
+  "AdminReportRejected.dc.html",
+  "AdminReportEscalated.dc.html",
+  "Accounts.dc.html",
+  "AccRegisterErrors.dc.html",
+  "AccLogin.dc.html",
+  "AccLoginError.dc.html",
+  "AccStatusPending.dc.html",
+  "AccStatusChanges.dc.html",
+  "AccStatusApproved.dc.html",
+  "AccStatusSuspended.dc.html",
+  "AccRegisterMobile.dc.html",
+  "AccLoginMobile.dc.html",
+  "Supplier.dc.html",
+  "SupProducts.dc.html",
+  "SupProduct.dc.html",
+  "SupProductNew.dc.html",
+  "SupSubmissions.dc.html",
+  "SupLocations.dc.html",
+  "SupAnnouncements.dc.html",
+  "SupAnnounceError.dc.html",
+  "SupOrders.dc.html",
+  "SupOrder.dc.html",
+  "SupOrderAccepted.dc.html",
+  "SupOrdersMobile.dc.html",
+  "SupProductsEmpty.dc.html",
+  "SupProductsLoading.dc.html",
+  "SupOrdersError.dc.html",
+  "Wholesaler.dc.html",
+  "WsSupplier.dc.html",
+  "WsFindLoading.dc.html",
+  "WsFindEmpty.dc.html",
+  "WsFindMobile.dc.html",
+  "WsRequest.dc.html",
+  "WsRequestReview.dc.html",
+  "WsRequestDone.dc.html",
+  "WsRequestMobile.dc.html",
+  "WsOrders.dc.html",
+  "WsOrder.dc.html",
+  "WsOrderFulfilled.dc.html",
+  "WsOrdersEmpty.dc.html",
+  "WsOrdersMobile.dc.html",
+  "AdminQueue.dc.html",
+  "AdminLogin.dc.html",
+  "Guide.dc.html",
+  "AdminCompanyCO015.dc.html",
+  "AdminCompanyCO017.dc.html",
+  "AdminCompanyCO018.dc.html",
+  "AdminCompanyApproved.dc.html",
+  "AdminCompanyChanges.dc.html",
+  "AdminLocations.dc.html",
+  "AdminLocationLC044.dc.html",
+  "AdminLocationLC041.dc.html",
+  "AdminLocationApproved.dc.html",
+  "AdminChanges.dc.html",
+  "AdminChangeCN0142.dc.html",
+  "AdminChangeCN0140.dc.html",
+  "AdminChangeCN0137.dc.html",
+  "AdminChangeApproved.dc.html",
+  "AdminChangeMobile.dc.html",
+  "AdminAnnouncements.dc.html",
+  "AdminAnnouncementAN0219.dc.html",
+  "AdminAnnouncementAN0218.dc.html",
+  "AdminAnnouncementHidden.dc.html",
+  "AdminLoginError.dc.html",
+  "AccForgot.dc.html",
+  "AccForgotSent.dc.html",
+  "AccStatusApprovedWholesaler.dc.html",
+  "GuideBatch.dc.html",
+  "GuideLimits.dc.html",
+  "GuideScanHelp.dc.html"
+ ],
+ "notes": {
+  "t1": {
+   "x": 0,
+   "y": 0,
+   "text": "1 \u00b7 Scan a product",
+   "kind": "title1",
+   "maxW": 1800,
+   "page": "consumer"
+  },
+  "t2": {
+   "x": 0,
+   "y": 1224,
+   "text": "2 \u00b7 Confirm the number",
+   "kind": "title1",
+   "maxW": 1800,
+   "page": "consumer"
+  },
+  "t3": {
+   "x": 0,
+   "y": 2448,
+   "text": "3 \u00b7 Results",
+   "kind": "title1",
+   "maxW": 2740,
+   "page": "consumer"
+  },
+  "t4": {
+   "x": 0,
+   "y": 4388,
+   "text": "4 \u00b7 Tablet & desktop",
+   "kind": "title1",
+   "maxW": 3874,
+   "page": "consumer"
+  },
+  "r1": {
+   "x": 0,
+   "y": 0,
+   "text": "1 \u00b7 Report a product concern (consumer)",
+   "kind": "title1",
+   "maxW": 2740,
+   "page": "reports"
+  },
+  "r2": {
+   "x": 0,
+   "y": 2730,
+   "text": "2 \u00b7 Report form \u00b7 desktop",
+   "kind": "title1",
+   "maxW": 1440,
+   "page": "reports"
+  },
+  "r3": {
+   "x": 0,
+   "y": 4810,
+   "text": "3 \u00b7 Admin moderation",
+   "kind": "title1",
+   "maxW": 2960,
+   "page": "reports"
+  },
+  "r4": {
+   "x": 0,
+   "y": 6690,
+   "text": "4 \u00b7 Moderation decisions",
+   "kind": "title1",
+   "maxW": 6000,
+   "page": "reports"
+  },
+  "a1": {
+   "x": 0,
+   "y": 0,
+   "text": "1 \u00b7 Register & log in",
+   "kind": "title1",
+   "maxW": 6000,
+   "page": "accounts"
+  },
+  "a2": {
+   "x": 0,
+   "y": 2180,
+   "text": "2 \u00b7 Company review status",
+   "kind": "title1",
+   "maxW": 6000,
+   "page": "accounts"
+  },
+  "a3": {
+   "x": 0,
+   "y": 3560,
+   "text": "3 \u00b7 Phone",
+   "kind": "title1",
+   "maxW": 1000,
+   "page": "accounts"
+  },
+  "s1": {
+   "x": 0,
+   "y": 0,
+   "text": "1 \u00b7 Overview & products",
+   "kind": "title1",
+   "maxW": 6000,
+   "page": "supplier"
+  },
+  "s2": {
+   "x": 0,
+   "y": 1880,
+   "text": "2 \u00b7 Submissions, locations, announcements",
+   "kind": "title1",
+   "maxW": 6000,
+   "page": "supplier"
+  },
+  "s3": {
+   "x": 0,
+   "y": 3760,
+   "text": "3 \u00b7 Incoming orders",
+   "kind": "title1",
+   "maxW": 6000,
+   "page": "supplier"
+  },
+  "s4": {
+   "x": 0,
+   "y": 6040,
+   "text": "4 \u00b7 States & mixed company",
+   "kind": "title1",
+   "maxW": 6000,
+   "page": "supplier"
+  },
+  "w1": {
+   "x": 0,
+   "y": 0,
+   "text": "1 \u00b7 Find suppliers",
+   "kind": "title1",
+   "maxW": 6500,
+   "page": "wholesaler"
+  },
+  "w2": {
+   "x": 0,
+   "y": 2580,
+   "text": "2 \u00b7 Order request",
+   "kind": "title1",
+   "maxW": 6500,
+   "page": "wholesaler"
+  },
+  "w3": {
+   "x": 0,
+   "y": 5260,
+   "text": "3 \u00b7 My orders",
+   "kind": "title1",
+   "maxW": 6500,
+   "page": "wholesaler"
+  },
+  "v1": {
+   "x": 0,
+   "y": 0,
+   "text": "1 \u00b7 Companies",
+   "kind": "title1",
+   "maxW": 3000,
+   "page": "review"
+  },
+  "v2": {
+   "x": 0,
+   "y": 1680,
+   "text": "2 \u00b7 Locations",
+   "kind": "title1",
+   "maxW": 3000,
+   "page": "review"
+  },
+  "v3": {
+   "x": 0,
+   "y": 3310,
+   "text": "3 \u00b7 Product changes",
+   "kind": "title1",
+   "maxW": 3000,
+   "page": "review"
+  },
+  "v4": {
+   "x": 0,
+   "y": 5240,
+   "text": "4 \u00b7 Announcements",
+   "kind": "title1",
+   "maxW": 3000,
+   "page": "review"
+  },
+  "v5": {
+   "x": 0,
+   "y": 7080,
+   "text": "5 \u00b7 Staff sign-in (not linked from the public site)",
+   "kind": "title1",
+   "maxW": 3000,
+   "page": "review"
+  },
+  "a4": {
+   "x": 0,
+   "y": 4720,
+   "text": "4 \u00b7 Reset password & wholesaler routing",
+   "kind": "title1",
+   "maxW": 3000,
+   "page": "accounts"
+  },
+  "g1": {
+   "x": 0,
+   "y": 0,
+   "text": "Pack guides (from landing \u201cread more\u201d and the scan help button)",
+   "kind": "title1",
+   "maxW": 3000,
+   "page": "guides"
+  }
+ },
+ "designSystems": []
+}

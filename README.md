@@ -1,10 +1,12 @@
 # FoodLens
 
-Software engineering capstone prototype. Consumers look up **simulated** product and batch records; companies manage demo-reviewed catalogue data; wholesalers find demo-reviewed suppliers and send order requests.
+FoodLens is a startup product at the demonstration-prototype stage; the founder's capstone is its first milestone. It is being rebuilt as a unit-level product integrity platform: every pack gets its own QR identity, shops record what happens to it, and consumers check it for free (`docs/PLAN.md`, final design in `docs/DECISIONS.md` D137–D147).
 
-> **DEMO DATA — NOT AN OFFICIAL REGULATOR SERVICE.** All companies, products, and register records are fictional. A lookup is not a laboratory test, not a safety guarantee, and not a NAFDAC or SON decision.
+**Status: Phases 1 to 7 are done, and Phase 8 (demo scenario) is built. A pass on a physical phone is still to do.** The unit-identity schema exists (units, cartons, lifecycle events, scans, alerts, allocations, POS partners), and the old registration lookup, simulated register and OCR are removed. Manufacturers generate a QR code for every pack and carton, download the one-time label file, release, void and allocate stock (see [Pack codes and labels](#pack-codes-and-labels)). Approved distributors and retailers record received, transferred, sold, returned and corrected stock at `/merchant` (see [Merchant page](#merchant-page)), and shop tills record sales after payment through the signed POS API (see [POS integration and the demo till](#pos-integration-and-the-demo-till)). Anyone can check a pack for free at `/check` (Scan QR or Type code) or by opening the QR link `/p/{code}` (see [Consumer checks](#consumer-checks)). Companies register with type flags (manufacturer, distributor, retailer), manage demo-reviewed catalogue data and appear in the public partner directory. Each phase updates this README for what it changes.
 
-Project docs: [`docs/HANDOFF.md`](docs/HANDOFF.md) (brief), [`docs/PLAN.md`](docs/PLAN.md) (phases), [`docs/DECISIONS.md`](docs/DECISIONS.md), [`docs/ERD.mmd`](docs/ERD.mmd) (draft data model).
+> **DEMO DATA — NOT AN OFFICIAL REGULATOR SERVICE.** All companies, products and codes are fictional. A check is not a laboratory test and not a NAFDAC or SON decision, and no QR system catches every copied code.
+
+Project docs: [`docs/PRODUCT_INTEGRITY.md`](docs/PRODUCT_INTEGRITY.md) (product concept), [`docs/PLAN.md`](docs/PLAN.md) (phases), [`docs/DECISIONS.md`](docs/DECISIONS.md), [`docs/SCHEMA.md`](docs/SCHEMA.md) and [`docs/ERD.mmd`](docs/ERD.mmd) (target data model), [`docs/log.md`](docs/log.md) (challenge log). [`docs/HANDOFF.md`](docs/HANDOFF.md) is history only.
 
 ## Layout
 
@@ -58,8 +60,79 @@ Sign-ins after seeding:
 | Account | Email | Password |
 |---|---|---|
 | Admin | `SEED_ADMIN_EMAIL` in `backend/.env` | `SEED_ADMIN_PASSWORD` in `backend/.env` |
-| Demo wholesaler (buyer) | `buyer@demo.foodlens.invalid` | `SEED_DEMO_PASSWORD` in `backend/.env` |
-| Demo supplier (Demo Harvest Foods) | `seller@demo.foodlens.invalid` | `SEED_DEMO_PASSWORD` in `backend/.env` |
+| Demo distributor (Demo Market Traders) | `buyer@demo.foodlens.invalid` | `SEED_DEMO_PASSWORD` in `backend/.env` |
+| Demo manufacturer (Demo Harvest Foods) | `seller@demo.foodlens.invalid` | `SEED_DEMO_PASSWORD` in `backend/.env` |
+| Demo retailer (Demo Corner Shop, demo till) | `shop@demo.foodlens.invalid` | `SEED_DEMO_PASSWORD` in `backend/.env` |
+| Demo retailer (Demo Kano Stores) | `kano@demo.foodlens.invalid` | `SEED_DEMO_PASSWORD` in `backend/.env` |
+
+The seed creates fictional companies, products, batches, reviewed locations and the demo scenario. To run the demo, see [Run the demo](#run-the-demo).
+
+## Run the demo
+
+The seed builds the whole demo scenario (D145) through the services, so every alert comes from the risk rules. The 7-minute walkthrough is [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md).
+
+**Set these once.** In `backend/.env`:
+
+```bash
+POS_SECRET_KEY=<generate: uv run python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())">
+SEED_ADMIN_EMAIL=admin@demo.foodlens.invalid
+SEED_ADMIN_PASSWORD=<10+ characters>
+SEED_DEMO_PASSWORD=<10+ characters>
+DEMO_POS_ENABLED=true
+SIMULATE_LOCATION_ENABLED=true
+```
+
+In `frontend/.env.local`:
+
+```bash
+NEXT_PUBLIC_DEMO_POS_ENABLED=true
+```
+
+**Reset and seed with one command**, from the repo root:
+
+```bash
+node scripts/reset-demo.mjs
+```
+
+**Warning: this deletes all data in the database named by `DATABASE_URL`, including every account you registered yourself.** Only the reference areas stay. It refuses, and deletes nothing, unless `APP_ENV=development` and the first four settings above are set. To add the scenario without deleting anything, run `uv run python -m app.seed` from `backend/` instead; a second run changes nothing.
+
+Then start the app with `node scripts/dev.mjs`.
+
+History is backdated from the moment of seeding. The seeded "just sold" pack (ending `1003`) keeps that result for 5.5 hours, and the resold pack (ending `1005`) for 4 hours. Reset again before a demo.
+
+### Demo logins
+
+| Role | Email | Password |
+|---|---|---|
+| Admin | `admin@demo.foodlens.invalid` (`SEED_ADMIN_EMAIL`) | `SEED_ADMIN_PASSWORD` |
+| Manufacturer: Demo Harvest Foods | `seller@demo.foodlens.invalid` | `SEED_DEMO_PASSWORD` |
+| Distributor: Demo Market Traders, Lagos | `buyer@demo.foodlens.invalid` | `SEED_DEMO_PASSWORD` |
+| Retailer with the demo till: Demo Corner Shop, Lagos | `shop@demo.foodlens.invalid` | `SEED_DEMO_PASSWORD` |
+| Retailer: Demo Kano Stores, Kano | `kano@demo.foodlens.invalid` | `SEED_DEMO_PASSWORD` |
+
+### Demo codes
+
+These codes are fictional and fixed, so they can be printed here (the D111 exception). They are stored as hashes like any other code. Type one at `/check`, or open `/p/<code without spaces>`. Choose the city shown in **Demo: check as if from**: with no area, the place-based rules cannot fire.
+
+| Code | City | Case | Result on check | Alert |
+|---|---|---|---|---|
+| `7DEM ABCD EFGH JKMN PQRS TV10 01` | Lagos | Never sold, kept for the walkthrough | In circulation, not yet sold | None until the walkthrough |
+| `7DEM ABCD EFGH JKMN PQRS TV10 02` | Lagos | Never sold, for a second run without a reset | In circulation, not yet sold | None |
+| `7DEM ABCD EFGH JKMN PQRS TV10 03` | Lagos | POS sale, then the buyer rescans | Just sold | None |
+| `7DEM ABCD EFGH JKMN PQRS TV10 04` | Kano | Sold in Lagos, checked in Kano 3 hours later | This code may have been copied | Rule 2, HIGH |
+| `7DEM ABCD EFGH JKMN PQRS TV10 05` | Lagos | Refund, then resale | Just sold | None |
+| `7DEM ABCD EFGH JKMN PQRS TV10 06` | Lagos | Never sold (`1007` to `1010` too, and `2001` to `2010` in Kano) | In circulation, not yet sold | None |
+| `7DEM ABCD EFGH JKMN PQRS TVK0 01` | Kano | Loose pack allocated individually to the Kano retailer (`K002` to `K004` too) | In circulation, not yet sold | None |
+| `7DEM ABCD EFGH JKMN PQRS TVA0 01` | Abuja | One of 5 packs checked in Abuja, which is allocated 3 (`A002` to `A005` too) | In circulation, not yet sold | Rule 9, MEDIUM, dashboard only |
+| `7DEM ABCD EFGH JKMN PQRS TVV0 01` | Ibadan | Voided before release, then checked | Code not recognised | Rule 8, HIGH |
+| `7DEM ABCD EFGH JKMN PQRS TVX0 01` | Port Harcourt | Never issued; one of a burst of 20 (`X002` to `X020`) | Code not recognised | Rule 4, MEDIUM, admin only |
+| `7DEM ABCD EFGH JKMN PQRS TVE0 01` | Lagos | Batch past its expiry date (`E002` too) | In circulation, not yet sold, with an amber expiry warning | None |
+| `7DEM ABCD EFGH JKMN PQRS TVT0 01` | Lagos | **Test case:** the one deliberately unreleased carton, batch `DEMO-LOT-TEST-UNRELEASED` (`T002`, `T003` too) | This code may have been copied | Rule 6, MEDIUM |
+| `7DEM ABCD EFGH JKMN PQRS TVC0 01` | Any | Carton C001, allocated to Lagos | This is a carton code | None |
+| `7DEM ABCD EFGH JKMN PQRS TVC0 02` | Any | Carton C002, allocated to Demo Kano Stores | This is a carton code | None |
+| `7DEM ABCD EFGH JKMN PQRS TVTC 01` | Any | The unreleased test carton | This is a carton code | None |
+
+Batch `DEMO-LOT-110` (Sample Palm Oil) holds the main cases and is allocated between Lagos (10 packs), Kano (14) and Abuja (3). Batch `DEMO-LOT-201` (Sample Groundnut Oil) has no codes, so the walkthrough can generate them live. Other seeded batches also have no codes yet.
 
 ## Run (separate terminals)
 
@@ -75,13 +148,9 @@ Check: `http://localhost:3000/api/health` returns `{"status":"ok"}`.
 
 `npm run dev` and `npm run start` run `frontend/server.mjs`, a small custom Next.js server that replaces any client-supplied `X-Forwarded-For` with the real connection address so rate limits cannot be dodged (D45). It listens on all interfaces, so other devices on the same network can open `http://<this-computer's-IP>:3000` during usability tests.
 
-## Scan a pack with the phone camera
+## Test on a phone
 
-On `/check`, tap **Scan pack**, fit the NAFDAC/SON number inside the box, and tap **Capture**; then do the same for the batch number or skip it. A confirm screen always shows what was read so you can correct it before the register is checked. Reading happens in the browser (Tesseract.js); no photo is uploaded or saved (D88-D94).
-
-The OCR files (about 7 MB) are copied from `node_modules` to `frontend/public/ocr/` automatically before `npm run dev` and `npm run build` (or run `npm run ocr:assets`). The folder is git-ignored.
-
-Phone cameras only work on HTTPS pages (or `localhost`), so a phone cannot scan at `http://<computer-IP>:3000`. Use a tunnel:
+Phone cameras only work on HTTPS pages (or `localhost`), so a phone cannot use the camera at `http://<computer-IP>:3000`. Use the tunnel below to try Scan QR at `/check` from a phone.
 
 ### Test on your phone (iPhone or Android) with a Cloudflare quick tunnel
 
@@ -93,35 +162,11 @@ Phone cameras only work on HTTPS pages (or `localhost`), so a phone cannot scan 
    ```
    (`npm run dev` also works through the tunnel; `*.trycloudflare.com` is allowed in `next.config.ts`.)
 4. In a third terminal: `cloudflared tunnel --url http://localhost:3000`
-5. Open the printed `https://<random-words>.trycloudflare.com/check` on the phone and allow the camera.
+5. Open the printed `https://<random-words>.trycloudflare.com/` on the phone.
 
 **Warning:** while the tunnel runs, anyone who has that URL can reach your local FoodLens. Use demo data only and stop the tunnel (Ctrl+C) when you finish. The URL changes every time.
 
 Backup (no internet tunnel; not tested on an iPhone): create a local certificate with [mkcert](https://github.com/FiloSottile/mkcert) (`mkcert -install`, then `mkcert <computer-IP>`), put an HTTPS proxy in front of port 3000 (for example `npx local-ssl-proxy --source 3443 --target 3000 --cert <cert>.pem --key <key>.pem`), and install and fully trust mkcert's root certificate on the phone (iPhone: Settings > General > About > Certificate Trust Settings). Then open `https://<computer-IP>:3443/check`. Through this proxy all phones share one rate-limit bucket, so add the computer's IP to `RATE_LIMIT_EXEMPT_IPS` for the session.
-
-To measure accuracy on real packs, use `docs/OCR_ACCURACY.md`.
-
-## Demo lookups
-
-Open `http://localhost:3000/check` (no account needed) after running the seed, or a link such as `/check?reg=DEMO-NAFDAC-0001&batch=DEMO-LOT-101`, which fills in and checks immediately. Each row is tested automatically (`backend/app/demo_data.py` `SEED_CASES`):
-
-| Case | Registration number | Batch number | Result |
-|---|---|---|---|
-| Active record, batch belongs to that product | `DEMO-NAFDAC-0001` | `DEMO-LOT-101` | `REGISTERED_ACTIVE` |
-| Active record, number only | `DEMO-NAFDAC-0002` | `(blank)` | `REGISTERED_ACTIVE` |
-| Scanned text with a label | `NAFDAC Reg No: demo-nafdac-0001` | `(blank)` | `REGISTERED_ACTIVE` |
-| Lot number shared by two products, resolved by the number | `DEMO-NAFDAC-0002` | `DEMO-LOT-001` | `REGISTERED_ACTIVE` |
-| Batch not in the FoodLens catalogue | `DEMO-NAFDAC-0001` | `DEMO-LOT-999` | `REGISTERED_ACTIVE` + BATCH_NOT_IN_CATALOGUE |
-| Batch expiry date has passed | `DEMO-NAFDAC-0005` | `DEMO-LOT-501` | `REGISTERED_ACTIVE` + BATCH_EXPIRED |
-| Number not in the simulated register | `DEMO-NAFDAC-9999` | `(blank)` | `REGISTRATION_NOT_FOUND` |
-| Registration expired | `DEMO-NAFDAC-0003` | `DEMO-LOT-301` | `REGISTRATION_EXPIRED_OR_INACTIVE` |
-| SON registration inactive | `DEMO-MANCAP-0004` | `DEMO-LOT-401` | `REGISTRATION_EXPIRED_OR_INACTIVE` |
-| Batch belongs to a product with a different number | `DEMO-NAFDAC-0001` | `DEMO-LOT-201` | `REGISTRATION_MISMATCH` |
-| Number registered to another product and company | `DEMO-NAFDAC-0009` | `DEMO-LOT-601` | `REGISTRATION_MISMATCH` |
-| Nothing entered | `(blank)` | `(blank)` | `INSUFFICIENT_OR_AMBIGUOUS` |
-| Batch number without a registration number | `(blank)` | `DEMO-LOT-101` | `INSUFFICIENT_OR_AMBIGUOUS` |
-
-The register is a **simulated, fictional** NAFDAC/SON register held by FoodLens, not the regulators' own system; a match never proves a pack is the original. Every lookup is logged anonymously in `batch_scan` (no IP, user, or device details).
 
 ## Accounts and the seed admin
 
@@ -140,27 +185,81 @@ cd backend && uv run python -m app.seed
 
 Running the seed again is safe. If an account with that email already exists it is promoted to admin and its password is left unchanged.
 
-## Companies, admin review, and the supplier directory
+## Pack codes and labels
+
+On `/company`, each batch has a **Codes, labels and allocations** link (`/company/batches/<batch>`). The company must be an approved manufacturer.
+
+| Action | Who | What happens |
+|---|---|---|
+| Generate and download labels | Owner | Up to 2,000 packs per request, optionally in cartons of N. Each pack and carton gets a random 26-character code (128 bits, Crockford Base32). FoodLens stores only the SHA-256 hash of each code and records an `ISSUED` event. The browser downloads a zip once: `labels.pdf`, `units.csv`, `cartons.csv` (columns `batch, carton_ref, token, verification_url`) and `READ-ME-FIRST.txt`. |
+| Release | Owner or staff | The whole batch or one carton moves from "Not released" to "Released" (`RELEASED` events). |
+| Void | Owner | Only before release, with a reason: the whole batch's unreleased packs, listed cartons, or single codes pasted from the CSV. Voided codes stop working; generate new ones to replace them. Released packs cannot be voided. |
+| Allocate | Owner or staff | Plan where stock goes: an area, optionally an approved distributor or retailer, by quantity, cartons or single codes. |
+
+Each QR encodes `{PUBLIC_BASE_URL}/p/{code}` with error correction level M and a 4-module quiet zone. The code is printed under it in groups of 4, with "Type the code at <host>/check". QR sizes below 15 mm are allowed with a warning. The page footer names the base URL used. **Set `PUBLIC_BASE_URL` in `backend/.env` before printing real labels: printed codes cannot change.**
+
+**The label file holds every raw code and cannot be downloaded again.** Keep it secure, send it only to the printer, and delete every copy after printing. A full 2,000-pack file takes about 15 seconds to build.
+
+## Companies, admin review, and the partner directory
 
 | Page | Who | What |
 |---|---|---|
-| `/suppliers` | Anyone | Approved companies with demo-reviewed locations, badge "FoodLens demo-reviewed profile" |
-| `/company/register` | Signed-in user without a company | Registers a company (starts pending; you become owner) |
-| `/company` | Company members | Review status, locations, products (with the registration number on the pack), batches, change notices with attachments, announcements (once approved) |
-| `/admin` | Admins (seed admin) | Approve, reject, or suspend companies; mark locations demo-reviewed; approve, reject, or request clarification on change notices; hide announcements |
+| `/suppliers` | Anyone | Partner directory: approved companies with demo-reviewed locations, badge "FoodLens demo-reviewed profile" |
+| `/company/register` | Signed-in user without a company | Registers a company as manufacturer, distributor and/or retailer (at least one; starts pending; you become owner) |
+| `/company` | Company members | Approved manufacturers: overview, products and batches (`/company/products`, `/company/batches/{id}`), pack timeline, alerts, notices, partners, consumer reports and stats. Other companies: `/company/profile` and the merchant page |
+| `/company/profile` | Company members | Review status, contact details, locations, change notices with attachments |
+| `/admin` | Admins (seed admin) | Overview, and the pages below |
+| `/admin/queues` | Admins | Approve, reject, or suspend companies; mark locations demo-reviewed; approve, reject, or request clarification on change notices; hide announcements |
+| `/admin/pos`, `/admin/alerts`, `/admin/reports`, `/admin/stats`, `/admin/scanning` | Admins | POS partners, alerts, consumer reports, platform stats, and the automated-scanning panel (counts by area and day, no IPs) |
 
-Try the full flow: create an account at `/register`, register a company, sign in as the seed admin in another browser (or a private window) and approve it at `/admin`, add a location at `/company`, mark it demo-reviewed at `/admin`, then see it at `/suppliers`. A company's products only show as registered at `/check` if their printed number matches an active record in the simulated register. A FoodLens demo review is never a NAFDAC or SON approval.
+Try the full flow: create an account at `/register`, register a company, sign in as the seed admin in another browser (or a private window) and approve it at `/admin`, add a location at `/company`, mark it demo-reviewed at `/admin`, then see it at `/suppliers`. The NAFDAC number on a product is shown as printed, as information only; FoodLens never checks it against any register. A FoodLens demo review is never a NAFDAC or SON approval.
+
+## Consumer checks
+
+No account and no cookies. Every result carries `data_mode: "DEMO"` and the disclaimer from the API, and the page shows the **DEMO DATA — NOT AN OFFICIAL REGULATOR SERVICE** banner (D115, D141).
+
+- `/check`: **Scan QR** reads the code with the phone camera, or from a photo when there is no camera. The reader runs in the browser (the built-in `BarcodeDetector`, otherwise the bundled jsQR); no image is uploaded. **Type code** accepts the 26 characters printed under the QR, with spaces or dashes; O, I and L are read as 0, 1 and 1.
+- `/p/{code}`: what any phone camera opens. The page records nothing on load; the browser checks the code with a `POST` after the page mounts, so link previews create no scan (D117).
+- Results, first match wins: `INVALID_IDENTITY`, `SUSPICIOUS_ACTIVITY` (from the risk rules' alerts), a carton QR gives `CARTON_CODE` ("check the individual pack"), then `RECOGNISED_JUST_SOLD` (sold within `JUST_SOLD_WINDOW_HOURS`, default 6), `RECOGNISED_PREVIOUSLY_SOLD` or `RECOGNISED_NOT_SOLD`. An expired batch adds an amber warning to the result. Only the last 4 characters of the code are shown, and responses contain no internal IDs.
+- **I've bought this** (no sale recorded) shows a note and sends nothing. **Report a concern** sends an anonymous report to the manufacturer and admins (`POST /api/check/report`, 5 per hour per network).
+- A check stores only the coarse area (city). With `SIMULATE_LOCATION_ENABLED=true` (demo only) a city chosen in the picker comes first (D148); otherwise the area comes from Cloudflare's location headers through a trusted tunnel, else the DB-IP Lite file at `GEOIP_DB_PATH`. The IP is discarded (D118). A check never changes a pack's status.
+
+Demo codes to type are in [Demo codes](#demo-codes). You can also generate codes for a batch at `/company` and type one from the label file.
+
+## Merchant page
+
+- `/merchant` (owner and staff of an approved distributor or retailer): open the camera or type the code under a pack or carton QR, then record **Received**, **Transferred** (to another approved company), **Sold**, **Returned** or **Sale corrected** (reason required).
+- The company needs a reviewed location with an area; the event takes that area. The server decides the status and holder.
+- A carton event applies to every pack inside, all or nothing, after a confirmation. Packs can still be handled one by one.
+- Only the company that recorded a sale can return or correct it. A return puts the pack back in stock, so the next consumer check shows "In circulation, not yet sold".
+- Voided and unreleased packs are refused with a message.
+- `/merchant/team` (owner only): add staff by the email of an existing account with no company, and deactivate them.
+- To try it: sign in as `buyer@demo.foodlens.invalid` (Demo Market Traders, a distributor). The company needs a reviewed location (add one at `/company`, approve it at `/admin`).
+
+## POS integration and the demo till
+
+Shop tills record sales through a signed API at `/api/pos/v1` (`units/lookup`, `sales`, `refunds`, `voids`). The partner guide, with Python and JavaScript signing examples, is [docs/POS_INTEGRATION.md](docs/POS_INTEGRATION.md).
+
+- **Setup:** set `POS_SECRET_KEY` in `backend/.env`. It is a Fernet key that encrypts each partner's signing secret. Generate one with `uv run python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`. Without it the POS API answers 503.
+- **Admin** (`/admin`, POS partners): add a partner (the API key and signing secret are shown once), add or revoke keys, suspend a partner, link approved retailers, and add tills on a retailer's reviewed location.
+- **Demo till** (`/demo/pos`, off by default):
+  1. Set `DEMO_POS_ENABLED=true` in `backend/.env` and `NEXT_PUBLIC_DEMO_POS_ENABLED=true` in `frontend/.env.local`.
+  2. Run the seed. With `POS_SECRET_KEY` set and an admin account in the database, it adds the partner "Demo Till Systems (fictional)", linked to Demo Corner Shop with till `DEMO-TILL-1`.
+  3. Sign in as `shop@demo.foodlens.invalid`, scan or type a pack code, and press **Confirm payment**. A check of that pack then shows "Just sold by Demo Corner Shop (fictional)".
+  4. **Refund** and **Void sale** appear on a sold pack.
+- **How the demo till signs:** the server signs each demo request with the demo partner's secret and runs the same checks as a real till. The browser never sees a key or secret (D123, D151).
+- **No payment data:** FoodLens stores no amounts, card or customer details, only an opaque `payment_reference`.
 
 ## Company contact details
 
 On `/company` the company owner can edit the public contact email and phone. Changes apply at once (no review) and are recorded in the audit log with who made them and when (D103). Product and batch details can only be changed through a change notice.
 
-## Wholesale order requests
+## Wholesale order requests (hidden, future work)
 
-Order requests are requests only: no prices or payments (D95-D101).
+Order requests are hidden future work (D127). They stay in the code, but the API registers the order routes only with `ORDERS_ENABLED=true` in `backend/.env`, and the web app shows them only with `NEXT_PUBLIC_ORDERS_ENABLED=true` in `frontend/.env.local`. Both default to `false`. They are requests only: no prices or payments (D95-D101).
 
-- `/suppliers`: search approved suppliers by name, area, or product, then open a supplier page. It shows the supplier's reviewed locations, contacts, and each published product's result in the simulated register (demo data).
-- Members of approved wholesaler (or "manufacturer and wholesaler") companies see **Request an order** on a supplier page. They choose quantities, units, and pickup or delivery, then track requests at `/orders` and cancel while a request is still "Requested".
+- `/suppliers`: search approved partners by name, area, or product, then open a partner page. It shows reviewed locations, contacts, and each published product with its size and NAFDAC number as printed.
+- With orders switched on, members of approved distributor companies see **Request an order** on a partner page. They choose quantities, units, and pickup or delivery, then track requests at `/orders` and cancel while a request is still "Requested".
 - Suppliers see **Incoming orders** at `/company`: Accept, Decline (optional reason), Reply, and Mark fulfilled, optionally linking their own batches to each line.
 
 Demo accounts: set `SEED_DEMO_PASSWORD` in `backend/.env` (at least 10 characters) and run `uv run python -m app.seed`. Then sign in as `buyer@demo.foodlens.invalid` (Demo Market Traders) or `seller@demo.foodlens.invalid` (Demo Harvest Foods) with that password. The seed adds one order in each status. Without `SEED_DEMO_PASSWORD` these accounts cannot sign in.
@@ -171,11 +270,19 @@ Requests are limited per network (IP address); no cookies or identifiers are use
 
 | What | Default |
 |---|---|
-| Product lookups | burst of 20, then 1 per second (`RATE_LIMIT_LOOKUP_BURST`, `RATE_LIMIT_LOOKUP_REFILL_PER_SECOND`) |
+| Consumer checks | burst of 20, then 1 per second (`RATE_LIMIT_CHECK_BURST`, `RATE_LIMIT_CHECK_REFILL_PER_SECOND`) |
 | Login | 5 per minute per IP + email (`RATE_LIMIT_LOGIN_PER_MINUTE`) |
 | Registration | 5 per hour per IP (`RATE_LIMIT_REGISTER_PER_HOUR`) |
+| Consumer concern reports | 5 per hour per IP (`RATE_LIMIT_REPORT_PER_HOUR`) |
 
-For usability-test sessions, list the test machines' IPs or a range in `RATE_LIMIT_EXEMPT_IPS`, e.g. `192.168.1.20,192.168.1.0/24`, and restart the API. Over the limit the API returns 429 with `Retry-After`. See `docs/DECISIONS.md` D39–D45.
+For usability-test sessions, list the test machines' IPs or a range in `RATE_LIMIT_EXEMPT_IPS`, e.g. `192.168.1.20,192.168.1.0/24`, and restart the API. Over the limit the API returns 429 with `Retry-After`. Blocked checks and reports are also counted per city and day in `rate_limit_daily`, with no IP (D144). See `docs/DECISIONS.md` D39–D45.
+
+## Risk alerts
+
+- Nine deterministic rules (D143, D152) run on every consumer check, single-pack merchant receipt or sale, and POS lookup or sale. Thresholds are in `backend/.env.example` (`RISK_*`, `ALLOCATION_OVERAGE_PCT`).
+- Manufacturers (owners and staff) see their alerts at `/company/alerts`: evidence, the pack timeline, status changes and notes. Admins see every alert, including invalid-code bursts, at `/admin/alerts`.
+- Only OPEN or INVESTIGATING alerts at MEDIUM or HIGH (never rule 9), or one resolved as a suspected copy, change what a buyer sees. LOW alerts stay on the dashboard.
+- Scan logs older than 12 months: `uv run python -m app.jobs.purge` (from `backend/`). Alert evidence keeps its own snapshot.
 
 ## Test and lint
 
@@ -204,9 +311,11 @@ uv run alembic check                                         # fails if models a
 
 Models must be imported in `backend/app/models/__init__.py` for autogenerate to see them. Table-by-table rules: [`docs/SCHEMA.md`](docs/SCHEMA.md).
 
+Migration `0006_unit_identity` keeps existing data: `company_type` becomes the three type flags (MANUFACTURER becomes manufacturer, WHOLESALER becomes distributor, BOTH becomes both), `REPRESENTATIVE` members become `STAFF`, `package_size` is renamed `size`, and supplier locations get an `area_id` where their area names a seeded city. It also seeds the reference `area` table. Migration `0007_drop_register` drops the simulated register, the old lookup log and `product_batch.qr_token`; that data is not kept. Both migrations can be rolled back to `0005_order_requests`.
+
 ## Reset the local database
 
-This deletes all local data:
+To go back to the demo scenario, use `node scripts/reset-demo.mjs` ([Run the demo](#run-the-demo)). To remove the database and its volume entirely, including the test database, run this. It deletes all local data:
 
 ```bash
 docker compose down -v && docker compose up -d db

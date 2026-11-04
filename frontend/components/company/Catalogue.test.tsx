@@ -11,7 +11,7 @@ const product: Product = {
   name: "Sample Cocoa Drink",
   brand: "Test Foods",
   category: "Beverages",
-  package_size: "500 g",
+  size: "500 g",
   manufacturer_name: "Test Foods Ltd (fictional)",
   label_information: null,
   registration_number: "DEMO-NAFDAC-5001",
@@ -34,7 +34,7 @@ function body(fetchMock: ReturnType<typeof routeFetch>, url: string) {
 describe("Catalogue", () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it("lists products with batches and the number printed on the pack", async () => {
+  it("lists products with batches and the NAFDAC number as printed", async () => {
     routeFetch({
       [`GET /api/companies/${companyId}/products`]: { body: [product] },
     });
@@ -42,7 +42,7 @@ describe("Catalogue", () => {
 
     const card = await screen.findByRole("listitem", { name: "Sample Cocoa Drink" });
     expect(card).toHaveTextContent("LOT-1 · expires 31 Dec 2027");
-    expect(card).toHaveTextContent("Number on the pack: DEMO-NAFDAC-5001");
+    expect(card).toHaveTextContent("NAFDAC number (as printed): DEMO-NAFDAC-5001");
     expect(card).not.toHaveTextContent(/credential/i);
   });
 
@@ -59,7 +59,7 @@ describe("Catalogue", () => {
     fill(container, "Brand", "Test Foods");
     fill(container, "Category", "Snacks");
     fill(container, "Manufacturer", "Test Foods Ltd (fictional)");
-    fill(container, "NAFDAC or SON number printed on the pack (optional)", "demo-nafdac-5002");
+    fill(container, "NAFDAC number (as printed, optional)", "demo-nafdac-5002");
     fireEvent.click(screen.getByRole("button", { name: "Publish product" }));
 
     await waitFor(() => expect(fetchMock.mock.calls.some(([, i]) => i?.method === "POST")).toBe(true));
@@ -68,9 +68,9 @@ describe("Catalogue", () => {
       "category",
       "manufacturer_name",
       "name",
-      "package_size",
       "product_code",
       "registration_number",
+      "size",
     ]);
   });
 

@@ -37,10 +37,13 @@ export function describeError(error: Error): string {
   return error.message;
 }
 
-type FastApiError = { detail?: string | { msg?: string }[] };
+/** FastAPI errors use `detail`; POS and demo-till errors use `error: {code, message}`. */
+type FastApiError = { detail?: string | { msg?: string }[]; error?: { code?: string; message?: string } };
 
 function errorMessage(status: number, payload: unknown): string {
-  const detail = (payload as FastApiError | null)?.detail;
+  const body = payload as FastApiError | null;
+  if (typeof body?.error?.message === "string") return body.error.message;
+  const detail = body?.detail;
   if (typeof detail === "string") return detail;
   if (Array.isArray(detail) && detail[0]?.msg) return detail[0].msg;
   return `Request failed (${status})`;
@@ -73,6 +76,29 @@ export async function apiFetch<T>(
     );
   }
   return schema ? schema.parse(payload) : (undefined as T);
+}
+
+export type Download = { blob: Blob; filename: string; headers: Headers };
+
+/** POST JSON and receive a file (e.g. the one-time label zip) instead of JSON. */
+export async function apiDownload(path: string, body: unknown): Promise<Download> {
+  const response = await fetch(path, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    const payload: unknown = await response.json().catch(() => null);
+    throw new ApiError(
+      response.status,
+      errorMessage(response.status, payload),
+      parseRetryAfter(response.headers.get("Retry-After")),
+    );
+  }
+  const disposition = response.headers.get("Content-Disposition") ?? "";
+  const filename = /filename="([^"]+)"/.exec(disposition)?.[1] ?? "download";
+  return { blob: await response.blob(), filename, headers: response.headers };
 }
 
 /** Upload one file as multipart/form-data (field name "file") through the same-origin proxy. */

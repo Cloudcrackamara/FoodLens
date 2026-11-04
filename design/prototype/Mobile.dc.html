@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FoodLens landing page, mobile</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&amp;family=Open+Sans:ital,wght@0,400;0,600;1,400&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1B7A45}a:hover{color:#145C34}
+.fl-wrap{max-width:1140px;margin:0 auto;padding:0 24px;box-sizing:border-box}
+@keyframes fl-enter{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes fl-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes fl-beam{0%{top:6%;opacity:0}18%{opacity:.9}82%{opacity:.9}100%{top:86%;opacity:0}}
+@keyframes fl-badge{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.fl-enter{animation:fl-enter 700ms cubic-bezier(.2,.7,.2,1) both}
+.fl-float{animation:fl-float 5s ease-in-out 800ms infinite}
+.fl-beam{animation:fl-beam 1.6s ease-in-out 1s 3 both}
+.fl-badge{opacity:0;animation:fl-badge 400ms ease-out 2.8s forwards}
+.fl-rm .fl-enter,.fl-rm .fl-float{animation:none}
+.fl-rm .fl-beam{display:none}
+.fl-rm .fl-badge{animation:none;opacity:1}
+@media (prefers-reduced-motion: reduce){.fl-enter,.fl-float{animation:none}.fl-beam{display:none}.fl-badge{animation:none;opacity:1}}
+.fl-navlinks{display:flex}
+.fl-menu{display:none}
+.fl-hero-badge{left:-5%}
+.fl-promo-art{position:absolute;right:-48px;top:50%;transform:translateY(-50%)}
+.fl-hero{aspect-ratio:16/9;min-height:600px}
+.fl-hero-media{position:absolute;inset:0}
+.fl-hero-media video,.fl-poster img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.fl-poster{display:block}
+.fl-hero-media video{z-index:1}
+.fl-rm .fl-hero-media video{display:none}.fl-rm .fl-poster{display:block}
+@media (prefers-reduced-motion: reduce){.fl-hero-media video{display:none}.fl-poster{display:block}}
+.fl-mob-scrim{display:none}
+.fl-hero-ui{position:absolute;left:0;right:0;top:50.5%;z-index:2;display:flex;flex-direction:column;align-items:center;padding:0 24px;box-sizing:border-box}
+.fl-hero-title{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;margin:0}
+@media (max-width:767px){
+.fl-hero{aspect-ratio:9/16;min-height:0}
+.fl-mob-scrim{display:block;position:absolute;inset:0;background:linear-gradient(180deg,rgba(22,20,61,.85) 0%,rgba(22,20,61,0) 22%,rgba(22,20,61,0) 42%,rgba(22,20,61,.9) 74%,#16143D 100%)}
+.fl-hero-ui{top:auto;bottom:0;align-items:flex-start;padding:0 20px 28px}
+.fl-hero-ui>div{justify-content:flex-start}
+.fl-hero-title{position:static;width:auto;height:auto;overflow:visible;clip:auto;white-space:normal;margin:0 0 20px}
+}
+@media (max-width:900px){.fl-navlinks{display:none}.fl-menu{display:inline-flex}}
+@media (max-width:860px){.fl-promo-art{position:static;transform:none;margin-top:40px}}
+@media (max-width:640px){.fl-hero-badge{left:3%}}
+</style>
+</helmet>
+<div style="width: 100%">
+<dc-import name="Main" hint-size="100%,11200px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":375,"height":11200}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

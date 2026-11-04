@@ -5,15 +5,19 @@ import { useState, type FormEvent } from "react";
 import { FormField } from "@/components/auth/FormField";
 import { describeError } from "@/lib/api";
 import { fieldErrors } from "@/lib/auth";
+import { buttonClass } from "@/lib/ui";
 import {
   companyRegisterFormSchema,
-  companyTypes,
+  companyTypeFlags,
   useRegisterCompany,
+  type CompanyTypeFlag,
   type CompanyRegisterForm as Form,
 } from "@/lib/companies";
 
 const emptyForm: Form = {
-  company_type: "MANUFACTURER",
+  is_manufacturer: false,
+  is_distributor: false,
+  is_retailer: false,
   display_name: "",
   contact_email: "",
   contact_phone: "",
@@ -29,6 +33,7 @@ export function CompanyRegisterForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const set = (key: keyof Form) => (value: string) => setForm({ ...form, [key]: value });
+  const toggle = (flag: CompanyTypeFlag) => setForm({ ...form, [flag]: !form[flag] });
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -43,20 +48,23 @@ export function CompanyRegisterForm() {
 
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
-      <label className="flex flex-col gap-1">
-        <span className="font-medium">Company type</span>
-        <select
-          value={form.company_type}
-          onChange={(event) => set("company_type")(event.target.value)}
-          className="rounded-md border border-zinc-400 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-900"
-        >
-          {Object.entries(companyTypes).map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </select>
-      </label>
+      <fieldset
+        aria-describedby={errors.company_types ? "company_types-error" : undefined}
+        className="flex flex-col gap-2"
+      >
+        <legend className="font-medium">What does your company do? Choose all that apply.</legend>
+        {(Object.keys(companyTypeFlags) as CompanyTypeFlag[]).map((flag) => (
+          <label key={flag} className="flex items-center gap-2">
+            <input type="checkbox" checked={form[flag]} onChange={() => toggle(flag)} />
+            {companyTypeFlags[flag]}
+          </label>
+        ))}
+        {errors.company_types && (
+          <p id="company_types-error" className="text-sm font-semibold text-bad">
+            {errors.company_types}
+          </p>
+        )}
+      </fieldset>
       <FormField
         id="display_name"
         label="Company name (shown publicly)"
@@ -80,9 +88,9 @@ export function CompanyRegisterForm() {
         error={errors.contact_phone}
         onChange={set("contact_phone")}
       />
-      <fieldset className="flex flex-col gap-4 rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
+      <fieldset className="flex flex-col gap-4 rounded-[12px] bg-white p-6 shadow-card">
         <legend className="px-1 font-semibold">Business details you claim</legend>
-        <p className="text-sm text-zinc-700 dark:text-zinc-300">
+        <p className="text-sm text-text-muted">
           FoodLens records these as claims. They are not verified and are not shown in the public
           directory.
         </p>
@@ -109,14 +117,14 @@ export function CompanyRegisterForm() {
         />
       </fieldset>
       {registerCompany.isError && (
-        <p role="alert" className="text-red-700 dark:text-red-400">
+        <p role="alert" className="font-semibold text-bad">
           {describeError(registerCompany.error)}
         </p>
       )}
       <button
         type="submit"
         disabled={registerCompany.isPending}
-        className="rounded-md bg-zinc-900 px-4 py-2 font-semibold text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
+        className={buttonClass("primary", "sm")}
       >
         {registerCompany.isPending ? "Submitting…" : "Submit for FoodLens review"}
       </button>

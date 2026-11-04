@@ -10,7 +10,7 @@
 
 **FoodLens** is a proposed Nigerian food-product traceability and trusted-sourcing platform. Consumers can check a packaged product and batch against a FoodLens database. Food companies can manage their profiles, representatives, products, batches, credential records, and product-change notices. Wholesalers can discover FoodLens-reviewed supplier locations, contact company representatives, and submit wholesale order requests. Platform administrators review company and supplier profiles, product updates, and records.
 
-For the capstone, regulatory and company data will be **fictional, seeded demonstration data** because the student has no authorized NAFDAC, SON, or other regulator integration. The system must show a prominent **DEMO DATA — NOT AN OFFICIAL REGULATOR SERVICE** banner wherever a consumer sees a lookup result.
+For the capstone, regulatory and company data will be **fictional, seeded demonstration data** because the founder has no authorized NAFDAC, SON, or other regulator integration. The system must show a prominent **DEMO DATA — NOT AN OFFICIAL REGULATOR SERVICE** banner wherever a consumer sees a lookup result.
 
 ### Critical product rule
 
@@ -26,7 +26,7 @@ The design was narrowed because a phone-camera photo cannot chemically identify 
 
 **Current scope is the expanded platform**, not the first small consumer-only design. The previous consumer-only ERD and workflow are historical and should not be treated as the final data model. The consumer concern-report idea can remain as a small optional feature, but the capstone’s main differentiator is the connection between product/batch records and B2B trusted sourcing.
 
-The student also mentioned “drop POPs” when companies make changes. This brief interprets that as **company product-change notices with optional supporting documents**. If “POPs” means a specific document type, implement it as an attachment or notice category after clarifying.
+The founder also mentioned “drop POPs” when companies make changes. This brief interprets that as **company product-change notices with optional supporting documents**. If “POPs” means a specific document type, implement it as an attachment or notice category after clarifying.
 
 ---
 
@@ -326,7 +326,7 @@ With supervisor approval and consent, ask a small group of users to scan/enter a
 
 - Project name: **FoodLens** (working name).
 - Context: Nigerian food product/supply chain.
-- Backend requested by student: **Python + FastAPI**.
+- Backend requested by founder: **Python + FastAPI**.
 - No access to NAFDAC/SON systems; capstone uses dummy/simulated data.
 - Never claim product is “safe” based only on the app/database.
 - Companies, reps, wholesalers, supplier locations, changes, and order requests are part of the expanded vision.
@@ -334,7 +334,7 @@ With supervisor approval and consent, ask a small group of users to scan/enter a
 - Batch traceability is desired; exact batch lookup is possible against seeded data.
 - “POPs” currently interpreted as product change notices and supporting documents.
 
-### Choices still open for student/supervisor
+### Choices still open for founder/supervisor
 
 - React/TypeScript vs another frontend framework.
 - PostgreSQL vs SQLite for final demo/deployment.
@@ -377,6 +377,6 @@ A newer conceptual expanded ERD source is at `/home/ubuntu/FoodLens_Current_ERD.
 6. Implement authorization checks server-side, including tenant/company ownership and moderator-only review actions.
 7. Write tests for lookup outcomes and permissions before adding optional OCR or other enhancements.
 8. Keep a `README` with install/run/test/seed instructions and document the database schema/migrations.
-9. Ask the student before making material choices that change business rules, privacy, or official-claim wording; use reversible defaults for minor implementation details and explain them.
+9. Ask the founder before making material choices that change business rules, privacy, or official-claim wording; use reversible defaults for minor implementation details and explain them.
 
 **One-sentence build target:** Build a responsive, role-based FoodLens prototype where consumers can look up simulated product/batch/credential records, companies can manage reviewed catalogue data and submit change notices, and wholesalers can discover demo-reviewed suppliers and place traceable order requests—without making official certification or product-safety claims.

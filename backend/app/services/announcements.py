@@ -5,8 +5,8 @@
 - Never change product data. The company can withdraw its own; admins can hide any.
 - Text with the whole words "safe" or "unsafe" is refused, so a company cannot claim its
   product is safe or unsafe (rule 1). Warnings such as "beware of fake versions" are allowed.
-- Regulator claims ("NAFDAC approved", "certified by SON", ...) are refused (D86): registration
-  status comes only from the simulated register.
+- Regulator claims ("NAFDAC approved", "certified by SON", ...) are refused (D86): FoodLens
+  never presents regulator status.
 """
 
 import re

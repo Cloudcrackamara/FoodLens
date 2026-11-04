@@ -6,6 +6,7 @@ import { useState, type FormEvent } from "react";
 import { describeError } from "@/lib/api";
 import { fieldErrors, MIN_PASSWORD_LENGTH, registerFormSchema, useRegister } from "@/lib/auth";
 import { FormField } from "./FormField";
+import { buttonClass } from "@/lib/ui";
 
 export function RegisterForm() {
   const router = useRouter();
@@ -56,20 +57,20 @@ export function RegisterForm() {
         onChange={setPassword}
       />
       {registerUser.isError && (
-        <p role="alert" className="text-red-700 dark:text-red-400">
+        <p role="alert" className="font-semibold text-bad">
           {describeError(registerUser.error)}
         </p>
       )}
       <button
         type="submit"
         disabled={registerUser.isPending}
-        className="rounded-md bg-zinc-900 px-4 py-2 font-semibold text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
+        className={buttonClass("primary", "sm")}
       >
         {registerUser.isPending ? "Creating account…" : "Create account"}
       </button>
       <p className="text-sm">
         Already have an account?{" "}
-        <Link href="/login" className="underline">
+        <Link href="/login" className="font-semibold text-brand-dark underline">
           Sign in
         </Link>
       </p>

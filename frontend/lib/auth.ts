@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { ApiError, apiFetch } from "./api";
+import { ordersEnabled } from "./features";
 
 // Mirrors backend/app/schemas/auth.py.
 export const MIN_PASSWORD_LENGTH = 10;
@@ -10,8 +11,10 @@ export const membershipSchema = z.object({
   company_id: z.string(),
   company_display_name: z.string(),
   company_review_status: z.enum(["PENDING_REVIEW", "APPROVED", "REJECTED", "SUSPENDED"]),
-  company_type: z.enum(["MANUFACTURER", "WHOLESALER", "BOTH"]),
-  role: z.enum(["OWNER", "REPRESENTATIVE"]),
+  is_manufacturer: z.boolean(),
+  is_distributor: z.boolean(),
+  is_retailer: z.boolean(),
+  role: z.enum(["OWNER", "STAFF"]),
 });
 
 export const userSchema = z.object({
@@ -24,13 +27,14 @@ export const userSchema = z.object({
 
 export type User = z.infer<typeof userSchema>;
 
-/** Members of approved wholesaler or "both" companies may send order requests (D95). The server
- *  enforces this too; this only decides what to show. */
+/** Members of approved distributor companies may send order requests (D95, D127), and only
+ *  while orders are enabled. The server enforces this too; this only decides what to show. */
 export function canOrder(user: User | null | undefined): boolean {
   const membership = user?.membership;
   return (
+    ordersEnabled &&
     membership?.company_review_status === "APPROVED" &&
-    (membership.company_type === "WHOLESALER" || membership.company_type === "BOTH")
+    membership.is_distributor
   );
 }
 

@@ -1,11 +1,11 @@
 import uuid
 
+from sqlalchemy import CheckConstraint
 from sqlmodel import Field
 
 from app.models.base import ReviewFieldsMixin, TimestampMixin, enum_column, uuid_pk
 from app.models.enums import (
     CompanyReviewStatus,
-    CompanyType,
     MemberRole,
     MembershipStatus,
     ReviewStatus,
@@ -14,9 +14,17 @@ from app.models.enums import (
 
 class Company(TimestampMixin, ReviewFieldsMixin, table=True):
     __tablename__ = "company"
+    __table_args__ = (
+        CheckConstraint(
+            "is_manufacturer OR is_distributor OR is_retailer", name="at_least_one_type"
+        ),
+    )
 
     company_id: uuid.UUID = uuid_pk()
-    company_type: CompanyType = Field(sa_type=enum_column(CompanyType, "company_type"))
+    # Type flags (D105): a company may be several; at least one is set.
+    is_manufacturer: bool = Field(default=False)
+    is_distributor: bool = Field(default=False)
+    is_retailer: bool = Field(default=False)
 
     # Company-managed, shown publicly once approved.
     display_name: str
@@ -62,7 +70,9 @@ class SupplierLocation(TimestampMixin, ReviewFieldsMixin, table=True):
     company_id: uuid.UUID = Field(foreign_key="company.company_id", index=True)
     name: str
     address: str
+    # Free text for display; area_id is the coarse area used for events (D118).
     area: str
+    area_id: uuid.UUID | None = Field(default=None, foreign_key="area.area_id", index=True)
     contact_member_id: uuid.UUID | None = Field(
         default=None, foreign_key="company_member.member_id"
     )

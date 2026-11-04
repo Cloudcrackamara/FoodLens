@@ -1,8 +1,9 @@
 """Wholesale order requests (CLAUDE.md rule 6, docs/DECISIONS.md D95-D99).
 
 Rules:
-- Buyer: the path company, approved, type WHOLESALER or BOTH. Seller: the company that owns the
-  ordered products, listed in the supplier directory. One seller per order; never the buyer.
+- Buyer: the path company, approved, flagged as a distributor (D127). Seller: the company that
+  owns the ordered products, listed in the partner directory. One seller per order; never the
+  buyer.
 - Lines: published products of that seller, quantity > 0, a unit. No prices or payments.
 - Pickup from one of the seller's reviewed locations, or delivery with an address/notes.
 - Status: REQUESTED -> ACCEPTED | DECLINED (seller) | CANCELLED (buyer); ACCEPTED -> FULFILLED
@@ -27,7 +28,6 @@ from app.models import (
 )
 from app.models.enums import (
     CompanyReviewStatus,
-    CompanyType,
     FulfilmentMethod,
     OrderStatus,
     ProductStatus,
@@ -47,8 +47,6 @@ from app.schemas.order import (
 )
 from app.services import audit, suppliers
 from app.services.companies import InvalidTransitionError, NotFoundError
-
-BUYER_TYPES = {CompanyType.WHOLESALER, CompanyType.BOTH}
 
 TRANSITIONS: dict[OrderStatus, set[OrderStatus]] = {
     OrderStatus.REQUESTED: {OrderStatus.ACCEPTED, OrderStatus.DECLINED, OrderStatus.CANCELLED},
@@ -80,8 +78,8 @@ def place_order(db: Session, member: CompanyMember, data: OrderCreateRequest) ->
     buyer = db.get(Company, member.company_id)
     if buyer is None or buyer.review_status != CompanyReviewStatus.APPROVED:
         raise NotAllowedError("Your company can order after FoodLens approves its profile")
-    if buyer.company_type not in BUYER_TYPES:
-        raise NotAllowedError("Only wholesaler companies can send order requests")
+    if not buyer.is_distributor:
+        raise NotAllowedError("Only distributor companies can send order requests")
 
     product_ids = [line.product_id for line in data.lines]
     if len(set(product_ids)) != len(product_ids):

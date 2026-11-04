@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FoodLens, Locations queue</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&amp;family=Open+Sans:wght@400;600&amp;family=IBM+Plex+Mono:wght@500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#145C34}a:hover{color:#0F4A29}
+.ad-side{flex:0 0 270px;box-sizing:border-box}
+.ad-menu{display:none}
+.ad-row{display:grid;grid-template-columns:minmax(0,696fr) minmax(0,336fr);gap:24px;align-items:start}
+.ad-hide-sm{display:block}
+.ad-cmp{display:grid;grid-template-columns:minmax(0,0.8fr) minmax(0,1.2fr) minmax(0,1.2fr)}
+@media (max-width:1023px){.ad-side{display:none !important}.ad-menu{display:inline-flex}.ad-row{grid-template-columns:minmax(0,1fr)}.ad-pad{padding-left:24px !important;padding-right:24px !important}}
+@media (max-width:640px){.ad-hide-sm{display:none !important}.ad-pad{padding-left:16px !important;padding-right:16px !important}.ad-cmp{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.ad-cmp-f{grid-column:1 / -1;padding-bottom:0 !important}}
+</style>
+</helmet>
+<div style="width: 100%">
+<dc-import name="AdminQueue" variant="locations" hint-size="100%,1100px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

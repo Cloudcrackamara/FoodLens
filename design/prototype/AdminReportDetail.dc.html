@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FoodLens admin report detail</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&amp;family=Open+Sans:wght@400;600&amp;family=IBM+Plex+Mono:wght@500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#145C34}a:hover{color:#0F4A29}
+.ad-side{flex:0 0 270px;box-sizing:border-box}
+.ad-menu{display:none}
+.ad-row{display:grid;grid-template-columns:minmax(0,696fr) minmax(0,336fr);gap:24px;align-items:start}
+.ad-hide-sm{display:block}
+@media (max-width:1023px){.ad-side{display:none !important}.ad-menu{display:inline-flex}.ad-row{grid-template-columns:minmax(0,1fr)}.ad-pad{padding-left:24px !important;padding-right:24px !important}}
+@media (max-width:640px){.ad-hide-sm{display:none !important}.ad-pad{padding-left:16px !important;padding-right:16px !important}}
+</style>
+</helmet>
+<div style="display: flex; min-height: 100%; background: #FFFFFF; color: #3A3F4B; font-family: 'Open Sans', system-ui, sans-serif; font-size: 14px; line-height: 1.5">
+
+<aside class="ad-side" aria-label="Admin navigation" style="padding: 22px 24px; display: flex; flex-direction: column; gap: 6px">
+<a href="Admin.dc.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #16143D; padding: 4px 0 32px">
+<svg width="34" height="34" viewBox="0 0 36 36" aria-hidden="true"><circle cx="15" cy="15" r="11" fill="none" stroke="#1B7A45" stroke-width="3.5"></circle><path d="M23 23l9 9" stroke="#1B7A45" stroke-width="4" stroke-linecap="round"></path><path d="M10 15.5l3.5 3.5 6.5-7" fill="none" stroke="#F6B93B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span style="font-family: 'Poppins', sans-serif; font-size: 22px"><span style="font-weight: 700">FoodLens</span><span style="font-weight: 500; color: #5F6472">admin</span></span>
+</a>
+<p style="margin: 8px 0 8px; font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.04em; color: #16143D">REVIEW</p>
+<nav style="display: flex; flex-direction: column; gap: 3px">
+<a href="Admin.dc.html" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 14px; border-radius: 6px; color: #2A2F3A; text-decoration: none">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="2"></rect><rect x="14" y="3" width="7" height="7" rx="2"></rect><rect x="3" y="14" width="7" height="7" rx="2"></rect><rect x="14" y="14" width="7" height="7" rx="2"></rect></svg>Overview</a>
+<a href="AdminQueue.dc.html" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 14px; border-radius: 6px; color: #2A2F3A; text-decoration: none">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5l8-2v18M12 8h8v13M4 21h17M8 8h1M8 12h1M8 16h1M16 12h1M16 16h1"></path></svg>
+<span style="flex: 1">Companies</span><span style="font-size: 11px; font-weight: 600; color: #145C34; background: #E3F4EA; padding: 1px 8px; border-radius: 999px">4</span></a>
+<a href="AdminLocations.dc.html" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 14px; border-radius: 6px; color: #2A2F3A; text-decoration: none">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"></path><circle cx="12" cy="9.5" r="2.5"></circle></svg>
+<span style="flex: 1">Locations</span><span style="font-size: 11px; font-weight: 600; color: #1F5F8F; background: #E3EFF8; padding: 1px 8px; border-radius: 999px">6</span></a>
+<a href="AdminChanges.dc.html" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 14px; border-radius: 6px; color: #2A2F3A; text-decoration: none">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 7.5L12 3l9 4.5v9L12 21l-9-4.5z"></path><path d="M3 7.5l9 4.5 9-4.5M12 12v9"></path></svg>
+<span style="flex: 1">Product changes</span><span style="font-size: 11px; font-weight: 600; color: #433F8A; background: #ECEBF7; padding: 1px 8px; border-radius: 999px">5</span></a>
+<a href="AdminReports.dc.html" aria-current="page" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 14px; border-radius: 6px; background: #1B7A45; color: #FFFFFF; text-decoration: none; font-weight: 600">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5"></path></svg>
+<span style="flex: 1">Reports</span><span style="font-size: 11px; font-weight: 700; color: #145C34; background: #FFFFFF; padding: 1px 8px; border-radius: 999px">3</span></a>
+<a href="AdminAnnouncements.dc.html" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 14px; border-radius: 6px; color: #2A2F3A;; text-decoration: none">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M4 10v4h3l7 4V6L7 10H4zM18 9a4 4 0 0 1 0 6"></path></svg>
+<span style="flex: 1">Announcements</span>
+</a>
+</nav>
+</aside>
+<div aria-hidden="true" class="ad-side" style="flex: 0 0 1px; width: 1px; background: #ECEDF1; align-self: flex-start; height: 600px"></div>
+
+<div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column">
+<header class="ad-pad" style="display: flex; align-items: center; gap: 14px; height: 72px; padding: 0 56px 0 16px; box-sizing: border-box">
+<button type="button" class="ad-menu" aria-label="Open navigation" style="width: 44px; height: 44px; border: 1px solid #E3E5EA; border-radius: 8px; background: #FFFFFF; align-items: center; justify-content: center; cursor: pointer">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2A2F3A" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+</button>
+<label style="flex: 0 1 260px; min-width: 0; display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px; border: 1px solid #E3E5EA; border-radius: 6px; box-sizing: border-box">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B6E7B" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+<span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Search reports</span>
+<input type="search" placeholder="Reference or product…" style="flex: 1; min-width: 0; border: 0; outline-offset: 4px; font: inherit; font-size: 13px; color: #2A2F3A; background: transparent">
+</label>
+<div style="flex: 1"></div>
+<span class="ad-hide-sm" style="display: inline-flex; align-items: center; height: 40px; padding: 0 16px; box-sizing: border-box; border: 2px solid #1B7A45; border-radius: 999px; font-family: 'Poppins', sans-serif; font-size: 15px; font-weight: 600; color: #145C34">Demo register</span>
+<button type="button" aria-label="Switch to dark theme" style="width: 44px; height: 44px; margin-left: 4px; border: 0; border-radius: 50%; background: transparent; display: inline-flex; align-items: center; justify-content: center; cursor: pointer">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2A2F3A" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"></path></svg>
+</button>
+<span style="position: relative; display: inline-flex"><button type="button" onClick="{{toggleAcct}}" aria-label="Account: Amaka Bello" aria-haspopup="true" aria-expanded="{{acctOpen}}" style="width: 40px; height: 40px; margin-left: 4px; border: 0; border-radius: 50%; background: #16143D; color: #F6B93B; font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer">AB</button><sc-if value="{{acctOpen}}" hint-placeholder-val="{{ false }}"><div role="menu" aria-label="Account" style="position: absolute; right: 0; top: 48px; z-index: 20; width: 240px; padding: 8px; border-radius: 10px; background: #FFFFFF; box-shadow: 0 10px 30px rgba(20,22,40,0.18); border: 1px solid #ECEDF1; text-align: left"><p style="margin: 0; padding: 8px 10px 10px; border-bottom: 1px solid #ECEDF1; font-size: 14px"><b style="display: block; color: #16143D">Amaka Bello</b><span style="font-size: 12px; color: #5F6472">FoodLens staff · Moderator</span></p><a role="menuitem" href="Admin.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 10px; border-radius: 6px; color: #2A2F3A; text-decoration: none; font-weight: 400">Dashboard</a><a role="menuitem" href="AdminLogin.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 10px; border-radius: 6px; color: #8C1D16; text-decoration: none; font-weight: 600">Sign out</a></div></sc-if></span>
+</header>
+
+<main class="ad-pad" style="padding: 24px 60px 30px 20px; display: flex; flex-direction: column; gap: 18px">
+<nav aria-label="Breadcrumb" style="font-size: 14px"><a href="AdminReports.dc.html" style="font-weight: 600">Consumer reports</a> <span aria-hidden="true" style="color: #9AA0AC">/</span> <span style="font-family: 'IBM Plex Mono', monospace">RP-0458</span></nav>
+
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+<h1 style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 22px; font-weight: 600; color: #16143D">Registration details do not match the packaging</h1>
+<span style="display: inline-block; padding: 3px 12px; border-radius: 999px; background: {{statusBg}}; color: {{statusFg}}; font-size: 13px; font-weight: 700">{{statusLabel}}</span>
+<span style="font-size: 12px; font-weight: 700; color: #7A4F00; background: #FDF5E2; padding: 2px 10px; border-radius: 999px">Demo data</span>
+</div>
+
+<div role="note" style="display: flex; gap: 10px; padding: 14px 16px; border-radius: 8px; background: #FDF5E2; color: #4A3412">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7A4F00" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="flex: none; margin-top: 1px"><path d="M12 3L2.5 20h19z"></path><path d="M12 10v4M12 17h.01"></path></svg>
+<span><b>Unverified consumer report.</b> This is an allegation from an anonymous shopper. It isn’t shown publicly and must not be treated as a finding that the product is copied or unsafe.</span>
+</div>
+
+<div class="ad-row">
+<!-- LEFT -->
+<div style="display: flex; flex-direction: column; gap: 24px; min-width: 0">
+<section aria-labelledby="det-h" style="background: #FFFFFF; border-radius: 8px; box-shadow: 0 1px 12px rgba(20,22,40,0.08); padding: 26px 30px">
+<h2 id="det-h" style="margin: 0 0 10px; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 600; color: #16143D">Report details</h2>
+<dl style="margin: 0; display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.6fr); font-size: 14px">
+<dt style="padding: 10px 0; border-top: 1px solid #ECEDF1; color: #5F6472">Reference</dt><dd style="margin: 0; padding: 10px 0; border-top: 1px solid #ECEDF1; font-family: 'IBM Plex Mono', monospace">RP-0458 <span style="font-family: 'Open Sans', sans-serif; color: #5F6472">(shopper sees DEMO-RP-0458)</span></dd>
+<dt style="padding: 10px 0; border-top: 1px solid #ECEDF1; color: #5F6472">Related product</dt><dd style="margin: 0; padding: 10px 0; border-top: 1px solid #ECEDF1"><b style="color: #16143D">Tomato paste, 70 g</b> · Demo Foods Nigeria Ltd</dd>
+<dt style="padding: 10px 0; border-top: 1px solid #ECEDF1; color: #5F6472">Registration no.</dt><dd style="margin: 0; padding: 10px 0; border-top: 1px solid #ECEDF1"><span style="font-family: 'IBM Plex Mono', monospace; font-weight: 500; color: #16143D">A7-0412L</span> · batch <span style="font-family: 'IBM Plex Mono', monospace">24B-117</span></dd>
+<dt style="padding: 10px 0; border-top: 1px solid #ECEDF1; color: #5F6472">Check result shown</dt><dd style="margin: 0; padding: 10px 0; border-top: 1px solid #ECEDF1"><span style="display: inline-block; padding: 1px 10px; border-radius: 999px; background: #FDECEA; color: #8C1D16; font-weight: 600">Different product</span> <span style="color: #5F6472">pack read as groundnut oil, 1 L</span></dd>
+<dt style="padding: 10px 0; border-top: 1px solid #ECEDF1; color: #5F6472">Submitted</dt><dd style="margin: 0; padding: 10px 0; border-top: 1px solid #ECEDF1">20 Oct 2026, 14:32</dd>
+<dt style="padding: 10px 0; border-top: 1px solid #ECEDF1; color: #5F6472">Reporter</dt><dd style="margin: 0; padding: 10px 0; border-top: 1px solid #ECEDF1">Anonymous · no account · no contact details collected</dd>
+</dl>
+</section>
+
+<section aria-labelledby="desc-h" style="background: #FFFFFF; border-radius: 8px; box-shadow: 0 1px 12px rgba(20,22,40,0.08); padding: 26px 30px">
+<h2 id="desc-h" style="margin: 0 0 10px; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 600; color: #16143D">Description</h2>
+<blockquote style="margin: 0; padding: 14px 16px; border-radius: 8px; background: #F5F5F3; font-size: 15px; color: #2A2F3A">“The label says groundnut oil, 1 L, but FoodLens shows this number belongs to tomato paste. Bought at a kiosk near Ogbete market on Saturday.”</blockquote>
+<p style="margin: 10px 0 0; font-size: 13px; color: #5F6472">Written by the shopper. Not edited by FoodLens.</p>
+</section>
+
+<section aria-labelledby="ph-h" style="background: #FFFFFF; border-radius: 8px; box-shadow: 0 1px 12px rgba(20,22,40,0.08); padding: 26px 30px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 14px">
+<h2 id="ph-h" style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 600; color: #16143D">Photos (2)</h2>
+<span style="font-size: 13px; color: #5F6472">Shopper uploads · may contain personal details</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px">
+<figure style="margin: 0">
+<div style="aspect-ratio: 4 / 3; border-radius: 8px; overflow: hidden; background: #22279A"><img src="/_blob/30b50c2d712709ab5916423dd696349c" alt="Shopper photo of the front label of the pack" style="width: 100%; height: 100%; object-fit: cover; object-position: 40% 28%; transform: scale(1.5)"></div>
+<figcaption style="display: flex; justify-content: space-between; gap: 8px; margin-top: 8px; font-size: 13px"><span><b style="color: #16143D">Front label</b> · 1.4 MB</span><a href="#full-1" style="font-weight: 600">Open full size</a></figcaption>
+</figure>
+<figure style="margin: 0">
+<div style="aspect-ratio: 4 / 3; border-radius: 8px; overflow: hidden; background: #22279A"><img src="/_blob/30b50c2d712709ab5916423dd696349c" alt="Shopper photo of the registration number on the pack" style="width: 100%; height: 100%; object-fit: cover; object-position: 42% 36%; transform: scale(2.4)"></div>
+<figcaption style="display: flex; justify-content: space-between; gap: 8px; margin-top: 8px; font-size: 13px"><span><b style="color: #16143D">Registration number</b> · 0.9 MB</span><a href="#full-2" style="font-weight: 600">Open full size</a></figcaption>
+</figure>
+</div>
+<p style="margin: 14px 0 0; font-size: 13px; color: #5F6472">Don’t download or share these outside FoodLens review. Use “Reject” with the reason “Contains personal information” if a photo shows a person or an address.</p>
+</section>
+</div>
+
+<!-- RIGHT -->
+<div style="display: flex; flex-direction: column; gap: 24px; min-width: 0">
+<sc-if value="{{undecided}}" hint-placeholder-val="{{ true }}">
+<section aria-labelledby="dec-h" style="background: #FFFFFF; border-radius: 8px; box-shadow: 0 1px 12px rgba(20,22,40,0.08); padding: 26px 24px">
+<h2 id="dec-h" style="margin: 0 0 4px; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 600; color: #16143D">Decision</h2>
+<p style="margin: 0 0 12px; font-size: 13px; color: #5F6472">Choose what happens to this report.</p>
+<fieldset style="margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 8px">
+<legend style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Decision</legend>
+<sc-for list="{{actions}}" as="a" hint-placeholder-count="4">
+<label style="display: flex; gap: 10px; padding: 10px 12px; border-radius: 8px; border: {{a.border}}; background: {{a.bg}}; cursor: pointer">
+<input type="radio" name="decision" checked="{{a.on}}" onChange="{{a.pick}}" style="flex: none; width: 18px; height: 18px; margin: 2px 0 0; accent-color: #1B7A45">
+<span><b style="display: block; color: #16143D">{{a.title}}</b><span style="font-size: 13px; color: #5F6472">{{a.hint}}</span></span>
+</label>
+</sc-for>
+</fieldset>
+
+<sc-if value="{{showReason}}" hint-placeholder-val="{{ false }}">
+<label style="display: flex; flex-direction: column; gap: 4px; margin-top: 12px; font-weight: 600; color: #16143D">Reason <span style="font-weight: 400; font-size: 12px; color: #8C1D16">Required</span>
+<select value="{{reason}}" onChange="{{onReason}}" style="height: 40px; padding: 0 10px; border: {{reasonBorder}}; border-radius: 6px; font: inherit; color: #16143D; background: #FFFFFF">
+<option value="">Choose a reason</option>
+<option value="detail">Not enough detail to review</option>
+<option value="duplicate">Duplicate of another report</option>
+<option value="notfood">Not about a food product</option>
+<option value="personal">Contains personal information</option>
+<option value="other">Other</option>
+</select></label>
+</sc-if>
+<sc-if value="{{showTeam}}" hint-placeholder-val="{{ false }}">
+<label style="display: flex; flex-direction: column; gap: 4px; margin-top: 12px; font-weight: 600; color: #16143D">Escalate to
+<select value="{{team}}" onChange="{{onTeam}}" style="height: 40px; padding: 0 10px; border: 1px solid #C9CCD4; border-radius: 6px; font: inherit; color: #16143D; background: #FFFFFF">
+<option value="registration">Registration review team</option>
+<option value="company">Company liaison (Demo Foods Nigeria Ltd)</option>
+<option value="regulator">Referral outside FoodLens</option>
+</select></label>
+</sc-if>
+<sc-if value="{{showNote}}" hint-placeholder-val="{{ false }}">
+<label style="display: flex; flex-direction: column; gap: 4px; margin-top: 12px; font-weight: 600; color: #16143D">{{noteLabel}} <span style="font-weight: 400; font-size: 12px; color: {{noteReqColor}}">{{noteReq}}</span>
+<textarea rows="3" value="{{note}}" onChange="{{onNote}}" placeholder="{{notePlaceholder}}" style="padding: 8px 10px; border: {{noteBorder}}; border-radius: 6px; font: inherit; color: #16143D; resize: vertical"></textarea></label>
+<sc-if value="{{isClarify}}" hint-placeholder-val="{{ false }}"><p style="margin: 4px 0 0; font-size: 12px; color: #5F6472">The shopper sees this message only if they look up their reference. We can’t contact them.</p></sc-if>
+</sc-if>
+<sc-if value="{{formError}}" hint-placeholder-val="{{ false }}"><p role="alert" style="margin: 10px 0 0; font-size: 13px; font-weight: 600; color: #B42318">{{formError}}</p></sc-if>
+<button type="button" onClick="{{confirm}}" style="width: 100%; margin-top: 14px; min-height: 44px; border: 0; border-radius: 6px; background: #1B7A45; color: #FFFFFF; font-family: 'Poppins', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer">Confirm decision</button>
+<p style="margin: 10px 0 0; font-size: 12px; color: #5F6472">No decision here publishes a claim about the product or changes its public check result.</p>
+</section>
+</sc-if>
+
+<sc-if value="{{decided}}" hint-placeholder-val="{{ false }}">
+<section aria-labelledby="out-h" style="background: #FFFFFF; border-radius: 8px; box-shadow: 0 1px 12px rgba(20,22,40,0.08); padding: 26px 24px">
+<div style="display: flex; align-items: center; gap: 10px">
+<span aria-hidden="true" style="flex: none; width: 36px; height: 36px; border-radius: 50%; background: {{statusFg}}; display: inline-flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>
+<h2 id="out-h" style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 600; color: #16143D">{{outTitle}}</h2>
+</div>
+<p style="margin: 12px 0 0; color: #2A2F3A">{{outText}}</p>
+<sc-if value="{{hasOutDetail}}" hint-placeholder-val="{{ true }}"><p style="margin: 10px 0 0; padding: 10px 12px; border-radius: 8px; background: #F5F5F3; font-size: 13px; color: #2A2F3A">{{outDetail}}</p></sc-if>
+<p style="margin: 10px 0 0; font-size: 13px; color: #5F6472">Amaka Bello · 20 Oct 2026, 15:10</p>
+<p style="margin: 10px 0 0; font-size: 12px; color: #5F6472">The report stays unverified and private. Nothing has been published about the product.</p>
+<button type="button" onClick="{{undo}}" style="width: 100%; margin-top: 14px; min-height: 44px; border: 1px solid #C9CCD4; border-radius: 6px; background: #FFFFFF; color: #16143D; font-family: 'Poppins', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer">Change decision</button>
+</section>
+</sc-if>
+
+<section aria-labelledby="hist-h" style="background: #FFFFFF; border-radius: 8px; box-shadow: 0 1px 12px rgba(20,22,40,0.08); padding: 26px 24px">
+<h2 id="hist-h" style="margin: 0 0 16px; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 600; color: #16143D">Moderation history</h2>
+<ol style="list-style: none; margin: 0; padding: 0">
+<sc-for list="{{history}}" as="h" hint-placeholder-count="3">
+<li style="display: grid; grid-template-columns: 16px minmax(0, 1fr); column-gap: 12px; padding-bottom: 14px">
+<span aria-hidden="true" style="display: flex; flex-direction: column; align-items: center"><span style="width: 10px; height: 10px; margin-top: 5px; border-radius: 50%; border: 2px solid {{h.color}}"></span><span style="flex: 1; width: 1px; background: #E3E5EA; margin-top: 4px"></span></span>
+<span><b style="display: block; font-weight: 600; color: #16143D">{{h.title}}</b><span style="font-size: 13px; color: #5F6472">{{h.meta}}</span></span>
+</li>
+</sc-for>
+</ol>
+</section>
+</div>
+</div>
+</main>
+<footer class="ad-pad" style="padding: 10px 60px 30px 20px; text-align: center; font-size: 15px; color: #3A3F4B">FoodLens admin · capstone prototype · <a href="Main.dc.html">Public site</a> · all records are fictional</footer>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"variant":{"editor":"enum","options":["pending","reviewed","clarify","rejected","escalated"],"default":"pending","section":"State"},"$preview":{"width":1440,"height":1500}}'>
+class Component extends DCLogic {
+renderVals() {
+const v = this.props.variant || 'pending';
+const st = this.state || {};
+const preset = {
+reviewed: { action: 'reviewed', note: 'Photos match the description. Logged for the weekly registration trend report; no further action from FoodLens.' },
+clarify: { action: 'clarify', note: 'Thank you. Could you add a clear photo of the batch number and best-before date?' },
+rejected: { action: 'rejected', reason: 'detail', note: 'The photos don’t show the registration number or batch.' },
+escalated: { action: 'escalated', team: 'registration', note: 'A7-0412L appears on a different product. Second report this week (see RP-0444).' }
+}[v] || {};
+const action = st.action !== undefined ? st.action : (preset.action || null);
+const decided = st.decided !== undefined ? st.decided : v !== 'pending';
+const note = st.note !== undefined ? st.note : (preset.note || '');
+const reason = st.reason !== undefined ? st.reason : (preset.reason || '');
+const team = st.team !== undefined ? st.team : (preset.team || 'registration');
+const S = {
+none: ['Pending review', '#FDF5E2', '#7A4F00'],
+reviewed: ['Reviewed', '#E3F4EA', '#145C34'],
+clarify: ['Clarification requested', '#ECEBF7', '#433F8A'],
+rejected: ['Rejected', '#EEEFF2', '#3A3F4B'],
+escalated: ['Escalated', '#FDEFE4', '#8F430B']
+};
+const s = S[decided && action ? action : 'none'];
+const defs = [
+['reviewed', 'Mark as reviewed', 'Close the report. Nothing is published.'],
+['clarify', 'Request clarification', 'Ask the shopper for more detail or photos.'],
+['rejected', 'Reject with a reason', 'The report can’t be used.'],
+['escalated', 'Escalate for investigation', 'Send to a team for a closer look.']
+];
+const reasons = { detail: 'Not enough detail to review', duplicate: 'Duplicate of another report', notfood: 'Not about a food product', personal: 'Contains personal information', other: 'Other' };
+const teams = { registration: 'Registration review team', company: 'Company liaison (Demo Foods Nigeria Ltd)', regulator: 'Referral outside FoodLens' };
+const needNote = action === 'clarify' || action === 'escalated' || (action === 'rejected' && reason === 'other');
+const err = st.err || '';
+const out = {
+reviewed: ['Marked as reviewed', 'Report closed. It remains private and unverified.', note],
+clarify: ['Clarification requested', 'Waiting for the shopper. Their reference now shows “More information needed”.', 'Message: ' + note],
+rejected: ['Rejected', 'Reason: ' + (reasons[reason] || '—') + '.', note],
+escalated: ['Escalated for investigation', 'Sent to ' + teams[team] + '. Still unverified and not public.', note]
+}[action] || ['', '', ''];
+const history = [
+{ title: 'Report submitted', meta: 'Anonymous shopper · 20 Oct 2026, 14:32 · 2 photos', color: '#1B7A45' },
+{ title: 'Opened for review', meta: 'Amaka Bello · 20 Oct 2026, 15:02', color: '#5B57A6' }
+];
+if (decided && action) history.push({ title: out[0], meta: 'Amaka Bello · 20 Oct 2026, 15:10', color: s[2] });
+else history.push({ title: 'Awaiting decision', meta: 'Not reviewed yet', color: '#C9CCD4' });
+return {
+acctOpen: !!st.acctOpen, toggleAcct: () => this.setState({ acctOpen: !st.acctOpen }),
+statusLabel: s[0], statusBg: s[1], statusFg: s[2],
+decided: decided && !!action,
+undecided: !(decided && action),
+actions: defs.map(([id, t, h]) => ({ title: t, hint: h, on: action === id, border: action === id ? '2px solid #1B7A45' : '1px solid #E3E5EA', bg: action === id ? '#F4FAF6' : '#FFFFFF', pick: () => this.setState({ action: id, err: '' }) })),
+showReason: action === 'rejected',
+showTeam: action === 'escalated',
+showNote: !!action,
+isClarify: action === 'clarify',
+noteLabel: action === 'clarify' ? 'Message to the shopper' : 'Note for the record',
+noteReq: needNote ? 'Required' : 'Optional',
+noteReqColor: needNote ? '#8C1D16' : '#5F6472',
+notePlaceholder: action === 'clarify' ? 'What do you need from them?' : 'Visible to moderators only',
+note: note, reason: reason, team: team,
+noteBorder: err && needNote && !note.trim() ? '2px solid #B42318' : '1px solid #C9CCD4',
+reasonBorder: err && action === 'rejected' && !reason ? '2px solid #B42318' : '1px solid #C9CCD4',
+onNote: (e) => this.setState({ note: e.target.value }),
+onReason: (e) => this.setState({ reason: e.target.value }),
+onTeam: (e) => this.setState({ team: e.target.value }),
+formError: err,
+confirm: () => {
+if (!action) { this.setState({ err: 'Choose a decision first.' }); return; }
+if (action === 'rejected' && !reason) { this.setState({ err: 'Choose a reason for rejecting.' }); return; }
+if (needNote && !note.trim()) { this.setState({ err: action === 'clarify' ? 'Write a message for the shopper.' : 'Add a note for the record.' }); return; }
+this.setState({ decided: true, err: '' });
+},
+undo: () => this.setState({ decided: false }),
+outTitle: out[0], outText: out[1], outDetail: out[2], hasOutDetail: !!(out[2] && out[2].trim()),
+history: history
+};
+}
+}
+</script>
+</body>
+</html>

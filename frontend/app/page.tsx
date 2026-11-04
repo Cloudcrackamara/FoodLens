@@ -1,31 +1,42 @@
 import Link from "next/link";
+import { Card } from "@/components/ui/Card";
+import { buttonClass, cardTitleClass } from "@/lib/ui";
 
 export default function Home() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-12">
-      <h1 className="text-3xl font-bold">FoodLens</h1>
-      <p className="text-lg">
-        Check the NAFDAC or SON registration number printed on a food pack against a simulated
-        register, and find suppliers whose profiles FoodLens has reviewed for this demo.
+      <h1 className="font-heading text-3xl font-bold">FoodLens</h1>
+      <p className="text-lg text-text">
+        Every pack gets its own QR code, issued by the manufacturer. Anyone can check a pack for
+        free, with no account, to see what has been recorded for that code: whether it is in
+        circulation or sold, and where.
       </p>
       <Link
         href="/check"
-        className="self-start rounded-md bg-zinc-900 px-5 py-3 text-lg font-semibold text-white dark:bg-zinc-100 dark:text-zinc-900"
+        className={`self-start ${buttonClass("primary", "lg")}`}
       >
-        Check a registration number
+        Check a pack
       </Link>
-      <section className="rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
-        <h2 className="mb-2 font-semibold">What a lookup can and cannot tell you</h2>
-        <ul className="list-disc space-y-1 pl-5">
-          <li>It shows whether the number matches a record in a simulated, fictional register.</li>
-          <li>A matching number cannot rule out a number copied onto another pack.</li>
-          <li>It is not a laboratory test and does not check the package in your hand.</li>
-          <li>It is not NAFDAC, SON, or any other regulator&apos;s service or decision.</li>
+      <Card>
+        <h2 className={`${cardTitleClass} mb-2`}>What a check can and cannot tell you</h2>
+        <ul className="list-disc space-y-1 pl-5 text-text">
+          <li>
+            It shows recorded facts about the code: issued by the manufacturer, in circulation,
+            or sold.
+          </li>
+          <li>
+            A copied QR carries the same code. FoodLens spots copies by whether the code was sold,
+            where it is checked, how often, and where the stock was sent, not by the QR alone. No
+            QR system catches every copied code.
+          </li>
+          <li>
+            It is not a laboratory test, and it is not NAFDAC, SON, or any other regulator&apos;s
+            service or decision.
+          </li>
         </ul>
-      </section>
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">
-        Software engineering capstone prototype. All companies, products, and credentials shown
-        are fictional.
+      </Card>
+      <p className="text-sm text-text-subtle">
+        Demonstration prototype. All companies, products, and codes shown are fictional.
       </p>
     </main>
   );

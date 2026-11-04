@@ -66,9 +66,9 @@ class RateLimiters:
         self.exempt = parse_networks(settings.rate_limit_exempt_ips)
         self.trusted_proxies = parse_networks(settings.trusted_proxy_ips)
         self.limiters = {
-            "lookup": TokenBucketLimiter(
-                capacity=settings.rate_limit_lookup_burst,
-                refill_per_second=settings.rate_limit_lookup_refill_per_second,
+            "check": TokenBucketLimiter(
+                capacity=settings.rate_limit_check_burst,
+                refill_per_second=settings.rate_limit_check_refill_per_second,
                 clock=clock,
             ),
             "login": TokenBucketLimiter(
@@ -81,7 +81,26 @@ class RateLimiters:
                 refill_per_second=settings.rate_limit_register_per_hour / 3600,
                 clock=clock,
             ),
+            "report": TokenBucketLimiter(
+                capacity=settings.rate_limit_report_per_hour,
+                refill_per_second=settings.rate_limit_report_per_hour / 3600,
+                clock=clock,
+            ),
+            # Keyed by POS partner, not by network (D119).
+            "pos": TokenBucketLimiter(
+                capacity=settings.rate_limit_pos_burst,
+                refill_per_second=settings.rate_limit_pos_refill_per_second,
+                clock=clock,
+            ),
         }
+
+    def retry_after(self, name: str, key: str) -> int | None:
+        """Take one token from `key`'s bucket. Returns None if allowed, else whole seconds to
+        wait. For limits keyed by something other than the client network."""
+        if not self.enabled:
+            return None
+        retry = self.limiters[name].hit(key)
+        return None if retry is None else max(1, math.ceil(retry))
 
     def client_ip(self, request: Request) -> str:
         """The connecting IP, or, when the connection comes from a trusted proxy (the Next.js
@@ -111,12 +130,19 @@ class RateLimiters:
             )
 
 
+def is_trusted_proxy(request: Request) -> bool:
+    """True when the connection comes from a trusted proxy (the Next.js server)."""
+    limiters: RateLimiters = request.app.state.rate_limiters
+    peer = request.client.host if request.client else ""
+    return in_networks(peer, limiters.trusted_proxies)
+
+
 def enforce_rate_limit(request: Request, name: str, extra_key: str = "") -> None:
     limiters: RateLimiters = request.app.state.rate_limiters
     limiters.enforce(request, name, extra_key)
 
 
-def limit_lookups(request: Request) -> None:
-    """Route dependency for public product lookups:
-    @router.post("/lookups/batch", dependencies=[Depends(limit_lookups)])"""
-    enforce_rate_limit(request, "lookup")
+def limit_checks(request: Request) -> None:
+    """Route dependency using the consumer check bucket (D119). The check routes themselves
+    call enforce_rate_limit after resolving the area, so a hit is counted per area (D144)."""
+    enforce_rate_limit(request, "check")

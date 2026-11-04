@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FoodLens admin review queue</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&amp;family=Open+Sans:wght@400;600&amp;family=IBM+Plex+Mono:wght@500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#145C34}a:hover{color:#0F4A29}
+.ad-side{flex:0 0 270px;box-sizing:border-box}
+.ad-menu{display:none}
+.ad-row{display:grid;grid-template-columns:minmax(0,696fr) minmax(0,336fr);gap:24px;align-items:start}
+.ad-hide-sm{display:block}
+.ad-cmp{display:grid;grid-template-columns:minmax(0,0.8fr) minmax(0,1.2fr) minmax(0,1.2fr)}
+@media (max-width:1023px){.ad-side{display:none !important}.ad-menu{display:inline-flex}.ad-row{grid-template-columns:minmax(0,1fr)}.ad-pad{padding-left:24px !important;padding-right:24px !important}}
+@media (max-width:640px){.ad-hide-sm{display:none !important}.ad-pad{padding-left:16px !important;padding-right:16px !important}.ad-cmp{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.ad-cmp-f{grid-column:1 / -1;padding-bottom:0 !important}}
+</style>
+</helmet>
+<div style="display: flex; min-height: 100%; background: #FFFFFF; color: #3A3F4B; font-family: 'Open Sans', system-ui, sans-serif; font-size: 14px; line-height: 1.5">
+
+<!-- SIDEBAR (same as the approved dashboard) -->
+<aside class="ad-side" aria-label="Admin navigation" style="padding: 22px 24px; display: flex; flex-direction: column; gap: 6px">
+<a href="Admin.dc.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #16143D; padding: 4px 0 32px">
+<svg width="34" height="34" viewBox="0 0 36 36" aria-hidden="true"><circle cx="15" cy="15" r="11" fill="none" stroke="#1B7A45" stroke-width="3.5"></circle><path d="M23 23l9 9" stroke="#1B7A45" stroke-width="4" stroke-linecap="round"></path><path d="M10 15.5l3.5 3.5 6.5-7" fill="none" stroke="#F6B93B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span style="font-family: 'Poppins', sans-serif; font-size: 22px"><span style="font-weight: 700">FoodLens</span><span style="font-weight: 500; color: #5F6472">admin</span></span>
+</a>
+<p style="margin: 8px 0 8px; font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.04em; color: #16143D">REVIEW</p>
+<nav style="display: flex; flex-direction: column; gap: 3px">
+<sc-for list="{{nav}}" as="n" hint-placeholder-count="6">
+<a href="{{n.href}}" aria-current="{{n.current}}" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 14px; border-radius: 6px; background: {{n.bg}}; color: {{n.fg}}; text-decoration: none; font-weight: {{n.weight}}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="{{n.icon}}"></path></svg>
+<span style="flex: 1">{{n.label}}</span><sc-if value="{{n.hasCount}}" hint-placeholder-val="{{ true }}"><span style="font-size: 11px; font-weight: 600; color: {{n.cFg}}; background: {{n.cBg}}; padding: 1px 8px; border-radius: 999px">{{n.count}}</span></sc-if></a>
+</sc-for>
+</nav>
+</aside>
+<div aria-hidden="true" class="ad-side" style="flex: 0 0 1px; width: 1px; background: #ECEDF1; align-self: flex-start; height: 600px"></div>
+
+<div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column">
+<header class="ad-pad" style="position: relative; display: flex; align-items: center; gap: 14px; height: 72px; padding: 0 56px 0 16px; box-sizing: border-box">
+<button type="button" class="ad-menu" onClick="{{toggleNav}}" aria-label="Open navigation" aria-expanded="{{navOpen}}" style="width: 44px; height: 44px; border: 1px solid #E3E5EA; border-radius: 8px; background: #FFFFFF; align-items: center; justify-content: center; cursor: pointer">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2A2F3A" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+</button>
+<label style="flex: 0 1 260px; min-width: 0; display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px; border: 1px solid #E3E5EA; border-radius: 6px; box-sizing: border-box">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B6E7B" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+<span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Search {{typeLower}}</span>
+<input type="search" value="{{q}}" onChange="{{onQ}}" placeholder="Reference or company…" style="flex: 1; min-width: 0; border: 0; outline-offset: 4px; font: inherit; font-size: 13px; color: #2A2F3A; background: transparent">
+</label>
+<div style="flex: 1"></div>
+<span class="ad-hide-sm" style="display: inline-flex; align-items: center; height: 40px; padding: 0 16px; box-sizing: border-box; border: 2px solid #1B7A45; border-radius: 999px; font-family: 'Poppins', sans-serif; font-size: 15px; font-weight: 600; color: #145C34">Demo register</span>
+<span style="position: relative; display: inline-flex">
+<button type="button" onClick="{{toggleAcct}}" aria-label="Account: Amaka Bello" aria-expanded="{{acctOpen}}" aria-haspopup="true" style="width: 40px; height: 40px; margin-left: 4px; border: 0; border-radius: 50%; background: #16143D; color: #F6B93B; font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer">AB</button>
+<sc-if value="{{acctOpen}}" hint-placeholder-val="{{ false }}">
+<div role="menu" aria-label="Account" style="position: absolute; right: 0; top: 48px; z-index: 20; width: 240px; padding: 8px; border-radius: 10px; background: #FFFFFF; box-shadow: 0 10px 30px rgba(20,22,40,0.18); border: 1px solid #ECEDF1">
+<p style="margin: 0; padding: 8px 10px 10px; border-bottom: 1px solid #ECEDF1"><b style="display: block; color: #16143D">Amaka Bello</b><span style="font-size: 12px; color: #5F6472">FoodLens staff · Moderator</span></p>
+<a role="menuitem" href="Admin.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 10px; border-radius: 6px; color: #2A2F3A; text-decoration: none">Dashboard</a>
+<a role="menuitem" href="AdminLogin.dc.html" style="display: flex; align-items: center; min-height: 44px; padding: 0 10px; border-radius: 6px; color: #8C1D16; text-decoration: none; font-weight: 600">Sign out</a>
+</div>
+</sc-if>
+</span>
+</header>
+<sc-if value="{{navOpen}}" hint-placeholder-val="{{ false }}">
+<nav aria-label="Admin navigation" style="display: flex; flex-direction: column; gap: 2px; padding: 8px 16px 16px; border-bottom: 1px solid #ECEDF1">
+<sc-for list="{{nav}}" as="n" hint-placeholder-count="6"><a href="{{n.href}}" style="display: flex; align-items: center; min-height: 44px; padding: 0 14px; border-radius: 6px; background: {{n.bg}}; color: {{n.fg}}; text-decoration: none; font-weight: 600">{{n.label}}</a></sc-for>
+</nav>
+</sc-if>
+
+<main class="ad-pad" style="padding: 32px 60px 30px 20px; display: flex; flex-direction: column; gap: 20px">
+
+<!-- ================= LIST ================= -->
+<sc-if value="{{isList}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px">
+<div>
+<h1 style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 22px; font-weight: 600; color: #16143D">{{listTitle}}</h1>
+<p style="margin: 2px 0 0; color: #5F6472">{{listIntro}}</p>
+</div>
+<span style="font-size: 12px; font-weight: 700; color: #7A4F00; background: #FDF5E2; padding: 2px 10px; border-radius: 999px">Demo data</span>
+</div>
+<div role="note" style="display: flex; gap: 10px; padding: 14px 16px; border-radius: 8px; background: #ECEBF7; color: #2F2C5E">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#433F8A" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="flex: none; margin-top: 1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 7.5h.01"></path></svg>
+<span>{{listNote}}</span>
+</div>
+<div role="tablist" aria-label="Filter by status" style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="5">
+<button type="button" role="tab" aria-selected="{{t.on}}" onClick="{{t.pick}}" style="display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; border-radius: 999px; border: {{t.border}}; background: {{t.bg}}; color: {{t.fg}}; font: inherit; font-weight: 600; cursor: pointer">{{t.label}} <span style="font-size: 12px; padding: 0 7px; border-radius: 999px; background: {{t.countBg}}">{{t.count}}</span></button>
+</sc-for>
+</div>
+<section aria-label="{{listTitle}}" style="background: #FFFFFF; border-radius: 8px; box-shadow: 0 1px 12px rgba(20,22,40,0.08); padding: 24px 30px 12px; min-width: 0">
+<div style="overflow-x: auto">
+<table style="width: 100%; min-width: 820px; border-collapse: collapse; font-size: 14px; color: #2A2F3A">
+<thead>
+<tr style="text-align: left; color: #16143D">
+<th scope="col" style="padding: 0 12px 14px 0; font-weight: 600">Reference</th>
+<th scope="col" style="padding: 0 12px 14px; font-weight: 600">{{colA}}</th>
+<th scope="col" style="padding: 0 12px 14px; font-weight: 600">{{colB}}</th>
+<th scope="col" style="padding: 0 12px 14px; font-weight: 600">Submitted</th>
+<th scope="col" style="padding: 0 12px 14px; font-weight: 600">Status</th>
+<th scope="col" style="padding: 0 0 14px 12px; font-weight: 600; text-align: right"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Action</span></th>
+</tr>
+</thead>
+<tbody>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="7">
+<tr style="border-top: 1px solid #ECEDF1">
+<td style="padding: 14px 12px 14px 0; white-space: nowrap"><button type="button" onClick="{{r.open}}" style="padding: 0; border: 0; background: none; font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 500; color: #16143D; text-decoration: underline; cursor: pointer">{{r.id}}</button><sc-if value="{{r.isNew}}" hint-placeholder-val="{{ false }}"> <span style="font-size: 11px; font-weight: 700; color: #145C34; background: #E3F4EA; padding: 0 6px; border-radius: 999px">New</span></sc-if></td>
+<td style="padding: 14px 12px; max-width: 260px"><b style="display: block; font-weight: 600; color: #16143D">{{r.a}}</b><span style="font-size: 12px; color: #5F6472">{{r.aSub}}</span></td>
+<td style="padding: 14px 12px; max-width: 260px">{{r.b}}<br><span style="font-size: 12px; color: #5F6472">{{r.bSub}}</span></td>
+<td style="padding: 14px 12px; white-space: nowrap">{{r.date}}</td>
+<td style="padding: 14px 12px"><span style="display: inline-block; padding: 2px 10px; border-radius: 999px; background: {{r.pillBg}}; color: {{r.pillFg}}; font-size: 13px; font-weight: 600; white-space: nowrap">{{r.status}}</span></td>
+<td style="padding: 14px 0 14px 12px; text-align: right"><button type="button" onClick="{{r.open}}" style="display: inline-flex; align-items: center; min-height: 36px; padding: 0 14px; border-radius: 6px; border: 1px solid #C9CCD4; background: #FFFFFF; color: #16143D; font: inherit; font-weight: 600; cursor: pointer">{{r.cta}}</button></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+<sc-if value="{{empty}}" hint-placeholder-val="{{ false }}"><p style="margin: 0; padding: 32px 0; text-align: center; color: #5F6472">Nothing with this status.</p></sc-if>
+</section>
+</sc-if>
+
+<!-- ================= DETAIL ================= -->
+<sc-if value="{{isDetail}}" hint-placeholder-val="{{ false }}">
+<nav aria-label="Breadcrumb" style="font-size: 14px"><button type="button" onClick="{{backToList}}" style="padding: 0; border: 0; background: none; color: #145C34; font: inherit; font-weight: 600; text-decoration: underline; cursor: pointer">{{listTitle}}</button> <span aria-hidden="true" style="color: #9AA0AC">/</span> <span style="font-family: 'IBM Plex Mono', monospace">{{it.id}}</span></nav>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px">
+<h1 style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 22px; font-weight: 600; color: #16143D">{{it.heading}}</h1>
+<span style="display: inline-block; padding: 2px 12px; border-radius: 999px; background: {{statusBg}}; color: {{statusFg}}; font-size: 13px; font-weight: 600">{{statusLabel}}</span>
+</div>
+<p style="margin: -10px 0 0; color: #5F6472">{{it.sub}}</p>
+
+<div class="ad-row">
+<div style="display: flex; flex-direction: column; gap: 24px; min-width: 0">
+
+<section aria-labelledby="det-h" style="background: #FFFFFF; border-radius: 8px; box-shadow: 0 1px 12px rgba(20,22,40,0.08); padding: 26px 30px">
+<h2 id="det-h" style="margin: 0 0 10px; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 600; color: #16143D">{{detailTitle}}</h2>
+<dl style="margin: 0; display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.6fr); font-size: 14px">
+<sc-for list="{{fields}}" as="f" hint-placeholder-count="6">
+<dt style="padding: 10px 0; border-top: 1px solid #ECEDF1; color: #5F6472">{{f.k}}</dt><dd style="margin: 0; padding: 10px 0; border-top: 1px solid #ECEDF1; font-family: {{f.font}}; color: #16143D">{{f.v}}</dd>
+</sc-for>
+</dl>
+</section>
+
+<sc-if value="{{isChange}}" hint-placeholder-val="{{ false }}">
+<section aria-labelledby="cmp-h" style="background: #FFFFFF; border-radius: 8px; box-shadow: 0 1px 12px rgba(20,22,40,0.08); padding: 26px 30px">
+<h2 id="cmp-h" style="margin: 0 0 4px; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 600; color: #16143D">Current and proposed</h2>
+<p style="margin: 0 0 12px; font-size: 13px; color: #5F6472">Changed rows are highlighted. Shoppers keep seeing the current version until you approve.</p>
+<div class="ad-cmp" role="table" aria-label="Current and proposed values" style="font-size: 14px">
+<div role="row" style="display: contents"><span role="columnheader" class="ad-cmp-f" style="padding: 8px 10px 8px 0; font-weight: 600; color: #16143D">Field</span><span role="columnheader" style="padding: 8px 10px; font-weight: 600; color: #16143D">Current (live)</span><span role="columnheader" style="padding: 8px 10px; font-weight: 600; color: #16143D">Proposed</span></div>
+<sc-for list="{{compare}}" as="c" hint-placeholder-count="4">
+<div role="row" style="display: contents"><span role="cell" class="ad-cmp-f" style="padding: 10px 10px 10px 0; border-top: 1px solid #ECEDF1; color: #5F6472">{{c.k}}</span><span role="cell" style="padding: 10px; border-top: 1px solid #ECEDF1; color: #2A2F3A; text-decoration: {{c.strike}}">{{c.cur}}</span><span role="cell" style="padding: 10px; border-top: 1px solid #ECEDF1; background: {{c.hl}}; color: #16143D; font-weight: {{c.weight}}">{{c.next}}<sc-if value="{{c.changed}}" hint-placeholder-val="{{ false }}"> <span style="font-size: 11px; font-weight: 700; color: #433F8A">Changed</span></sc-if></span></div>
+</sc-for>
+</div>
+<sc-if value="{{hasRegCheck}}" hint-placeholder-val="{{ false }}"><p style="margin: 14px 0 0; padding: 12px 14px; border-radius: 8px; background: {{regCheckBg}}; color: {{regCheckFg}}; font-size: 14px"><b>Demo register lookup:</b> {{regCheck}}</p></sc-if>
+</section>
+</sc-if>
+
+<sc-if value="{{isAnn}}" hint-placeholder-val="{{ false }}">
+<section aria-labelledby="pv-h" style="background: #FFFFFF; border-radius: 8px; box-shadow: 0 1px 12px rgba(20,22,40,0.08); padding: 26px 30px">
+<h2 id="pv-h" style="margin: 0 0 10px; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 600; color: #16143D">What shoppers see</h2>
+<div style="padding: 16px; border-radius: 12px; border: 1px dashed #B9BCC6; background: #FAF8F3">
+<p style="margin: 0; font-size: 12px; color: #5F6472">Message from the company · not reviewed by FoodLens</p>
+<p style="margin: 6px 0 2px; font-weight: 700; color: #16143D">{{it.title}}</p>
+<p style="margin: 0; font-size: 14px; color: #2A2F3A">{{it.body}}</p>
+</div>
+<p style="margin: 10px 0 0; font-size: 13px; color: #5F6472">Shown under the result for {{it.product}}. Written by the company. Not edited by FoodLens.</p>
+</section>
+<section aria-labelledby="fl-h" style="background: #FFFFFF; border-radius: 8px; box-shadow: 0 1px 12px rgba(20,22,40,0.08); padding: 26px 30px">
+<h2 id="fl-h" style="margin: 0 0 10px; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 600; color: #16143D">Why it’s in review</h2>
+<sc-for list="{{flags}}" as="g" hint-placeholder-count="2">
+<p style="display: flex; gap: 10px; margin: 0 0 8px; padding: 10px 12px; border-radius: 8px; background: #F5F5F3; color: #2A2F3A"><span aria-hidden="true" style="flex: none; width: 8px; height: 8px; margin-top: 7px; border-radius: 50%; background: #C76A1E"></span><span>{{g}}</span></p>
+</sc-for>
+<sc-if value="{{noFlags}}" hint-placeholder-val="{{ false }}"><p style="margin: 0; color: #5F6472">No shopper reports and no blocked wording. Routine spot check.</p></sc-if>
+</section>
+</sc-if>
+
+<section aria-labelledby="chk-h" style="background: #FFFFFF; border-radius: 8px; box-shadow: 0 1px 12px rgba(20,22,40,0.08); padding: 26px 30px">
+<h2 id="chk-h" style="margin: 0 0 4px; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 600; color: #16143D">Reviewer checklist</h2>
+<p style="margin: 0 0 10px; font-size: 13px; color: #5F6472">For your own notes. Ticking doesn’t approve anything.</p>
+<sc-for list="{{checks}}" as="k" hint-placeholder-count="3">
+<label style="display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-top: 1px solid #ECEDF1; cursor: pointer"><input type="checkbox" checked="{{k.on}}" onChange="{{k.toggle}}" style="flex: none; width: 18px; height: 18px; margin: 2px 0 0; accent-color: #1B7A45"><span style="color: #2A2F3A">{{k.label}}</span></label>
+</sc-for>
+</section>
+</div>
+
+<!-- RIGHT -->
+<div style="display: flex; flex-direction: column; gap: 24px; min-width: 0">
+<sc-if value="{{undecided}}" hint-placeholder-val="{{ true }}">
+<section aria-labelledby="dec-h" style="background: #FFFFFF; border-radius: 8px; box-shadow: 0 1px 12px rgba(20,22,40,0.08); padding: 26px 24px">
+<h2 id="dec-h" style="margin: 0 0 4px; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 600; color: #16143D">Decision</h2>
+<p style="margin: 0 0 12px; font-size: 13px; color: #5F6472">{{decisionIntro}}</p>
+<fieldset style="margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 8px">
+<legend style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Decision</legend>
+<sc-for list="{{actions}}" as="a" hint-placeholder-count="3">
+<label style="display: flex; gap: 10px; padding: 10px 12px; border-radius: 8px; border: {{a.border}}; background: {{a.bg}}; cursor: pointer">
+<input type="radio" name="decision" checked="{{a.on}}" onChange="{{a.pick}}" style="flex: none; width: 18px; height: 18px; margin: 2px 0 0; accent-color: #1B7A45">
+<span><b style="display: block; color: #16143D">{{a.title}}</b><span style="font-size: 13px; color: #5F6472">{{a.hint}}</span></span>
+</label>
+</sc-for>
+</fieldset>
+<sc-if value="{{showReason}}" hint-placeholder-val="{{ false }}">
+<label style="display: flex; flex-direction: column; gap: 4px; margin-top: 12px; font-weight: 600; color: #16143D">Reason <span style="font-weight: 400; font-size: 12px; color: #8C1D16">Required</span>
+<select value="{{reason}}" onChange="{{onReason}}" style="height: 40px; padding: 0 10px; border: {{reasonBorder}}; border-radius: 6px; font: inherit; color: #16143D; background: #FFFFFF">
+<option value="">Choose a reason</option>
+<sc-for list="{{reasonOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.k}}">{{o.v}}</option></sc-for>
+</select></label>
+</sc-if>
+<sc-if value="{{showNote}}" hint-placeholder-val="{{ false }}">
+<label style="display: flex; flex-direction: column; gap: 4px; margin-top: 12px; font-weight: 600; color: #16143D">{{noteLabel}} <span style="font-weight: 400; font-size: 12px; color: {{noteReqColor}}">{{noteReq}}</span>
+<textarea rows="3" value="{{note}}" onChange="{{onNote}}" placeholder="{{notePlaceholder}}" style="padding: 8px 10px; border: {{noteBorder}}; border-radius: 6px; font: inherit; color: #16143D; resize: vertical"></textarea></label>
+<p style="margin: 4px 0 0; font-size: 12px; color: #5F6472">{{noteHelp}}</p>
+</sc-if>
+<sc-if value="{{formError}}" hint-placeholder-val="{{ false }}"><p role="alert" style="margin: 10px 0 0; font-size: 13px; font-weight: 600; color: #B42318">{{formError}}</p></sc-if>
+<button type="button" onClick="{{confirm}}" style="width: 100%; margin-top: 14px; min-height: 44px; border: 0; border-radius: 6px; background: #1B7A45; color: #FFFFFF; font-family: 'Poppins', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer">Confirm decision</button>
+<p style="margin: 10px 0 0; font-size: 12px; color: #5F6472">{{decisionFoot}}</p>
+</section>
+</sc-if>
+
+<sc-if value="{{decided}}" hint-placeholder-val="{{ false }}">
+<section role="status" aria-labelledby="out-h" style="background: #FFFFFF; border-radius: 8px; box-shadow: 0 1px 12px rgba(20,22,40,0.08); padding: 26px 24px">
+<div style="display: flex; align-items: center; gap: 10px">
+<span aria-hidden="true" style="flex: none; width: 36px; height: 36px; border-radius: 50%; background: {{statusFg}}; display: inline-flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>
+<h2 id="out-h" style="margin: 0; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 600; color: #16143D">{{outTitle}}</h2>
+</div>
+<p style="margin: 12px 0 0; color: #2A2F3A">{{outText}}</p>
+<sc-if value="{{hasOutDetail}}" hint-placeholder-val="{{ true }}"><p style="margin: 10px 0 0; padding: 10px 12px; border-radius: 8px; background: #F5F5F3; font-size: 13px; color: #2A2F3A">{{outDetail}}</p></sc-if>
+<p style="margin: 10px 0 0; font-size: 13px; color: #5F6472">Amaka Bello · 20 Oct 2026, 15:10</p>
+<div style="display: flex; flex-direction: column; gap: 8px; margin-top: 14px">
+<button type="button" onClick="{{nextItem}}" style="min-height: 44px; border: 0; border-radius: 6px; background: #1B7A45; color: #FFFFFF; font-family: 'Poppins', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer">{{nextLabel}}</button>
+<button type="button" onClick="{{undo}}" style="min-height: 44px; border: 1px solid #C9CCD4; border-radius: 6px; background: #FFFFFF; color: #16143D; font-family: 'Poppins', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer">Change decision</button>
+</div>
+</section>
+</sc-if>
+
+<section aria-labelledby="hist-h" style="background: #FFFFFF; border-radius: 8px; box-shadow: 0 1px 12px rgba(20,22,40,0.08); padding: 26px 24px">
+<h2 id="hist-h" style="margin: 0 0 16px; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 600; color: #16143D">Review history</h2>
+<ol style="list-style: none; margin: 0; padding: 0">
+<sc-for list="{{history}}" as="h" hint-placeholder-count="3">
+<li style="display: grid; grid-template-columns: 16px minmax(0, 1fr); column-gap: 12px; padding-bottom: 14px">
+<span aria-hidden="true" style="display: flex; flex-direction: column; align-items: center"><span style="width: 10px; height: 10px; margin-top: 5px; border-radius: 50%; border: 2px solid {{h.color}}"></span><span style="flex: 1; width: 1px; background: #E3E5EA; margin-top: 4px"></span></span>
+<span><b style="display: block; font-weight: 600; color: #16143D">{{h.title}}</b><span style="font-size: 13px; color: #5F6472">{{h.meta}}</span></span>
+</li>
+</sc-for>
+</ol>
+</section>
+</div>
+</div>
+</sc-if>
+</main>
+<footer class="ad-pad" style="padding: 10px 60px 30px 20px; text-align: center; font-size: 15px; color: #3A3F4B">FoodLens admin · capstone prototype · <a href="Main.dc.html">Public site</a> · all records are fictional</footer>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"variant":{"editor":"string","default":"companies","section":"State"},"$preview":{"width":1440,"height":1300}}'>
+class Component extends DCLogic {
+renderVals() {
+const st = this.state || {};
+const set = (o) => this.setState(o);
+const parts = String(this.props.variant || 'companies').split(':');
+const type = st.type || parts[0] || 'companies';
+const openId = st.openId !== undefined ? st.openId : (parts[1] || null);
+const presetAction = st.openId !== undefined ? null : (parts[2] || null);
+const ST = {
+pending: ['Pending review', '#FDF5E2', '#7A4F00'],
+changes: ['Changes requested', '#ECEBF7', '#433F8A'],
+clarify: ['Question sent', '#ECEBF7', '#433F8A'],
+approved: ['Approved', '#E3F4EA', '#145C34'],
+rejected: ['Rejected', '#EEEFF2', '#3A3F4B'],
+live: ['Live', '#E3F4EA', '#145C34'],
+flagged: ['Flagged', '#FDEFE4', '#8F430B'],
+kept: ['Kept live', '#E3F4EA', '#145C34'],
+hidden: ['Hidden', '#EEEFF2', '#3A3F4B']
+};
+const D = {
+companies: [
+{ id: 'CO-018', a: 'Benue Fresh Juices Ltd', aSub: 'Manufacturer', b: 'Makurdi, Benue', bSub: 'Juices, drinks', date: 'Today, 09:42', s: 'pending', isNew: true, cac: 'RC 2045118', contact: 'Terver Iorliam · Operations', phone: '+234 805 000 0000', addr: '7 Gboko Road, Makurdi, Benue', what: 'Juices & drinks' },
+{ id: 'CO-017', a: 'Kano Staples Depot', aSub: 'Wholesaler', b: 'Kano, Kano', bSub: 'Buys for North-West', date: 'Today, 07:55', s: 'pending', isNew: true, cac: 'RC 1876002', contact: 'Halima Sani · Buyer', phone: '+234 809 000 0000', addr: '22 Bello Road, Fagge, Kano', what: 'Regions: North-West (Kano, Kaduna…)' },
+{ id: 'CO-016', a: 'Eko Grains Ltd', aSub: 'Manufacturer', b: 'Agege, Lagos', bSub: 'Grains, flour', date: '18 Oct 2026', s: 'pending', cac: 'RC 1650431', contact: 'Bisi Lawal · Director', phone: '+234 802 000 0000', addr: '3 Abeokuta Expressway, Agege, Lagos', what: 'Grains & flour' },
+{ id: 'CO-015', a: 'Ngozi Foods Ltd', aSub: 'Manufacturer', b: 'Enugu, Enugu', bSub: 'Oils, seasoning', date: '16 Oct 2026', s: 'pending', cac: 'RC 1588207', contact: 'Ngozi Eze · Managing director', phone: '+234 807 000 0000', addr: '41 Agbani Road, Enugu', what: 'Oils, seasoning' },
+{ id: 'CO-012', a: 'Demo Foods Nigeria Ltd', aSub: 'Manufacturer', b: 'Ikeja, Lagos', bSub: 'Tomato products, seasoning', date: '9 Oct 2026', s: 'approved', cac: 'RC 1234567', contact: 'Tolu Adebayo · Sales', phone: '+234 801 000 0000', addr: '12 Demo Industrial Ave, Ikeja, Lagos', what: 'Tomato products, seasoning' },
+{ id: 'CO-011', a: 'Arewa Grainline', aSub: 'Wholesaler', b: 'Kano, Kano', bSub: 'Buys for North-West', date: '8 Oct 2026', s: 'approved', cac: 'RC 7654321', contact: 'Ibrahim Musa · Buyer', phone: '+234 803 000 0000', addr: '14 Murtala Mohammed Way, Sabon Gari, Kano', what: 'Regions: North-West' },
+{ id: 'CO-009', a: 'Quickmart Supplies', aSub: 'Wholesaler', b: 'Ibadan, Oyo', bSub: 'Buys for South-West', date: '2 Oct 2026', s: 'rejected', cac: 'RC 0000000', contact: 'A. Oladele', phone: '+234 808 000 0000', addr: 'No street address given', what: 'Regions: South-West' }
+],
+locations: [
+{ id: 'LC-044', a: 'Onitsha depot', aSub: 'Demo Foods Nigeria Ltd', b: 'Upper Iweka Rd, Onitsha', bSub: 'Depot · Anambra', date: 'Today, 08:40', s: 'pending', isNew: true, hours: 'Mon–Sat 8:00–17:00', use: 'Pickup', co: 'Demo Foods Nigeria Ltd · Manufacturer · approved' },
+{ id: 'LC-043', a: 'Kano warehouse', aSub: 'Demo Foods Nigeria Ltd', b: 'Plot 4, Sharada Industrial Estate, Kano', bSub: 'Warehouse · Kano', date: 'Yesterday, 17:20', s: 'pending', hours: 'Mon–Fri 8:00–17:00', use: 'Delivery dispatch', co: 'Demo Foods Nigeria Ltd · Manufacturer · approved' },
+{ id: 'LC-042', a: 'Ibadan depot', aSub: 'Demo Mills Ltd', b: 'Ring Road, Ibadan', bSub: 'Depot · Oyo', date: '19 Oct 2026', s: 'pending', hours: 'Mon–Sat 7:30–18:00', use: 'Pickup', co: 'Demo Mills Ltd · Manufacturer · approved' },
+{ id: 'LC-041', a: 'Kaduna depot', aSub: 'Arewa Grainline', b: 'Kachia Road, Kaduna', bSub: 'Depot · Kaduna', date: '17 Oct 2026', s: 'pending', hours: 'Mon–Fri 8:00–16:00', use: 'Receiving stock', co: 'Arewa Grainline · Wholesaler · approved' },
+{ id: 'LC-040', a: 'Port Harcourt warehouse', aSub: 'Delta Dairy Demo', b: 'Trans-Amadi, Port Harcourt', bSub: 'Warehouse · Rivers', date: '17 Oct 2026', s: 'pending', hours: 'Mon–Fri 8:00–17:00', use: 'Delivery dispatch', co: 'Delta Dairy Demo · Manufacturer · approved' },
+{ id: 'LC-039', a: 'Jos depot', aSub: 'Golden Grains Co', b: 'Bukuru Expressway, Jos', bSub: 'Depot · Plateau', date: '16 Oct 2026', s: 'pending', hours: 'Mon–Sat 8:00–17:00', use: 'Pickup', co: 'Golden Grains Co · Manufacturer · approved' },
+{ id: 'LC-031', a: 'Ikeja depot', aSub: 'Demo Foods Nigeria Ltd', b: '12 Demo Industrial Ave, Ikeja', bSub: 'Depot · Lagos', date: '10 Oct 2026', s: 'approved', hours: 'Mon–Sat 8:00–18:00', use: 'Pickup', co: 'Demo Foods Nigeria Ltd · Manufacturer · approved' }
+],
+changes: [
+{ id: 'CN-0142', a: 'Demo Foods Nigeria Ltd', aSub: 'Tomato paste, 70 g · A7-0412L', b: 'Pack size change', bSub: 'Effective 5 Jan 2027', date: 'Today, 09:15', s: 'pending', isNew: true, why: 'New 65 g sachet replaces the 70 g tin from January.', file: 'sachet-label-65g.pdf · 1.2 MB', cmp: [['Product name', 'Tomato paste, 70 g', 'Tomato paste, 65 g'], ['Pack', 'Tin', 'Sachet'], ['Registration no.', 'A7-0412L', 'A7-0412L'], ['Batches', '5 listed', '5 listed']] },
+{ id: 'CN-0141', a: 'Demo Mills Ltd', aSub: 'Semolina, 1 kg · B1-2210L', b: 'Product name', bSub: 'Effective 1 Nov 2026', date: 'Yesterday, 14:02', s: 'pending', why: 'Brand name added to the pack.', file: 'semolina-front.png · 0.8 MB', cmp: [['Product name', 'Semolina, 1 kg', 'Demo Mills Semolina, 1 kg'], ['Registration no.', 'B1-2210L', 'B1-2210L'], ['Pack', 'Bag', 'Bag']] },
+{ id: 'CN-0140', a: 'Demo Mills Ltd', aSub: 'Spaghetti, 500 g · B1-2304L', b: 'Pack size change', bSub: 'Effective 1 Dec 2026', date: '18 Oct 2026', s: 'pending', why: 'Moving to a 450 g pack.', file: 'spaghetti-450g.pdf · 2.1 MB', cmp: [['Product name', 'Spaghetti, 500 g', 'Spaghetti, 450 g'], ['Registration no.', 'B1-2304L', 'B1-2304L'], ['Pack', 'Carton of 20', 'Carton of 20']] },
+{ id: 'CN-0139', a: 'Demo Foods Nigeria Ltd', aSub: 'Tomato paste, 210 g · A7-0418L', b: 'Label redesign', bSub: 'Effective 1 Nov 2026', date: '16 Oct 2026', s: 'clarify', why: 'New label artwork.', file: 'No file attached', note: 'Please upload the new label artwork as a PDF so we can compare it.', cmp: [['Label', 'Red band, 2019 design', 'Green band, 2026 design'], ['Registration no.', 'A7-0418L', 'A7-0418L']] },
+{ id: 'CN-0138', a: 'Delta Dairy Demo', aSub: 'Evaporated milk, 160 g · D4-1102L', b: 'Registration number', bSub: 'Effective on approval', date: '15 Oct 2026', s: 'pending', why: 'Renewed registration issued a new number.', file: 'renewal-letter.pdf · 0.4 MB', reg: 'found', cmp: [['Product name', 'Evaporated milk, 160 g', 'Evaporated milk, 160 g'], ['Registration no.', 'D4-1102L', 'D4-1188L']] },
+{ id: 'CN-0137', a: 'Okeke Foods', aSub: 'Palm oil, 5 L · D2-0045L', b: 'Registration number', bSub: 'Effective on approval', date: '14 Oct 2026', s: 'pending', why: 'Number on new packs differs.', file: 'pack-photo.jpg · 1.6 MB', reg: 'other', cmp: [['Product name', 'Palm oil, 5 L', 'Palm oil, 5 L'], ['Registration no.', 'D2-0045L', 'A7-0611L']] },
+{ id: 'CN-0131', a: 'Demo Foods Nigeria Ltd', aSub: 'Seasoning cubes, 10 g · 02-4410L', b: 'Product name', bSub: 'Live since 6 Oct', date: '2 Oct 2026', s: 'approved', why: 'Name shortened on pack.', file: 'cubes-front.png · 0.6 MB', cmp: [['Product name', 'Seasoning cubes (10 g)', 'Seasoning cubes, 10 g']] }
+],
+announcements: [
+{ id: 'AN-0219', a: 'Demo Mills Ltd', aSub: 'Semolina, 1 kg', b: 'Only buy from our Kano depot', bSub: 'Reported by 2 shoppers · RP-031', date: 'Today, 08:12', s: 'flagged', isNew: true, title: 'Only buy from our Kano depot', body: 'Packs sold anywhere else are not from us. Buy only at our Kano depot on Zaria Road.', flags: ['Reported by 2 shoppers (RP-031): “It tells people every shop is selling copies.”', 'Makes a claim about every other seller that FoodLens can’t check.'] },
+{ id: 'AN-0218', a: 'Okeke Foods', aSub: 'Palm oil, 5 L', b: 'Pure and 100% natural', bSub: 'Reported by 1 shopper · RP-029', date: 'Yesterday, 18:30', s: 'flagged', title: 'Pure and 100% natural', body: 'Our palm oil is pure and 100% natural. Look for the yellow seal on the cap.', flags: ['Reported by 1 shopper (RP-029): quality claim.', 'Quality claim that FoodLens can’t check. The cap description is fine.'] },
+{ id: 'AN-0215', a: 'Demo Foods Nigeria Ltd', aSub: 'Tomato paste, 70 g', b: 'New label from November', bSub: 'Spot check', date: '28 Sep 2026', s: 'live', title: 'New label from November', body: 'Our 70 g tin gets a new label from November. The registration number stays A7-0412L.', flags: [] },
+{ id: 'AN-0212', a: 'Demo Foods Nigeria Ltd', aSub: 'Tomato paste, 70 g', b: 'Copies with a blue cap', bSub: 'Spot check', date: '3 Oct 2026', s: 'live', title: 'Copies with a blue cap', body: 'Our tins have a red lid. Tins with a blue cap have been seen in Kano. Check the number before you buy.', flags: [] },
+{ id: 'AN-0207', a: 'Delta Dairy Demo', aSub: 'Evaporated milk, 160 g', b: 'Pull-tab lids from October', bSub: 'Spot check', date: '25 Sep 2026', s: 'live', title: 'Pull-tab lids from October', body: 'New tins open with a pull tab. Older tins without a tab are still ours until they sell out.', flags: [] },
+{ id: 'AN-0201', a: 'Golden Grains Co', aSub: 'Parboiled rice, 50 kg', b: 'Stitched bag tops', bSub: 'Spot check', date: '20 Sep 2026', s: 'live', title: 'Stitched bag tops', body: 'Our bags are machine-stitched across the top with green thread.', flags: [] },
+{ id: 'AN-0190', a: 'Demo Foods Nigeria Ltd', aSub: 'Seasoning cubes, 10 g', b: 'Now NAFDAC approved', bSub: 'Blocked wording', date: '10 Sep 2026', s: 'hidden', title: 'Now NAFDAC approved', body: 'Our seasoning cubes are now NAFDAC approved.', flags: ['Claims regulator approval.'], note: 'Hidden on 12 Sep: claims regulator approval.' }
+]
+};
+const META = {
+companies: { title: 'Companies', lower: 'companies', intro: 'Business registrations waiting for a company check.', note: 'Approving a company lets it sign in to its workspace and submit products, locations and announcements. A FoodLens review is not a NAFDAC or SON approval.', colA: 'Company', colB: 'Location', detailTitle: 'Company details', decisionIntro: 'Choose what happens to this registration.', foot: 'The company sees the outcome on its account status page.' },
+locations: { title: 'Locations', lower: 'locations', intro: 'Depots and warehouses companies want to show to buyers.', note: 'Wholesalers only see a location after you approve it. FoodLens doesn’t visit sites; this is a details check.', colA: 'Location', colB: 'Address', detailTitle: 'Location details', decisionIntro: 'Choose what happens to this location.', foot: 'The company sees the outcome on its Locations page.' },
+changes: { title: 'Product changes', lower: 'product changes', intro: 'Changes companies want to make to published products.', note: 'Shoppers keep seeing the current version until a change is approved. Approving never changes a register status.', colA: 'Company and product', colB: 'Change', detailTitle: 'Submission', decisionIntro: 'Choose what happens to this change.', foot: 'The company sees the outcome on its Product submissions page.' },
+announcements: { title: 'Announcements', lower: 'announcements', intro: 'Company messages shown to shoppers under a product result.', note: 'Announcements are written by companies and labelled “not reviewed by FoodLens”. Hide any that claim safety, quality or regulator approval, or that FoodLens can’t check.', colA: 'Company and product', colB: 'Title', detailTitle: 'Announcement', decisionIntro: 'Keep it live, or hide it from shoppers.', foot: 'Hiding removes it from every result page straight away. The company sees your reason.' }
+};
+const M = META[type];
+const ACTIONS = type === 'announcements'
+? [['kept', 'Keep live', 'Leave it on the product result.'], ['hidden', 'Hide', 'Remove it from shoppers. Tell the company why.']]
+: type === 'changes'
+? [['approved', 'Approve change', 'It goes live on the effective date.'], ['clarify', 'Ask a question', 'Send the company a message. The change waits.'], ['rejected', 'Reject', 'The current version stays live.']]
+: [['approved', 'Approve', type === 'companies' ? 'The company can start using its workspace.' : 'Wholesalers can see this location.'], ['changes', 'Request changes', 'Send the company a message. It can resubmit.'], ['rejected', 'Reject', 'Give the company a reason.']];
+const REASONS = {
+companies: [['cac', 'CAC number doesn’t match the company name'], ['address', 'Address isn’t a business address'], ['contact', 'Contact details don’t work'], ['dup', 'Duplicate of another account'], ['other', 'Other']],
+locations: [['address', 'Address can’t be found'], ['notbiz', 'Not a business premises'], ['dup', 'Duplicate location'], ['other', 'Other']],
+changes: [['regother', 'Registration number belongs to another product or company'], ['evidence', 'No supporting document'], ['scope', 'This needs a new product, not a change'], ['other', 'Other']],
+announcements: [['safety', 'Claims safety or quality FoodLens can’t check'], ['regulator', 'Claims regulator approval'], ['others', 'Makes claims about other sellers'], ['contact', 'Contains prices or personal contact details'], ['other', 'Other']]
+}[type];
+const rmap = {}; REASONS.forEach(([k, v]) => { rmap[k] = v; });
+const dec = st.dec || {};
+const items = D[type].map((d) => Object.assign({}, d, { s: dec[d.id] ? dec[d.id].action : d.s }));
+const pendingKeys = type === 'announcements' ? ['flagged'] : ['pending'];
+const f = st.f || 'all';
+const TABS = type === 'announcements' ? [['all', 'All'], ['flagged', 'Flagged'], ['live', 'Live'], ['hidden', 'Hidden']] : type === 'changes' ? [['all', 'All'], ['pending', 'Pending review'], ['clarify', 'Question sent'], ['approved', 'Approved'], ['rejected', 'Rejected']] : [['all', 'All'], ['pending', 'Pending review'], ['changes', 'Changes requested'], ['approved', 'Approved'], ['rejected', 'Rejected']];
+const norm = (s) => (s === 'kept' ? 'live' : s);
+const q = (st.q || '').toLowerCase();
+const rows = items.filter((d) => (f === 'all' || norm(d.s) === f) && (!q || (d.id + ' ' + d.a + ' ' + d.b).toLowerCase().indexOf(q) >= 0)).map((d) => ({ id: d.id, a: d.a, aSub: d.aSub, b: d.b, bSub: d.bSub, date: d.date, isNew: !!d.isNew && pendingKeys.indexOf(d.s) >= 0, status: ST[d.s][0], pillBg: ST[d.s][1], pillFg: ST[d.s][2], cta: pendingKeys.indexOf(d.s) >= 0 ? 'Review' : 'Open', open: () => set({ type: type, openId: d.id, action: undefined, reason: undefined, note: undefined, err: '', checks: {} }) }));
+const tabs = TABS.map(([k, l]) => ({ label: l, count: items.filter((d) => k === 'all' || norm(d.s) === k).length, on: f === k, border: f === k ? '1px solid #1B7A45' : '1px solid #E3E5EA', bg: f === k ? '#1B7A45' : '#FFFFFF', fg: f === k ? '#FFFFFF' : '#2A2F3A', countBg: f === k ? 'rgba(255,255,255,0.22)' : '#F1F2F5', pick: () => set({ f: k }) }));
+const pendingCount = (t) => D[t].filter((d) => { const s = dec[d.id] ? dec[d.id].action : d.s; return t === 'announcements' ? s === 'flagged' : s === 'pending'; }).length;
+const NAVDEF = [
+['overview', 'Overview', 'Admin.dc.html', 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z', null, '', ''],
+['companies', 'Companies', 'AdminQueue.dc.html', 'M4 21V5l8-2v18M12 8h8v13M4 21h17M8 8h1M8 12h1M8 16h1M16 12h1M16 16h1', type === 'companies' ? pendingCount('companies') : 4, '#145C34', '#E3F4EA'],
+['locations', 'Locations', 'AdminLocations.dc.html', 'M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21zM12 7a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z', type === 'locations' ? pendingCount('locations') : 6, '#1F5F8F', '#E3EFF8'],
+['changes', 'Product changes', 'AdminChanges.dc.html', 'M3 7.5L12 3l9 4.5v9L12 21l-9-4.5zM3 7.5l9 4.5 9-4.5M12 12v9', type === 'changes' ? pendingCount('changes') : 5, '#433F8A', '#ECEBF7'],
+['reports', 'Reports', 'AdminReports.dc.html', 'M5 21V4M5 4h11l-2 4 2 4H5', 3, '#8F430B', '#FCEBDD'],
+['announcements', 'Announcements', 'AdminAnnouncements.dc.html', 'M4 10v4h3l7 4V6L7 10H4zM18 9a4 4 0 0 1 0 6', null, '#7A4F00', '#FDF5E2']
+];
+const nav = NAVDEF.map(([k, l, h, icon, c, fg, bg]) => { const on = k === type; return { label: l, href: h, icon: icon, count: c, hasCount: c !== null && c > 0, current: on ? 'page' : 'false', bg: on ? '#1B7A45' : 'transparent', fg: on ? '#FFFFFF' : '#2A2F3A', weight: on ? 600 : 400, cFg: on ? '#145C34' : fg, cBg: on ? '#FFFFFF' : bg }; });
+const it0 = openId ? items.find((d) => d.id === openId) : null;
+const base = it0 ? D[type].find((d) => d.id === openId) : null;
+const out = { isList: !it0, isDetail: !!it0, nav: nav, navOpen: !!st.navOpen, toggleNav: () => set({ navOpen: !st.navOpen }), acctOpen: !!st.acctOpen, toggleAcct: () => set({ acctOpen: !st.acctOpen }),
+q: st.q || '', onQ: (e) => set({ q: e.target.value }), typeLower: M.lower,
+listTitle: M.title, listIntro: M.intro, listNote: M.note, colA: M.colA, colB: M.colB, tabs: tabs, rows: rows, empty: rows.length === 0,
+backToList: () => set({ type: type, openId: null }) };
+const noop = () => {};
+if (!it0) return Object.assign(out, { it: {}, fields: [], compare: [], flags: [], checks: [], actions: [], reasonOpts: [], history: [], statusBg: '', statusFg: '', statusLabel: '', detailTitle: '', regCheckBg: '', regCheckFg: '', regCheck: '', decisionIntro: '', reason: '', reasonBorder: '', noteLabel: '', noteReqColor: '', noteReq: '', note: '', notePlaceholder: '', noteBorder: '', noteHelp: '', formError: '', decisionFoot: '', outTitle: '', outText: '', outDetail: '', nextLabel: '', isChange: false, hasRegCheck: false, isAnn: false, noFlags: false, undecided: false, showReason: false, showNote: false, decided: false, hasOutDetail: false, onReason: noop, onNote: noop, confirm: noop, nextItem: noop, undo: noop });
+// ---- detail ----
+const preset = presetAction ? { action: presetAction, reason: presetAction === 'rejected' || presetAction === 'hidden' ? (type === 'announcements' ? 'others' : REASONS[0][0]) : '', note: presetAction === 'changes' ? 'Please upload a utility bill or tenancy letter for this address.' : presetAction === 'hidden' ? 'Please remove the line about other sellers. You can describe your own packs.' : presetAction === 'clarify' ? 'Please upload the new label artwork as a PDF.' : '' } : null;
+const d0 = dec[it0.id] || preset;
+const decided = !!d0 && st.editing !== it0.id;
+const action = st.action !== undefined ? st.action : (d0 ? d0.action : null);
+const reason = st.reason !== undefined ? st.reason : (d0 ? d0.reason || '' : '');
+const note = st.note !== undefined ? st.note : (d0 ? d0.note || '' : '');
+const sKey = decided ? d0.action : base.s;
+const eff = (it0.bSub || '').replace('Effective ', '').replace(/^on approval$/, 'On approval');
+const needReason = action === 'rejected' || action === 'hidden';
+const needNote = action === 'changes' || action === 'clarify' || (needReason && reason === 'other');
+const fields = type === 'companies' ? [['Reference', it0.id, 1], ['Company name', it0.a], ['Type', it0.aSub], ['CAC number', it0.cac, 1], ['Business address', it0.addr], ['Makes or buys', it0.what], ['Contact', it0.contact + ' · ' + it0.phone], ['Submitted', it0.date]]
+: type === 'locations' ? [['Reference', it0.id, 1], ['Company', it0.co], ['Name', it0.a], ['Type', it0.bSub.split(' · ')[0]], ['Address', it0.b + ', ' + it0.bSub.split(' · ')[1]], ['Opening hours', it0.hours], ['Used for', it0.use], ['Submitted', it0.date]]
+: type === 'changes' ? [['Reference', it0.id, 1], ['Company', it0.a], ['Product', it0.aSub], ['Change', it0.b], ['Effective', eff], ['Company’s reason', it0.why], ['Supporting document', it0.file], ['Submitted', it0.date]]
+: [['Reference', it0.id, 1], ['Company', it0.a], ['Product', it0.aSub], ['Posted', it0.date], ['Shown to shoppers', sKey === 'hidden' ? 'No · hidden' : 'Yes']];
+const CHECKS = {
+companies: ['CAC number format looks right and matches the company name', 'Address is a business address in the stated state', 'Contact name and phone are given', 'No other account uses this CAC number'],
+locations: ['Company account is approved', 'Address is complete and in the stated state', 'Opening hours are given'],
+changes: ['The change matches the company’s reason', 'Supporting document shows the change', 'Registration number still belongs to this company'],
+announcements: ['No claims of safety, quality or regulator approval', 'Only describes the company’s own products or packs', 'No prices or personal contact details']
+}[type];
+const ck = st.checks || {};
+const regCheck = it0.reg === 'found' ? ['D4-1188L is in the demo register: active, listed for Delta Dairy Demo, evaporated milk, 160 g.', '#E3F4EA', '#145C34'] : it0.reg === 'other' ? ['A7-0611L is in the demo register for a different company and product (Demo Foods Nigeria Ltd, tomato ketchup). Check before approving.', '#FDECEA', '#8C1D16'] : null;
+const outMap = {
+approved: [type === 'changes' ? 'Change approved' : 'Approved', type === 'companies' ? it0.a + ' can now publish products, locations and announcements.' : type === 'locations' ? it0.a + ' is now visible to wholesalers.' : (eff === 'On approval' ? 'Goes live now.' : 'Goes live on ' + eff + '.')],
+changes: ['Changes requested', it0.a + ' can update and resubmit. Nothing is published meanwhile.'],
+clarify: ['Question sent', it0.a + ' sees your message on its Product submissions page. The change waits.'],
+rejected: ['Rejected', 'Reason: ' + (rmap[reason] || '—') + '.'],
+kept: ['Kept live', 'The announcement stays on the product result.'],
+hidden: ['Hidden from shoppers', 'Reason: ' + (rmap[reason] || '—') + '. ' + it0.a + ' sees this reason.']
+}[decided ? d0.action : 'approved'];
+const pend = items.filter((d) => pendingKeys.indexOf(d.s) >= 0 && d.id !== it0.id);
+const hist = [{ title: type === 'announcements' ? 'Posted by the company' : 'Submitted by the company', meta: it0.a + ' · ' + it0.date, color: '#1B7A45' }];
+if (base.note && !dec[it0.id] && !preset) hist.push({ title: ST[base.s][0], meta: 'FoodLens · ' + base.note, color: ST[base.s][2] });
+if (decided) hist.push({ title: outMap[0], meta: 'Amaka Bello · 20 Oct 2026, 15:10', color: ST[d0.action][2] });
+else if (pendingKeys.indexOf(base.s) >= 0) hist.push({ title: 'Awaiting decision', meta: 'Not reviewed yet', color: '#C9CCD4' });
+return Object.assign(out, {
+it: { id: it0.id, heading: type === 'announcements' ? it0.title : type === 'changes' ? it0.b + ' · ' + it0.aSub.split(' · ')[0] : it0.a, sub: type === 'companies' ? it0.aSub + ' · ' + it0.b : type === 'locations' ? it0.aSub + ' · ' + it0.bSub : it0.a, title: it0.title || '', body: it0.body || '', product: it0.aSub },
+statusLabel: ST[sKey][0], statusBg: ST[sKey][1], statusFg: ST[sKey][2],
+detailTitle: M.detailTitle,
+fields: fields.map(([k, v, mono]) => ({ k: k, v: v, font: mono ? "'IBM Plex Mono', monospace" : 'inherit' })),
+isChange: type === 'changes', isAnn: type === 'announcements',
+compare: (it0.cmp || []).map(([k, a, b]) => ({ k: k, cur: a, next: b, changed: a !== b, hl: a !== b ? '#ECEBF7' : 'transparent', weight: a !== b ? 600 : 400, strike: a !== b ? 'line-through' : 'none' })),
+hasRegCheck: !!regCheck, regCheck: regCheck ? regCheck[0] : '', regCheckBg: regCheck ? regCheck[1] : '', regCheckFg: regCheck ? regCheck[2] : '',
+flags: it0.flags || [], noFlags: !(it0.flags && it0.flags.length),
+checks: CHECKS.map((l, i) => ({ label: l, on: !!ck[i], toggle: () => set({ checks: Object.assign({}, ck, { [i]: !ck[i] }) }) })),
+decided: decided, undecided: !decided, decisionIntro: M.decisionIntro, decisionFoot: M.foot,
+actions: ACTIONS.map(([k, t, h]) => ({ title: t, hint: h, on: action === k, border: action === k ? '2px solid #1B7A45' : '1px solid #E3E5EA', bg: action === k ? '#F4FAF6' : '#FFFFFF', pick: () => set({ action: k, err: '' }) })),
+showReason: needReason, reason: reason, reasonOpts: REASONS.map(([k, v]) => ({ k: k, v: v })), onReason: (e) => set({ reason: e.target.value, err: '' }), reasonBorder: st.err && needReason && !reason ? '2px solid #B42318' : '1px solid #C9CCD4',
+showNote: !!action, note: note, onNote: (e) => set({ note: e.target.value, err: '' }),
+noteLabel: action === 'changes' || action === 'clarify' ? 'Message to the company' : 'Note', noteReq: needNote ? 'Required' : 'Optional', noteReqColor: needNote ? '#8C1D16' : '#5F6472',
+noteBorder: st.err && needNote && !note.trim() ? '2px solid #B42318' : '1px solid #C9CCD4',
+notePlaceholder: action === 'changes' ? 'e.g. Please upload a document that shows this address.' : action === 'clarify' ? 'e.g. Please upload the new label artwork.' : action === 'hidden' ? 'e.g. Remove the line about other sellers.' : 'For the record',
+noteHelp: action === 'approved' || action === 'kept' ? 'Kept in the review history.' : 'The company sees this message.',
+formError: st.err || '',
+confirm: () => {
+if (!action) { set({ err: 'Choose a decision first.' }); return; }
+if (needReason && !reason) { set({ err: 'Choose a reason.' }); return; }
+if (needNote && !note.trim()) { set({ err: 'Write a message for the company.' }); return; }
+set({ dec: Object.assign({}, dec, { [it0.id]: { action: action, reason: reason, note: note } }), editing: null, err: '' });
+},
+outTitle: outMap[0], outText: outMap[1], hasOutDetail: !!(decided && d0.note), outDetail: decided && d0.note ? (d0.action === 'approved' || d0.action === 'kept' ? 'Note: ' : 'Message: ') + d0.note : '',
+nextLabel: pend.length ? 'Next in queue (' + pend.length + ' left)' : 'Back to ' + M.lower,
+nextItem: () => pend.length ? set({ openId: pend[0].id, action: undefined, reason: undefined, note: undefined, err: '', checks: {} }) : set({ openId: null }),
+undo: () => set({ editing: it0.id, action: d0.action, reason: d0.reason || '', note: d0.note || '' }),
+history: hist
+});
+}
+}
+</script>
+</body>
+</html>

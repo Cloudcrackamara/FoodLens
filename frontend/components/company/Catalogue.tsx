@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import type { z } from "zod";
 import { FormField } from "@/components/auth/FormField";
@@ -13,10 +14,11 @@ import {
   useProducts,
   type Product,
 } from "@/lib/catalogue";
-import { formatDate } from "@/lib/lookup";
+import { formatDate } from "@/lib/format";
+import { buttonClass } from "@/lib/ui";
+import { EmptyPanel } from "@/components/ui/Panels";
 
-const buttonClass =
-  "self-start rounded-md bg-zinc-900 px-4 py-2 font-semibold text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900";
+const submitClass = `self-start ${buttonClass("primary", "sm")}`;
 
 /** Small form helper: holds values, validates with zod, submits, clears on success. */
 function useForm<S extends z.ZodObject>(
@@ -42,7 +44,7 @@ function useForm<S extends z.ZodObject>(
 
 function ErrorText({ error }: { error: Error | null }) {
   return error ? (
-    <p role="alert" className="text-red-700 dark:text-red-400">
+    <p role="alert" className="font-semibold text-bad">
       {describeError(error)}
     </p>
   ) : null;
@@ -52,25 +54,25 @@ function AddProductForm({ companyId }: { companyId: string }) {
   const addProduct = useAddProduct(companyId);
   const form = useForm(
     productFormSchema,
-    { product_code: "", name: "", brand: "", category: "", package_size: "", manufacturer_name: "", registration_number: "" },
+    { product_code: "", name: "", brand: "", category: "", size: "", manufacturer_name: "", registration_number: "" },
     (data, done) => addProduct.mutate(data, { onSuccess: done }),
   );
   return (
     <form onSubmit={form.onSubmit} noValidate className="flex flex-col gap-3">
       <h3 className="font-semibold">Add a product</h3>
-      <p className="text-sm text-zinc-700 dark:text-zinc-300">
-        Products and batches appear in consumer lookups straight away. Later changes to a published
-        product go through a change notice.
+      <p className="text-sm text-text-muted">
+        Products and batches are published straight away. Later changes to a published product go
+        through a change notice.
       </p>
       <FormField id="product_code" label="Product code" value={form.values.product_code} error={form.errors.product_code} autoCapitalize="characters" spellCheck={false} onChange={form.set("product_code")} />
       <FormField id="product_name" label="Product name" value={form.values.name} error={form.errors.name} onChange={form.set("name")} />
       <FormField id="brand" label="Brand" value={form.values.brand} error={form.errors.brand} onChange={form.set("brand")} />
       <FormField id="category" label="Category" value={form.values.category} error={form.errors.category} onChange={form.set("category")} />
-      <FormField id="package_size" label="Package size (optional)" value={form.values.package_size} error={form.errors.package_size} onChange={form.set("package_size")} />
+      <FormField id="size" label="Size (optional)" value={form.values.size} error={form.errors.size} onChange={form.set("size")} />
       <FormField id="manufacturer_name" label="Manufacturer" value={form.values.manufacturer_name} error={form.errors.manufacturer_name} onChange={form.set("manufacturer_name")} />
-      <FormField id="registration_number" label="NAFDAC or SON number printed on the pack (optional)" value={form.values.registration_number} error={form.errors.registration_number} hint="Consumers check this number against the simulated register. FoodLens does not record it as approved." autoCapitalize="characters" spellCheck={false} onChange={form.set("registration_number")} />
+      <FormField id="registration_number" label="NAFDAC number (as printed, optional)" value={form.values.registration_number} error={form.errors.registration_number} hint="Shown as information only. FoodLens does not check it against any register." autoCapitalize="characters" spellCheck={false} onChange={form.set("registration_number")} />
       <ErrorText error={addProduct.error} />
-      <button type="submit" disabled={addProduct.isPending} className={buttonClass}>Publish product</button>
+      <button type="submit" disabled={addProduct.isPending} className={submitClass}>Publish product</button>
     </form>
   );
 }
@@ -90,25 +92,30 @@ function AddBatchForm({ companyId, product }: { companyId: string; product: Prod
       <FormField id={id("production_date")} label="Production date (optional)" type="date" value={form.values.production_date} onChange={form.set("production_date")} />
       <FormField id={id("expiry_date")} label="Expiry date (optional)" type="date" value={form.values.expiry_date} onChange={form.set("expiry_date")} />
       <ErrorText error={addBatch.error} />
-      <button type="submit" disabled={addBatch.isPending} className={buttonClass}>Publish batch</button>
+      <button type="submit" disabled={addBatch.isPending} className={submitClass}>Publish batch</button>
     </form>
   );
 }
 
 function ProductCard({ companyId, product }: { companyId: string; product: Product }) {
   return (
-    <li aria-label={product.name} className="flex flex-col gap-3 rounded-md border border-zinc-300 p-4 dark:border-zinc-700">
+    <li aria-label={product.name} className="flex flex-col gap-3 rounded-[12px] bg-white p-6 shadow-card">
       <div>
         <h3 className="font-semibold">{product.name}</h3>
-        <p className="text-sm">{product.product_code} · {product.brand} · {product.category}{product.package_size && ` · ${product.package_size}`}</p>
-        <p className="text-sm">Number on the pack: {product.registration_number ?? "Not given"}</p>
+        <p className="text-sm">{product.product_code} · {product.brand} · {product.category}{product.size && ` · ${product.size}`}</p>
+        <p className="text-sm">NAFDAC number (as printed): {product.registration_number ?? "Not given"}</p>
       </div>
       <div>
         <h4 className="font-medium">Batches</h4>
         {product.batches.length === 0 ? <p className="text-sm">No batches yet.</p> : (
           <ul className="text-sm">
             {product.batches.map((batch) => (
-              <li key={batch.batch_id}>{batch.batch_number} · expires {formatDate(batch.expiry_date)}</li>
+              <li key={batch.batch_id}>
+                {batch.batch_number} · expires {formatDate(batch.expiry_date)} ·{" "}
+                <Link href={`/company/batches/${batch.batch_id}`} className="font-semibold text-brand-dark underline">
+                  Codes, labels and allocations
+                </Link>
+              </li>
             ))}
           </ul>
         )}
@@ -122,9 +129,9 @@ export function Catalogue({ companyId }: { companyId: string }) {
   const products = useProducts(companyId);
   return (
     <section aria-labelledby="catalogue-heading" className="flex flex-col gap-4">
-      <h2 id="catalogue-heading" className="text-lg font-semibold">Products</h2>
+      <h2 id="catalogue-heading" className="font-heading text-[17px] font-semibold text-ink">Products</h2>
       {products.isError && <ErrorText error={products.error} />}
-      {products.data?.length === 0 && <p>No products yet.</p>}
+      {products.data?.length === 0 && <EmptyPanel title="No products yet." />}
       <ul className="flex flex-col gap-4">
         {products.data?.map((product) => <ProductCard key={product.product_id} companyId={companyId} product={product} />)}
       </ul>

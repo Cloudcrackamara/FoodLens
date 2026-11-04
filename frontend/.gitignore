@@ -41,5 +41,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# In-browser OCR files, copied from node_modules by scripts/copy-ocr-assets.mjs
-/public/ocr/
+# design comparison screenshots (local only)
+/screenshots/

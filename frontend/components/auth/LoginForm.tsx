@@ -6,6 +6,7 @@ import { useState, type FormEvent } from "react";
 import { describeError } from "@/lib/api";
 import { fieldErrors, loginFormSchema, useLogin } from "@/lib/auth";
 import { FormField } from "./FormField";
+import { buttonClass } from "@/lib/ui";
 
 export function LoginForm() {
   const router = useRouter();
@@ -46,20 +47,20 @@ export function LoginForm() {
         onChange={setPassword}
       />
       {login.isError && (
-        <p role="alert" className="text-red-700 dark:text-red-400">
+        <p role="alert" className="font-semibold text-bad">
           {describeError(login.error)}
         </p>
       )}
       <button
         type="submit"
         disabled={login.isPending}
-        className="rounded-md bg-zinc-900 px-4 py-2 font-semibold text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
+        className={buttonClass("primary", "sm")}
       >
         {login.isPending ? "Signing in…" : "Sign in"}
       </button>
       <p className="text-sm">
         No account?{" "}
-        <Link href="/register" className="underline">
+        <Link href="/register" className="font-semibold text-brand-dark underline">
           Create one
         </Link>
       </p>

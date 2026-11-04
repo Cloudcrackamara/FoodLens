@@ -8,7 +8,7 @@ from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.models.enums import CompanyType, DataMode, FulfilmentMethod, OrderStatus
+from app.models.enums import DataMode, FulfilmentMethod, OrderStatus
 from app.schemas.company import SupplierContactRead, SupplierRead
 
 MAX_LINES = 20
@@ -113,31 +113,17 @@ class OrderRead(BaseModel):
 # --- Supplier page ---------------------------------------------------------------------------
 
 
-class RegistrationResult(StrEnum):
-    """Registration status from the simulated register for a supplier's product (D100).
-    Checked like a lookup: not found, expired/inactive, different product or company, active."""
-
-    ACTIVE_IN_DEMO_REGISTER = "ACTIVE_IN_DEMO_REGISTER"
-    EXPIRED_OR_INACTIVE_IN_DEMO_REGISTER = "EXPIRED_OR_INACTIVE_IN_DEMO_REGISTER"
-    REGISTERED_TO_ANOTHER_PRODUCT = "REGISTERED_TO_ANOTHER_PRODUCT"
-    NOT_FOUND_IN_DEMO_REGISTER = "NOT_FOUND_IN_DEMO_REGISTER"
-    NO_NUMBER_GIVEN = "NO_NUMBER_GIVEN"
-
-
 class SupplierProductRead(BaseModel):
     product_id: uuid.UUID
     name: str
     brand: str
     category: str
-    package_size: str | None
+    size: str | None
+    # As printed on the pack; information only, never checked (D107).
     registration_number: str | None
-    registration_result: RegistrationResult
-    registration_label: str
-    register_name: str | None
 
 
 class SupplierDetailRead(SupplierRead):
-    company_type: CompanyType
     products: list[SupplierProductRead]
     contacts: list[SupplierContactRead]
     data_mode: DataMode = DataMode.DEMO
